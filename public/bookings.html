@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>All Bookings</title></head>
+<body>
+  <h2>Confirmed Bookings</h2>
+  <ul id="list"></ul>
+  <script>
+    async function loadBookings() {
+      try {
+        const res = await fetch("/listBookings");
+        const data = await res.json();
+        const ul = document.getElementById("list");
+        ul.innerHTML = "";
+        data.bookings.forEach(b => {
+          const li = document.createElement("li");
+          li.textContent = `${b.name} – ${b.service} on ${b.date} at ${b.time} (${b.status})`;
+          ul.appendChild(li);
+        });
+      } catch {
+        document.getElementById("list").innerHTML = "<li>❌ Failed to load bookings</li>";
+      }
+    }
+    loadBookings();
+  </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+id,name,service,sqMeters,distance,frequency,price,discountNote,status,createdAt
+bk1,Alice,Standard Cleaning,50,10,weekly,90,Weekly booking: 10% discount applied,pending,2025-08-31T10:00:00Z

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quotation Request | CleanPro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap card" style="max-width:600px; margin:auto; text-align:center; padding:2rem;">
+    <h2>📩 Quotation Request Submitted</h2>
+    <p id="qDetails" style="font-size:1.1rem; font-weight:500;"></p>
+    <p>
+      For properties larger than 250 sq.m, we prepare tailored offers.  
+      Our team will review your request and contact you soon with a custom price by phone or email.
+    </p>
+    <br>
+    <a href="index.html" class="btn">← Back to Home</a>
+  </main>
+
+  <footer class="wrap" style="text-align:center; margin-top:2rem;">
+    © <span id="y"></span> CleanPro
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name") || "";
+    const company = params.get("company") || "";
+    const address = params.get("address") || "";
+    const sqMeters = params.get("sqMeters") || "";
+    const propertyType = params.get("propertyType") || "";
+
+    document.getElementById("qDetails").textContent =
+      `${name}${company ? " (" + company + ")" : ""}, ${address} — ${sqMeters} sq.m (${propertyType})`;
+  </script>
+</body>
+</html>

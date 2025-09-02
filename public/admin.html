@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | CleanPro</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    h2 { margin-top: 2rem; }
+    button {
+      padding: 4px 8px;
+      margin: 0 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .approve { background: #4caf50; color: #fff; }
+    .reject { background: #f44336; color: #fff; }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js"></script>
+</head>
+<body>
+  <main class="wrap" style="max-width:1000px; margin:auto; padding:2rem;">
+    <h1>🛠 CleanPro Admin Dashboard</h1>
+
+    <h2>📋 Bookings</h2>
+    <table id="bookingsTable">
+      <thead>
+        <tr>
+          <th>Name</th><th>Service</th><th>Date</th><th>Time</th>
+          <th>Sq.m</th><th>Price</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>📩 Quotations</h2>
+    <table id="quotationsTable">
+      <thead>
+        <tr>
+          <th>Name</th><th>Company</th><th>Address</th><th>Sq.m</th>
+          <th>Property Type</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <footer class="wrap" style="text-align:center; margin-top:2rem;">
+    © <span id="y"></span> CleanPro Admin
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    // ✅ Firebase config (same as before)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAmBuHcfrttFRcSxtXLcI5TI7s_9qLLjp4",
+      authDomain: "cleanpro-site.firebaseapp.com",
+      projectId: "cleanpro-site",
+      storageBucket: "cleanpro-site.firebasestorage.app",
+      messagingSenderId: "5539254765",
+      appId: "1:5539254765:web:44c0236e1986d7b6b797e4",
+      measurementId: "G-H2P7M2Y2DT"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
+
+    // 🔹 Helper: Update status
+    function updateStatus(collection, id, status) {
+      db.collection(collection).doc(id).update({status}).then(() => {
+        alert(`${collection} ${id} marked as ${status}`);
+      });
+    }
+
+    // 🔹 Bookings
+    db.collection("bookings").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+      const tbody = document.querySelector("#bookingsTable tbody");
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const b = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${b.name || ""}</td>
+          <td>${b.service || ""}</td>
+          <td>${b.date || ""}</td>
+          <td>${b.time || ""}</td>
+          <td>${b.sqMeters || ""}</td>
+          <td>$${b.price || ""}</td>
+          <td>${b.status || ""}</td>
+          <td>
+            <button class="approve" onclick="updateStatus('bookings','${doc.id}','approved')">Approve</button>
+            <button class="reject" onclick="updateStatus('bookings','${doc.id}','rejected')">Reject</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+
+    // 🔹 Quotations
+    db.collection("quotations").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+      const tbody = document.querySelector("#quotationsTable tbody");
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const q = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${q.name || ""}</td>
+          <td>${q.company || ""}</td>
+          <td>${q.address || ""}</td>
+          <td>${q.sqMeters || ""}</td>
+          <td>${q.propertyType || ""}</td>
+          <td>${q.status || ""}</td>
+          <td>
+            <button class="approve" onclick="updateStatus('quotations','${doc.id}','approved')">Approve</button>
+            <button class="reject" onclick="updateStatus('quotations','${doc.id}','rejected')">Reject</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>

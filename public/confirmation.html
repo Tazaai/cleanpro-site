@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Booking Confirmed | CleanPro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap card" style="max-width:600px; margin:auto; text-align:center; padding:2rem;">
+    <h2>✅ Your booking is confirmed!</h2>
+    <p id="details" style="font-size:1.1rem; font-weight:500;"></p>
+    <p>
+      Thank you for choosing <strong>CleanPro</strong>.<br>
+      We may contact you by SMS or phone call to confirm details.
+    </p>
+    <br>
+    <a href="index.html" class="btn">← Back to Home</a>
+    <a href="booking.html" class="btn stripe">Book Another Service</a>
+  </main>
+
+  <footer class="wrap" style="text-align:center; margin-top:2rem;">
+    © <span id="y"></span> CleanPro
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    const params = new URLSearchParams(window.location.search);
+    const price = params.get("price");
+    const service = params.get("service");
+    const date = params.get("date");
+    const time = params.get("time");
+    const frequency = params.get("frequency");
+    const discount = params.get("discount");
+
+    let details = "";
+    if (price) details += `💰 Total: $${price} `;
+    if (service) details += `| 🧹 Service: ${service} `;
+    if (date) details += `| 📅 Date: ${date} `;
+    if (time) details += `| ⏰ Time: ${time} `;
+    if (frequency) details += `| 🔁 Frequency: ${frequency} `;
+    if (discount) details += `| 🎁 ${discount}`;
+
+    document.getElementById("details").textContent = details;
+  </script>
+</body>
+</html>
+

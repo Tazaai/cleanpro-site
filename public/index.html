@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clean Departure</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      color: #222;
+    }
+    section {
+      background: #fff;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 0.5rem;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.7rem 1.2rem;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Clean Departure</h1>
+
+  <!-- Booking Form -->
+  <section>
+    <h2>Create a Booking</h2>
+    <form id="bookingForm">
+      <label>Name <input type="text" name="name" required></label>
+      <label>Service
+        <select name="service" required>
+          <option value="Standard Cleaning">Standard Cleaning</option>
+          <option value="Deep Cleaning">Deep Cleaning</option>
+          <option value="Office Cleaning">Office Cleaning</option>
+        </select>
+      </label>
+      <label>Square meters <input type="number" name="sqMeters" required></label>
+      <label>Distance (km) <input type="number" name="distance" required></label>
+      <label>Frequency
+        <select name="frequency">
+          <option value="">One-time</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </label>
+      <button type="submit">Submit Booking</button>
+    </form>
+  </section>
+
+  <!-- Quotation Form -->
+  <section>
+    <h2>Request a Quotation</h2>
+    <form id="quotationForm">
+      <label>Name <input type="text" name="name" required></label>
+      <label>Email <input type="email" name="email" required></label>
+      <label>Details
+        <textarea name="details" rows="3" required></textarea>
+      </label>
+      <button type="submit">Submit Quotation</button>
+    </form>
+  </section>
+
+  <!-- Bookings Table -->
+  <section>
+    <h2>📋 Bookings</h2>
+    <button id="listBookingsBtn">Refresh Bookings</button>
+    <table id="bookingsTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Service</th>
+          <th>SqM</th>
+          <th>Distance</th>
+          <th>Price</th>
+          <th>Discount</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Quotations Table -->
+  <section>
+    <h2>📨 Quotations</h2>
+    <button id="listQuotationsBtn">Refresh Quotations</button>
+    <table id="quotationsTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Details</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script>
+    const API_BASE = "https://us-central1-cleanpro-site.cloudfunctions.net";
+
+    // Helper: render table rows
+    function renderTable(tableId, items, type) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = "";
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        if (type === "bookings") {
+          tr.innerHTML = `
+            <td>${item.name || ""}</td>
+            <td>${item.service || ""}</td>
+            <td>${item.sqMeters || ""}</td>
+            <td>${item.distance || ""}</td>
+            <td>${item.price || ""}</td>
+            <td>${item.discountNote || ""}</td>
+            <td>${item.status || ""}</td>
+            <td>${item.createdAt? new Date(item.createdAt._seconds*1000).toLocaleString() : ""}</td>
+          `;
+        } else if (type === "quotations") {
+          tr.innerHTML = `
+            <td>${item.name || ""}</td>
+            <td>${item.email || ""}</td>
+            <td>${item.details || ""}</td>
+            <td>${item.status || ""}</td>
+            <td>${item.createdAt? new Date(item.createdAt._seconds*1000).toLocaleString() : ""}</td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Booking form
+    document.getElementById("bookingForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const booking = Object.fromEntries(new FormData(e.target).entries());
+      const res = await fetch(`${API_BASE}/createBooking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(booking),
+      });
+      await res.json();
+      document.getElementById("listBookingsBtn").click();
+    });
+
+    // Quotation form
+    document.getElementById("quotationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const quotation = Object.fromEntries(new FormData(e.target).entries());
+      const res = await fetch(`${API_BASE}/createQuotation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quotation),
+      });
+      await res.json();
+      document.getElementById("listQuotationsBtn").click();
+    });
+
+    // List bookings
+    document.getElementById("listBookingsBtn").addEventListener("click", async () => {
+      const res = await fetch(`${API_BASE}/listBookings`);
+      const data = await res.json();
+      renderTable("bookingsTable", data.bookings || [], "bookings");
+    });
+
+    // List quotations (we need a new backend function later!)
+    document.getElementById("listQuotationsBtn").addEventListener("click", async () => {
+      // Right now backend has no listQuotations function → add later
+      alert("⚠️ listQuotations function not implemented yet in backend.");
+    });
+
+    // Auto-load bookings on page open
+    window.addEventListener("load", () => {
+      document.getElementById("listBookingsBtn").click();
+    });
+  </script>
+</body>
+</html>
