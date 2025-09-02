@@ -1,16 +1,34 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { google } = require("googleapis");
 
-admin.initializeApp();
+// 🔑 Load service account from Firebase config
+const serviceAccountBase64 = functions.config().serviceaccount.key;
+const serviceAccount = JSON.parse(
+  Buffer.from(serviceAccountBase64, "base64").toString("utf8")
+);
 
-// ✅ Google Sheets API
-const SHEET_ID = "YOUR_GOOGLE_SHEET_ID"; // replace with your sheet ID
-const auth = new google.auth.GoogleAuth({
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
+const db = admin.firestore();
+
+// ✅ Hello World (for quick test)
+exports.helloWorld = onRequest((req, res) => {
+  res.status(200).json({ ok: true, message: "Hello from Firebase Gen2!" });
 });
+
+// ✅ Google Sheets helper
+const SHEET_ID = "YOUR_GOOGLE_SHEET_ID"; // replace with real ID
 async function updateSheet(range, values) {
+  const auth = new google.auth.GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
   const client = await auth.getClient();
   const sheets = google.sheets({ version: "v4", auth: client });
   await sheets.spreadsheets.values.update({
@@ -21,24 +39,8 @@ async function updateSheet(range, values) {
   });
 }
 
-// ✅ Hello World (Gen2, works on Cloud Run)
-exports.helloWorld = onRequest((req, res) => {
-  res.json({ ok: true, message: "Hello from Firebase Gen2!" });
-});
-
-// ✅ Scheduled Firestore → Sheets Sync
-exports.syncFirestoreToSheets = onSchedule("every 5 minutes", async (event) => {
-  const db = admin.firestore();
-
-  // --- SERVICES ---
-  const servicesSnap = await db.collection("services").get();
-  const services = [["ID", "Base Price", "Distance Fee", "Image URL"]];
-  servicesSnap.forEach((doc) => {
-    const d = doc.data();
-    services.push([doc.id, d.basePrice, d.distanceFee, d.imageUrl || ""]);
-  });
-  await updateSheet("Services!A1", services);
-
+// ✅ Firestore → Sheets Sync (every 5 min)
+exports.syncFirestoreToSheets = onSchedule("every 5 minutes", async () => {
   // --- BOOKINGS ---
   const bookingsSnap = await db.collection("bookings").get();
   const bookings = [["ID", "Name", "Service", "SqM", "Distance", "Price", "Status"]];
@@ -46,11 +48,11 @@ exports.syncFirestoreToSheets = onSchedule("every 5 minutes", async (event) => {
     const d = doc.data();
     bookings.push([
       doc.id,
-      d.name,
-      d.service,
-      d.sqMeters,
-      d.distance,
-      d.price,
+      d.name || "",
+      d.service || "",
+      d.sqMeters || "",
+      d.distance || "",
+      d.price || "",
       d.status || "pending",
     ]);
   });
@@ -63,9 +65,9 @@ exports.syncFirestoreToSheets = onSchedule("every 5 minutes", async (event) => {
     const d = doc.data();
     quotations.push([
       doc.id,
-      d.name,
-      d.email,
-      d.details,
+      d.name || "",
+      d.email || "",
+      d.details || "",
       d.status || "pending",
     ]);
   });
