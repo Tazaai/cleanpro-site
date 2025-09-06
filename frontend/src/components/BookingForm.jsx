@@ -1,151 +1,219 @@
 import { useState, useEffect } from "react";
-import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { app } from "../firebase";
-
-const db = getFirestore(app);
-const ORIGIN = "Van Nuys, Los Angeles, CA"; // 🚐 Center
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function BookingForm() {
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
   const [prices, setPrices] = useState({});
-  const [service, setService] = useState("standard_cleaning");
-  const [sqMeters, setSqMeters] = useState(0);
-  const [address, setAddress] = useState("");
-  const [distance, setDistance] = useState(0);
-  const [calcPrice, setCalcPrice] = useState(0);
+  const [form, setForm] = useState({
+    name: "",
+    service: "standard_cleaning",
+    sqMeters: "",
+    address: "",
+    distance: "",
+    frequency: "one-time",
+    lastCleaningDate: "",
+  });
+  const [calc, setCalc] = useState({
+    basePrice: 0,
+    distanceFee: 0,
+    discount: 0,
+    total: 0,
+    transportDiscount: false,
+  });
 
-  // 🔹 Fetch dynamic prices from Firestore
+  // 🔹 Fetch merged docs from Firestore
   useEffect(() => {
     async function fetchPrices() {
       const services = ["standard_cleaning", "deep_cleaning", "office_cleaning"];
-      const priceData = {};
+      const data = {};
       for (const s of services) {
         const snap = await getDoc(doc(db, "services", s));
-        if (snap.exists()) priceData[s] = snap.data();
+        if (snap.exists()) data[s] = snap.data();
       }
-      setPrices(priceData);
+      setPrices(data);
     }
     fetchPrices();
   }, []);
 
-  // 🔹 Google Maps API distance fetch
-  async function fetchDistance(addr) {
-    if (!addr) return;
-    try {
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
-        ORIGIN
-      )}&destinations=${encodeURIComponent(addr)}&key=${
-        import.meta.env.VITE_GOOGLE_MAPS_KEY
-      }`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.rows[0].elements[0].status === "OK") {
-        const km = data.rows[0].elements[0].distance.value / 1000;
-        setDistance(km);
-      }
-    } catch (err) {
-      console.error("Distance API error", err);
-    }
-  }
-
-  // 🔹 Live price calculation
+  // 🔹 Live calculation
   useEffect(() => {
-    if (!prices[service]) return;
-    const base = prices[service].basePrice || 0;
-    const perKm = prices[service].distanceFee || 0;
-    const total = sqMeters * base + distance * perKm;
-    setCalcPrice(total.toFixed(2));
-  }, [sqMeters, distance, service, prices]);
+    if (!form.sqMeters || !prices[form.service]) return;
 
-  // 🔹 Handle booking submit
-  async function handleSubmit(e) {
+    const { basePrice, distanceFee, weeklyDiscount, monthlyDiscount } =
+      prices[form.service];
+
+    let total =
+      form.sqMeters * basePrice + (Number(form.distance) || 0) * distanceFee;
+    let discount = 0;
+
+    if (form.frequency === "weekly") discount = weeklyDiscount || 0;
+    if (form.frequency === "monthly") discount = monthlyDiscount || 0;
+
+    total = total - total * discount;
+
+    const transportDiscount = (Number(form.distance) || 0) < 40;
+
+    setCalc({
+      basePrice,
+      distanceFee,
+      discount: discount * 100,
+      total: total.toFixed(2),
+      transportDiscount,
+    });
+  }, [form, prices]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const formData = Object.fromEntries(new FormData(e.target).entries());
-    const booking = {
-      name: formData.name,
-      service,
-      sqMeters,
-      address,
-      distance: Number(distance.toFixed(2)),
-      price: Number(calcPrice),
-      status: "pending",
-      createdAt: serverTimestamp(),
-    };
+    setStatus(null);
 
     try {
-      await addDoc(collection(db, "bookings"), booking);
-      alert("✅ Booking saved!");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/createBooking`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
+
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      setStatus({ success: true, data });
+      setForm({
+        name: "",
+        service: "standard_cleaning",
+        sqMeters: "",
+        address: "",
+        distance: "",
+        frequency: "one-time",
+        lastCleaningDate: "",
+      });
     } catch (err) {
-      console.error("Error saving booking:", err);
-      alert("❌ Failed to save booking.");
+      console.error(err);
+      setStatus({ success: false, message: "Failed to create booking." });
     }
 
     setLoading(false);
-    e.target.reset();
-    setAddress("");
-    setSqMeters(0);
-    setDistance(0);
-    setCalcPrice(0);
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="mdl-grid">
+      <h3 className="mdl-cell mdl-cell--12-col">Create a Booking</h3>
+
+      {/* Name */}
       <div className="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--12-col">
-        <input className="mdl-textfield__input" type="text" name="name" required />
+        <input
+          className="mdl-textfield__input"
+          type="text"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
         <label className="mdl-textfield__label">Name</label>
       </div>
 
+      {/* Service */}
       <div className="mdl-cell mdl-cell--12-col">
         <select
           name="service"
-          value={service}
-          onChange={(e) => setService(e.target.value)}
+          value={form.service}
+          onChange={handleChange}
           className="mdl-textfield__input"
           required
         >
-          <option value="standard_cleaning">Standard Cleaning</option>
-          <option value="deep_cleaning">Deep Cleaning</option>
-          <option value="office_cleaning">Office Cleaning</option>
+          <option value="standard_cleaning">
+            {prices.standard_cleaning?.title || "Standard Cleaning"}
+          </option>
+          <option value="deep_cleaning">
+            {prices.deep_cleaning?.title || "Deep Cleaning"}
+          </option>
+          <option value="office_cleaning">
+            {prices.office_cleaning?.title || "Office Cleaning"}
+          </option>
         </select>
       </div>
 
+      {/* SqM */}
       <div className="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--6-col">
         <input
           className="mdl-textfield__input"
           type="number"
           name="sqMeters"
-          value={sqMeters}
-          onChange={(e) => setSqMeters(Number(e.target.value))}
+          value={form.sqMeters}
+          onChange={handleChange}
           required
         />
         <label className="mdl-textfield__label">Square meters</label>
       </div>
 
+      {/* Distance */}
       <div className="mdl-textfield mdl-js-textfield mdl-cell mdl-cell--6-col">
         <input
           className="mdl-textfield__input"
-          type="text"
-          name="address"
-          value={address}
-          onChange={(e) => {
-            setAddress(e.target.value);
-            fetchDistance(e.target.value);
-          }}
-          required
+          type="number"
+          name="distance"
+          value={form.distance}
+          onChange={handleChange}
         />
-        <label className="mdl-textfield__label">Customer Address</label>
+        <label className="mdl-textfield__label">Distance (miles)</label>
       </div>
 
-      <div className="mdl-cell mdl-cell--12-col">
-        <strong>📍 Distance: {distance.toFixed(2)} km</strong>
+      {/* Frequency */}
+      <div className="mdl-cell mdl-cell--6-col">
+        <select
+          name="frequency"
+          value={form.frequency}
+          onChange={handleChange}
+          className="mdl-textfield__input"
+        >
+          <option value="one-time">One-time</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
       </div>
 
-      <div className="mdl-cell mdl-cell--12-col">
-        <strong>💰 Estimated Price: ${calcPrice}</strong>
+      {/* Last Cleaning Date */}
+      <div className="mdl-cell mdl-cell--6-col">
+        <input
+          className="mdl-textfield__input"
+          type="date"
+          name="lastCleaningDate"
+          value={form.lastCleaningDate}
+          onChange={handleChange}
+        />
+        <label className="mdl-textfield__label">Date of Last Cleaning</label>
       </div>
 
+      {/* Booking Summary */}
+      {form.sqMeters && prices[form.service] && (
+        <div className="mdl-cell mdl-cell--12-col">
+          <h5>Booking Summary</h5>
+          <p>🧹 Service: {prices[form.service]?.title}</p>
+          <p>📐 Area: {form.sqMeters} m²</p>
+          <p>🚚 Distance: {form.distance || 0} miles</p>
+          {calc.transportDiscount && (
+            <p style={{ color: "green" }}>🚐 Free transport discount applied!</p>
+          )}
+          <p>💵 Price per m²: ${calc.basePrice}</p>
+          <p>🚚 Price per mile: ${calc.distanceFee}</p>
+          <p>📊 Discount: {calc.discount}%</p>
+          <p>
+            <strong>💰 Total Price: ${calc.total}</strong>
+          </p>
+          <p>🗓️ Last Cleaning: {form.lastCleaningDate || "Not provided"}</p>
+        </div>
+      )}
+
+      {/* Submit */}
       <div className="mdl-cell mdl-cell--12-col">
         <button
           type="submit"
@@ -155,6 +223,17 @@ export default function BookingForm() {
           {loading ? "Submitting..." : "Submit Booking"}
         </button>
       </div>
+
+      {/* Status messages */}
+      {status?.success && (
+        <p style={{ color: "green" }}>
+          ✅ Thanks for your booking! We’ll contact you by phone or email for
+          confirmation. (Booking ID: {status.data.id})
+        </p>
+      )}
+      {status?.success === false && (
+        <p style={{ color: "red" }}>❌ {status.message}</p>
+      )}
     </form>
   );
 }
