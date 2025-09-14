@@ -1,0 +1,16 @@
+# Ignore dependencies and build cache
+node_modules
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Ignore build output (will be regenerated inside container)
+dist
+build
+
+# Editor & system files
+.DS_Store
+*.swp
+*.swo
+.vscode
+.idea
