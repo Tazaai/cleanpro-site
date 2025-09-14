@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional global tweaks */
+body {
+  @apply bg-gray-50 font-sans text-gray-800;
+}
+
+section {
+  @apply bg-white rounded-lg shadow p-6 mb-6;
+}
+
+input,
+select,
+textarea {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md text-base mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+button {
+  @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:bg-gray-400;
+}
+
+p.success {
+  @apply text-green-600 font-medium;
+}
+
+p.error {
+  @apply text-red-600 font-medium;
+}
