@@ -16,7 +16,7 @@ if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
   exit 1
 fi
 
-gcloud builds submit ./backend --tag $IMAGE
+gcloud builds submit ./backend --tag gcr.io/cleanpro-site/cleanpro-backend --project=cleanpro-site
 
 gcloud run deploy $SERVICE_NAME \
   --image $IMAGE \
