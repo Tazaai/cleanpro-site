@@ -1,0 +1,3 @@
+diagnostics:
+  entrypoint: ./review_report.sh
+
