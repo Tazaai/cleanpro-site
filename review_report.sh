@@ -1,4 +1,5 @@
 #!/bin/bash
+exec > >(tee agent.md) 2>&1
 # ~/cleanpro-site/review_report.sh
 # Clean Departure Diagnostic Report (Read-Only)
 # 🚫 GPT / Codox: Run diagnostics only. Do NOT edit, add, or remove code without explicit permission.
