@@ -1,4 +1,14 @@
+ HEAD
 node_modules
 node_modules
 node_modules
+node_modules/
+dist/
+*.bak
+0fc9157f02aa813ecd25f355298d5c20ffa0df88
 backend/serviceAccountKey.json
+node_modules
+.env
+*.env
+serviceAccountKey.json
+firebase_config.json
