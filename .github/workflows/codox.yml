@@ -12,10 +12,11 @@ jobs:
 
       - name: Run CleanPro diagnostics & deploy
         run: |
-          cd ${{ github.workspace }}
+          cd $GITHUB_WORKSPACE
           chmod +x ./review_report.sh
           ./review_report.sh
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
           PROJECT_DIR: ${{ github.workspace }}
+          CLOUDSDK_CORE_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
