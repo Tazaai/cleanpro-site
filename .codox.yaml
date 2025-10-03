@@ -1,3 +1,4 @@
 diagnostics:
   entrypoint: ./review_report.sh
-
+  env:
+    GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
