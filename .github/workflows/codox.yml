@@ -1,7 +1,7 @@
 name: Codox Diagnostics
 
 on:
-  workflow_dispatch:   # manual trigger in Codox
+  workflow_dispatch:   # Manual trigger only
 
 jobs:
   diagnostics:
@@ -9,10 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run CleanPro diagnostics & deploy
+      - name: Run CleanPro full diagnostics + deploy
         run: |
           chmod +x ./review_report.sh
           ./review_report.sh
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          CLOUDSDK_CORE_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
