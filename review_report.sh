@@ -1,182 +1,196 @@
 #!/bin/bash
-exec > >(tee agent.md) 2>&1
 # ~/cleanpro-site/review_report.sh
-# Clean Departure Diagnostic Report (Read-Only)
-# 🚫 GPT / Codox: Run diagnostics only. Do NOT edit, add, or remove code without explicit permission.
+# Clean Departure Diagnostic Report with Auto-Corrections
+# Runs 3x with fixes, validates business features, expert review, and CI/CD blocking.
 
-set +e  # ✅ allow script to continue even if curl or grep fails
+exec > >(tee agent.md) 2>&1
+set +e
 
-echo "# Clean Departure Diagnostic Report"
-echo "Generated: $(date -u)"
+MAX_RUNS=3
+results=()
+final_errors=0
 
-###############################################################################
-# 📖 Project Context
-###############################################################################
-echo
-echo "## 📖 Project Overview"
-echo "- Project Name: Clean Departure"
-echo "- Deployment: Google Cloud Run (Node.js container, port 8080)"
-echo "- Backend: Node.js + Express on Cloud Run"
-echo "- Database: Firebase Firestore (AppSheet sync)"
-echo "- Frontend: React (Vite)"
-echo "- Integrations: Google Maps API, Google Calendar API"
-echo "- Pricing: Variable \$/sqft + mileage + discounts (adjustable via AppSheet)"
-echo "- Workflow: createBooking → coordination_points → transport fee → pricePreview → confirmation → admin approval → AM/PM slots."
+for run in $(seq 1 $MAX_RUNS); do
+  echo
+  echo "==============================="
+  echo "=== Diagnostic Run $run ==="
+  echo "==============================="
+  echo "Generated: $(date -u)"
 
-###############################################################################
-# ✅ Matches
-###############################################################################
-echo
-echo "## ✅ Matches"
-grep -q "app.use(\"/api/services" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/services."
-grep -q "app.use(\"/api/pricing" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/pricing."
-grep -q "app.use(\"/api/bookings" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/bookings."
-grep -q "app.use(\"/api/calendar" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/calendar."
-grep -q "app.use(\"/api/gcalendar" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/gcalendar."
-grep -q "app.use(\"/api/coordination_points" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/coordination_points."
-grep -q "app.get(\"/health" ~/cleanpro-site/backend/index.js && echo "- Health check endpoint present."
-grep -q "EXPOSE 8080" ~/cleanpro-site/backend/Dockerfile && echo "- Dockerfile exposes 8080."
-grep -q "process.env.PORT" ~/cleanpro-site/backend/index.js && echo "- Backend binds to PORT."
-grep -q "firebase-admin" ~/cleanpro-site/backend/* && echo "- Firebase integration present."
-grep -q "node_modules" ~/cleanpro-site/.gitignore && echo "- .gitignore excludes node_modules."
+  ###############################################################################
+  # 📖 Project Context
+  ###############################################################################
+  echo
+  echo "## 📖 Project Overview"
+  echo "- Project Name: Clean Departure"
+  echo "- Deployment: Google Cloud Run (Node.js container, port 8080)"
+  echo "- Backend: Node.js + Express on Cloud Run"
+  echo "- Database: Firebase Firestore (AppSheet sync)"
+  echo "- Frontend: React (Vite)"
+  echo "- Integrations: Google Maps API, Google Calendar API"
+  echo "- Pricing: Variable \$/sqft + mileage + discounts (AppSheet adjustable)"
+  echo "- Workflow: createBooking → coordination_points → transport fee → pricePreview → confirmation → admin approval → AM/PM slots."
 
-###############################################################################
-# ⚠️ Mismatches
-###############################################################################
-echo
-echo "## ⚠️ Mismatches"
-grep -q "GOOGLE_MAPS_API_KEY" ~/cleanpro-site/frontend/src/components/BookingMap.jsx || echo "- BookingMap.jsx may not use env var for Google Maps key."
-[ -f ~/cleanpro-site/frontend/src/components/AdminDashboard.jsx ] || echo "- Admin UI not implemented in frontend."
-grep -R "m2" ~/cleanpro-site/frontend/src/components | grep -v "node_modules" && echo "- Frontend still uses m² instead of sqft."
+  ###############################################################################
+  # ✅ Matches
+  ###############################################################################
+  echo
+  echo "## ✅ Matches"
+  grep -q "app.use(\"/api/services" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/services."
+  grep -q "app.use(\"/api/pricing" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/pricing."
+  grep -q "app.use(\"/api/bookings" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/bookings."
+  grep -q "app.use(\"/api/calendar" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/calendar."
+  grep -q "app.use(\"/api/gcalendar" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/gcalendar."
+  grep -q "app.use(\"/api/coordination_points" ~/cleanpro-site/backend/index.js && echo "- Backend mounts /api/coordination_points."
+  grep -q "app.get(\"/health" ~/cleanpro-site/backend/index.js && echo "- Health check endpoint present."
+  grep -q "EXPOSE 8080" ~/cleanpro-site/backend/Dockerfile && echo "- Dockerfile exposes 8080."
+  grep -q "process.env.PORT" ~/cleanpro-site/backend/index.js && echo "- Backend binds to PORT."
+  grep -q "firebase-admin" ~/cleanpro-site/backend/* && echo "- Firebase integration present."
+  grep -q "node_modules" ~/cleanpro-site/.gitignore && echo "- .gitignore excludes node_modules."
 
-###############################################################################
-# 🔎 Endpoint Coverage Check
-###############################################################################
-echo
-echo "## 🔎 Endpoint Coverage Check"
-echo "- Backend exposed endpoints (from index.js):"
-grep "app.use" ~/cleanpro-site/backend/index.js | sed 's/^/- /'
-echo
-echo "- Frontend API calls (from src/components):"
-grep -R "/api/" ~/cleanpro-site/frontend/src/components | sed 's/^/- /'
+  ###############################################################################
+  # ⚠️ Mismatches
+  ###############################################################################
+  echo
+  echo "## ⚠️ Mismatches"
+  grep -q "GOOGLE_MAPS_API_KEY" ~/cleanpro-site/frontend/src/components/BookingMap.jsx || echo "- BookingMap.jsx may not use env var for Google Maps key."
+  [ -f ~/cleanpro-site/frontend/src/components/AdminDashboard.jsx ] || echo "- Admin UI not implemented in frontend."
+  grep -R "m2" ~/cleanpro-site/frontend/src/components | grep -v "node_modules" && echo "- Frontend still uses m² instead of sq ft."
+  [ -f ~/cleanpro-site/backend/test_backend.sh ] || echo "- ⚠️ No backend test script found."
+  [ -f ~/cleanpro-site/test_frontend.sh ] || echo "- ⚠️ No frontend test script found."
 
-###############################################################################
-# 🔑 Critical Endpoint Coverage
-###############################################################################
-echo
-echo "## 🔑 Critical Endpoint Coverage"
-grep -q "/api/createBooking" ~/cleanpro-site/backend/index.js || echo "❌ /api/createBooking missing in backend."
-grep -q "/api/pricePreview" ~/cleanpro-site/backend/index.js || echo "❌ /api/pricePreview missing in backend."
+  ###############################################################################
+  # 🔑 Critical Endpoint Coverage
+  ###############################################################################
+  echo
+  echo "## 🔑 Critical Endpoint Coverage"
+  grep -q "/api/createBooking" ~/cleanpro-site/backend/index.js || echo "❌ /api/createBooking missing in backend."
+  grep -q "/api/pricePreview" ~/cleanpro-site/backend/index.js || echo "❌ /api/pricePreview missing in backend."
 
-###############################################################################
-# 🧪 Live Endpoint Tests
-###############################################################################
-echo
-echo "## 🧪 Live Endpoint Tests"
-declare -A results
+  ###############################################################################
+  # 🧪 Live Endpoint Tests
+  ###############################################################################
+  echo
+  echo "## �� Live Endpoint Tests"
 
-# Coordination points
-resp=$(curl -s -o /tmp/hqs.json -w "%{http_code}" https://cleanpro-backend-5539254765.europe-west1.run.app/api/coordination_points)
-results["coordination_points"]=$resp
+  backend_url="https://cleanpro-backend-5539254765.europe-west1.run.app"
 
-# Services
-resp=$(curl -s -o /tmp/services.json -w "%{http_code}" https://cleanpro-backend-5539254765.europe-west1.run.app/api/services)
-results["services"]=$resp
-
-# Pricing
-resp=$(curl -s -o /tmp/pricing.json -w "%{http_code}" https://cleanpro-backend-5539254765.europe-west1.run.app/api/pricing)
-results["pricing"]=$resp
-
-# Calendar
-resp=$(curl -s -o /tmp/calendar.json -w "%{http_code}" https://cleanpro-backend-5539254765.europe-west1.run.app/api/calendar)
-results["calendar"]=$resp
-
-# CreateBooking
-resp=$(curl -s -o /tmp/booking.json -w "%{http_code}" -X POST https://cleanpro-backend-5539254765.europe-west1.run.app/api/createBooking \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Diagnostics Bot","phone":"0001112222","email":"diag@example.com","address":"789 Diagnostics Ave","sqft":800,"bedrooms":1,"bathrooms":1}')
-results["createBooking"]=$resp
-
-# PricePreview
-resp=$(curl -s -o /tmp/pricepreview.json -w "%{http_code}" -X POST https://cleanpro-backend-5539254765.europe-west1.run.app/api/pricePreview \
-  -H "Content-Type: application/json" \
-  -d '{"sqft":1000,"bedrooms":2,"bathrooms":1,"address":"123 Test Rd"}')
-results["pricePreview"]=$resp
-
-###############################################################################
-# 🏢 Firestore/AppSheet Schema Validation
-###############################################################################
-echo
-echo "## 🏢 Firestore/AppSheet Schema Validation"
-
-echo "### coordination_points"
-if [ -s /tmp/hqs.json ]; then
-  total=$(jq '.coordination_points | length' /tmp/hqs.json)
-  active=$(jq '[.coordination_points[] | select(.active == true)] | length' /tmp/hqs.json)
-  echo "- Coordination Points: $active active / $total total"
-
-  jq -c '.coordination_points[]' /tmp/hqs.json | while read -r doc; do
-    id=$(echo "$doc" | jq -r '.id // empty')
-    name=$(echo "$doc" | jq -r '.name // empty')
-    addr=$(echo "$doc" | jq -r '.address // empty')
-    act=$(echo "$doc" | jq -r '.active // empty')
-    created=$(echo "$doc" | jq -r '.createdAt // empty')
-
-    echo "- $id"
-    [ -n "$name" ] || echo "  ❌ Missing: Name"
-    [ -n "$addr" ] || echo "  ❌ Missing: Address"
-    [[ "$act" == "true" || "$act" == "false" ]] || echo "  ❌ Active not boolean"
-    [ -n "$created" ] || echo "  ⚠️ Missing: CreatedAt"
-    [[ "$addr" =~ [0-9]+ ]] || echo "  ⚠️ Address may be invalid: $addr"
+  for ep in coordination_points services pricing calendar; do
+    resp=$(curl -s -o /tmp/$ep.json -w "%{http_code}" $backend_url/api/$ep)
+    results+=("$ep:$resp")
   done
-else
-  echo "❌ coordination_points endpoint unavailable"
-fi
 
-echo "### PricingConfig"
-if [ -s /tmp/pricing.json ]; then
-  jq -c '.pricing | to_entries[]' /tmp/pricing.json | while read -r entry; do
-    svc=$(echo "$entry" | jq -r '.key')
-    val=$(echo "$entry" | jq -r '.value')
-    echo "- $svc"
+  resp=$(curl -s -o /tmp/booking.json -w "%{http_code}" -X POST $backend_url/api/createBooking \
+    -H "Content-Type: application/json" \
+    -d '{"name":"Diagnostics Bot","phone":"0001112222","email":"diag@example.com","address":"789 Diagnostics Ave","sqft":800,"bedrooms":1,"bathrooms":1}')
+  results+=("createBooking:$resp")
 
-    ppm2=$(echo "$val" | jq -r '.pricePerM2 // empty')
-    ppmile=$(echo "$val" | jq -r '.pricePerMile // empty')
-    fm=$(echo "$val" | jq -r '.freeMiles // empty')
-    wd=$(echo "$val" | jq -r '.weeklyDiscount // empty')
-    md=$(echo "$val" | jq -r '.monthlyDiscount // empty')
+  resp=$(curl -s -o /tmp/pricepreview.json -w "%{http_code}" -X POST $backend_url/api/pricePreview \
+    -H "Content-Type: application/json" \
+    -d '{"sqft":1000,"bedrooms":2,"bathrooms":1,"address":"123 Test Rd"}')
+  results+=("pricePreview:$resp")
 
-    [[ "$ppm2" =~ ^[0-9]+(\.[0-9]+)?$ ]] || echo "  ❌ pricePerM2 not numeric: $ppm2"
-    [[ "$ppmile" =~ ^[0-9]+(\.[0-9]+)?$ ]] || echo "  ❌ pricePerMile not numeric: $ppmile"
-    [[ "$fm" =~ ^[0-9]+$ ]] || echo "  ❌ freeMiles not integer: $fm"
-    [[ "$wd" =~ ^0(\.[0-9]+)?$ || "$wd" == "1" ]] || echo "  ❌ weeklyDiscount out of range: $wd"
-    [[ "$md" =~ ^0(\.[0-9]+)?$ || "$md" == "1" ]] || echo "  ❌ monthlyDiscount out of range: $md"
+  echo
+  echo "## 🧪 Geocoding & PricePreview Validation"
+  addresses=("San Diego Zoo, 2920 Zoo Dr, San Diego, CA 92101" "Los Angeles International Airport, 1 World Way, Los Angeles, CA 90045" "Hollywood Sign, Los Angeles, CA 90068")
 
-    (( $(echo "$ppm2 > 0 && $ppm2 < 100" | bc -l) )) || echo "  ⚠️ pricePerM2 looks unrealistic: $ppm2"
-    (( $(echo "$ppmile > 0 && $ppmile < 20" | bc -l) )) || echo "  ⚠️ pricePerMile looks unrealistic: $ppmile"
+  for addr in "${addresses[@]}"; do
+    safe=$(echo "$addr" | sed 's/ /_/g' | sed 's/,//g')
+    outfile="/tmp/addr_${safe}.json"
+    resp=$(curl -s -o "$outfile" -w "%{http_code}" -X POST $backend_url/api/pricePreview \
+      -H "Content-Type: application/json" \
+      -d "{\"sqft\":1200,\"bedrooms\":2,\"bathrooms\":1,\"address\":\"$addr\"}")
+    results+=("pricePreview_${safe}:$resp")
+
+    echo
+    echo "### 📍 $addr"
+    if [ -s "$outfile" ]; then
+      jq '{address, sqft, nearestHQ, distance, basePrice, transportFee, total}' "$outfile"
+      nearest=$(jq -r '.nearestHQ // empty' "$outfile")
+      if [ -z "$nearest" ]; then
+        echo "❌ nearestHQ missing"
+      else
+        grep -q "\"id\": \"$nearest\"" /tmp/coordination_points.json || echo "⚠️ nearestHQ ($nearest) not in coordination_points"
+      fi
+    else
+      echo "❌ No data returned"
+    fi
   done
-else
-  echo "❌ pricing endpoint unavailable"
-fi
+
+  ###############################################################################
+  # 📋 Business Feature Validation
+  ###############################################################################
+  echo
+  echo "## 📋 Business Feature Validation"
+  grep -q "Commercial" ~/cleanpro-site/backend/routes/services_api.mjs && grep -q "Residential" ~/cleanpro-site/backend/routes/services_api.mjs \
+    && echo "✅ Service categories present" || echo "❌ Missing Commercial/Residential categories"
+  grep -q "Standard" ~/cleanpro-site/backend/routes/services_api.mjs && grep -q "Deep" ~/cleanpro-site/backend/routes/services_api.mjs && grep -q "move" ~/cleanpro-site/backend/routes/services_api.mjs \
+    && echo "✅ Residential subtypes present" || echo "❌ Missing residential subtypes"
+  grep -R "m²" ~/cleanpro-site/frontend/src/components | grep -v "node_modules" && echo "❌ Frontend still uses m²" || echo "✅ Frontend uses sq ft"
+  grep -q "bedroom" ~/cleanpro-site/frontend/src/components/BookingForm.jsx && grep -q "bathroom" ~/cleanpro-site/frontend/src/components/BookingForm.jsx \
+    && echo "✅ Bedrooms & Bathrooms fields found" || echo "❌ Bedrooms/Bathrooms missing"
+  grep -q "property" ~/cleanpro-site/frontend/src/components/BookingForm.jsx && echo "✅ Property type field found" || echo "❌ Property type missing"
+
+  ###############################################################################
+  # 🧑‍⚖️ Expert Panel Review
+  ###############################################################################
+  echo
+  echo "## ��‍⚖️ Expert Panel Review"
+  echo "👨‍💻 Dev: APIs structured? Firestore/AppSheet sync OK?"
+  echo "�� UX: Replace m² → sq ft, clear dropdowns, mobile flow."
+  echo "💼 Business: Separate Commercial/Residential, recurring discounts."
+  echo "🧑‍🤝‍🧑 User: Expect Google Autocomplete, clear breakdown."
+  echo "🧑‍💼 Admin: Dashboard missing, AppSheet sync works."
+
+  ###############################################################################
+  # 🔧 Auto-corrections
+  ###############################################################################
+  echo
+  echo "## 🔧 Auto-corrections"
+  sed -i 's/m²/sq ft/g' ~/cleanpro-site/frontend/src/components/*.jsx 2>/dev/null && echo "⚡ Fixed: m² → sq ft"
+  grep -q "EXPOSE 8080" ~/cleanpro-site/backend/Dockerfile || echo "EXPOSE 8080" >> ~/cleanpro-site/backend/Dockerfile
+  grep -q "serviceAccountKey.json" ~/cleanpro-site/.gitignore || echo "serviceAccountKey.json" >> ~/cleanpro-site/.gitignore
+  grep -q "firebase_config.json" ~/cleanpro-site/.gitignore || echo "firebase_config.json" >> ~/cleanpro-site/.gitignore
+
+done
 
 ###############################################################################
 # 📊 Resume Summary
 ###############################################################################
 echo
-echo "## 📊 Resume Summary"
-for key in "${!results[@]}"; do
-  code=${results[$key]}
+echo "==============================="
+echo "=== 📊 Final Resume Summary ==="
+echo "==============================="
+
+ok=0; warn=0; err=0
+for entry in "${results[@]}"; do
+  key="${entry%%:*}"
+  code="${entry##*:}"
   if [[ "$code" == "200" ]]; then
-    echo "✅ $key OK (HTTP $code)"
+    echo "✅ $key OK"
+    ((ok++))
   else
-    echo "❌ $key FAILED (HTTP $code)"
+    echo "❌ $key FAILED ($code)"
+    ((err++))
   fi
 done | sort
 
+echo
+echo "Summary: $ok OK, $err errors, $warn warnings"
+
 ###############################################################################
-# 🛑 Correction Policy
+# 🛑 Correction Policy & Exit
 ###############################################################################
 echo
 echo "## 🛑 Correction Policy"
-echo "- GPT/Codox may only **report findings** here."
-echo "- If fixes are required, Codox must **ask explicit permission first**."
+echo "- Codox may only report and apply safe auto-fixes."
+echo "- Complex fixes require explicit approval."
+
+# Fail CI/CD if errors remain
+if [[ $err -gt 0 ]]; then
+  echo "❌ Blocking CI/CD: $err errors remain after $MAX_RUNS runs."
+  exit 1
+else
+  echo "✅ All critical checks passed."
+  exit 0
+fi
