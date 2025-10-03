@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 
 import calendarApi from "./routes/calendar_api.mjs";
+import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
 import mapsApi from "./routes/maps.js";
 import servicesApi from "./routes/services_api.mjs";
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/calendar", calendarApi);
+app.use("/api/coordination_points", coordinationPointsRouter);
 app.use("/api/config", configApi);
 app.use("/api/maps", mapsApi);
 app.use("/api/services", servicesApi);
