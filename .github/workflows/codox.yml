@@ -1,0 +1,16 @@
+name: Codox Diagnostics
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run CleanPro diagnostics & deploy
+        run: ./review_report.sh
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
