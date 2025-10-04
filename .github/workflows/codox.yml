@@ -11,22 +11,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ✅ Authenticate to Google Cloud BEFORE any gcloud usage
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      # ✅ Set up gcloud CLI
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
-      - name: 🔐 Authenticate gcloud
+      # ✅ Verify gcloud authentication and project
+      - name: 🔎 Verify gcloud authentication
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > $HOME/gcloud-key.json
-          gcloud auth activate-service-account --key-file=$HOME/gcloud-key.json
+          gcloud auth list
           gcloud config set project ${{ secrets.GCP_PROJECT }}
           gcloud config set run/region europe-west1
-          gcloud auth list
-          gcloud config list project
+          gcloud info
 
+      # ✅ Run diagnostic checks
       - name: 🧠 Run CleanPro Diagnostics
         run: |
           chmod +x ./review_report.sh
@@ -35,14 +41,18 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
+      # ✅ Deploy backend and frontend sequentially
       - name: 🚀 Deploy Backend & Frontend
         run: |
           chmod +x ./deploy_backend.sh
           chmod +x ./deploy_frontend.sh
+
           echo "▶️ Deploying Backend..."
-          bash ./deploy_backend.sh || { echo "❌ Backend deploy failed"; exit 1; }
+          ./deploy_backend.sh || { echo "❌ Backend deploy failed"; exit 1; }
+
           echo "▶️ Deploying Frontend..."
-          bash ./deploy_frontend.sh || { echo "❌ Frontend deploy failed"; exit 1; }
+          ./deploy_frontend.sh || { echo "❌ Frontend deploy failed"; exit 1; }
+
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
