@@ -1,4 +1,4 @@
-name: Codox Diagnostics
+name: Codox Diagnostics & Self-Healing
 
 on:
   workflow_dispatch:
@@ -14,25 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ Google Cloud authentication
+      # ✅ Authenticate with Google Cloud
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # ✅ Set up gcloud
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
 
-      - name: 🔎 Verify gcloud authentication
+      # ✅ Verify authentication
+      - name: 🔎 Verify gcloud configuration
         run: |
           gcloud auth list
           gcloud config set project ${{ secrets.GCP_PROJECT }}
           gcloud config set run/region europe-west1
           gcloud info
 
-      # ✅ Run diagnostic report
+      # ✅ Run full diagnostics
       - name: 📋 Run diagnostic script
         id: diagnostics
         run: |
@@ -42,38 +44,38 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
-      # ✅ Collect logs (non-blocking if no permission)
+      # ✅ Collect logs safely
       - name: 🧠 Collect logs and reference
         if: always()
         continue-on-error: true
         run: |
           mkdir -p codox_logs
-          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt || echo "⚠️ Unable to fetch Cloud Run logs"
-          cp agent.md codox_logs/review_reference.txt || echo "⚠️ No agent.md found"
-          echo "🧠 Logs prepared for Codox GPT analysis."
+          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt || echo "⚠️ No permission or no logs available"
+          cp agent.md codox_logs/review_reference.txt || echo "⚠️ Missing agent.md"
+          echo "🧠 Logs ready for Codox GPT analysis."
 
-      # ✅ Smart Codox Auto-Correction with retry
+      # ✅ Smart self-healing Codox (conditional + retry)
       - name: 🤖 Codox Auto-Correction & Redeploy (smart retry)
         if: failure() || steps.diagnostics.outputs.errors != '0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔍 Errors detected (${{ steps.diagnostics.outputs.errors }}). Running Codox self-healing..."
+          echo "🔍 Errors detected (${{ steps.diagnostics.outputs.errors }}). Starting Codox self-healing..."
           MAX_RETRIES=2
           for i in $(seq 1 $MAX_RETRIES); do
-            echo "🧠 Attempt $i of $MAX_RETRIES"
+            echo "🧠 Codox attempt $i of $MAX_RETRIES"
             npx codox fix --auto --commit --push \
               --project cleanpro-site \
               --branch main \
               --use-github \
               --max-fixes 5 \
               --redeploy "bash ./deploy_backend.sh && bash ./deploy_frontend.sh" && break
-            echo "⚠️ Codox fix failed (attempt $i)"
+            echo "⚠️ Codox fix attempt $i failed, retrying..."
             sleep 10
           done
-          echo "✅ Codox process complete."
+          echo "✅ Codox self-healing process completed."
 
-      # ✅ Push diagnostic summary to reports branch
+      # ✅ Push report to `reports` branch
       - name: 📊 Push diagnostic summary to reports branch
         if: always()
         env:
@@ -87,3 +89,17 @@ jobs:
           git add reports/
           git commit -m "Add diagnostic report $(date +'%Y-%m-%d %H:%M')" || echo "No new changes"
           git push origin reports --force
+
+      # ✅ Post-deploy self-verification
+      - name: 🔄 Verify backend after redeploy
+        if: always()
+        run: |
+          echo "🩺 Running post-deploy health check..."
+          BACKEND_URL="https://cleanpro-backend-5539254765.europe-west1.run.app"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Backend responded 200 OK – system stable."
+          else
+            echo "❌ Backend returned $STATUS – deployment verification failed."
+            exit 1
+          fi
