@@ -39,5 +39,5 @@ app.use((err, req, res, next) => {
 // ✅ Start server (Cloud Run compatible)
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server ready — listening on 0.0.0.0:${PORT}`);
+  console.log(`✅ CleanPro backend running on port ${PORT}`);
 });
