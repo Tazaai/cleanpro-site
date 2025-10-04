@@ -1,13 +1,22 @@
 #!/bin/bash
 # ~/cleanpro-site/review_report.sh
 # Clean Departure Diagnostic, Auto-Correction, and Reporting Script
-# Runs 3x with fixes, validates endpoints/features, but does NOT deploy.
+# Runs 3x with fixes, validates endpoints/features, integrates with Codox self-healing.
 
 exec > >(tee agent.md) 2>&1
 set +e
 
 MAX_RUNS=3
 results=()
+
+###############################################################################
+# 🧩 Safety: prevent endless Codox re-edits
+###############################################################################
+if [ -f ".codox_lock" ]; then
+  echo "🛡️ Codox lock present — skipping redundant run"
+  exit 0
+fi
+echo "run" > .codox_lock
 
 ###############################################################################
 # 🔑 Check environment secrets
@@ -31,7 +40,7 @@ for run in $(seq 1 $MAX_RUNS); do
   echo "Generated: $(date -u)"
 
   echo
-  echo "## 📖 Project Overview"
+  echo "## �� Project Overview"
   echo "- Project: Clean Departure"
   echo "- Stack: Node.js backend (Cloud Run) + React frontend"
   echo "- Database: Firestore (AppSheet sync)"
@@ -125,9 +134,23 @@ done | sort
 echo
 echo "Summary: $ok OK, $err errors"
 
+###############################################################################
+# 📤 Save for Codox Analysis
+###############################################################################
+mkdir -p codox_logs
+cp agent.md codox_logs/review_full_$(date +'%Y%m%d_%H%M').md
+echo "errors=$err" >> $GITHUB_OUTPUT
+echo "🧠 Diagnostic log ready for Codox analysis."
+
+###############################################################################
+# 🚪 Exit with proper status
+###############################################################################
 if [[ $err -gt 0 ]]; then
   echo "❌ Blocking CI/CD: $err errors remain after $MAX_RUNS runs."
+  sleep 10
   exit 1
 else
   echo "✅ All diagnostics passed (no deploy in this script)."
+  sleep 5
+  exit 0
 fi
