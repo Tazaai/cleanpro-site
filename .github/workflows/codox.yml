@@ -34,6 +34,19 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
+      # ✅ Ensure backend listens correctly on Cloud Run
+      - name: 🩺 Verify & Fix Backend PORT binding
+        run: |
+          FILE="backend/index.js"
+          echo "Checking $FILE for proper PORT binding..."
+          if ! grep -q "app.listen(process.env.PORT" "$FILE"; then
+            echo "⚙️ Adding Cloud Run port listener..."
+            echo "" >> "$FILE"
+            echo "app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log(\`✅ Server running on port \${process.env.PORT || 8080}\`));" >> "$FILE"
+          else
+            echo "✅ PORT binding already present."
+          fi
+
       # ✅ Run full diagnostics
       - name: 📋 Run diagnostic script
         id: diagnostics
@@ -47,7 +60,6 @@ jobs:
       # ✅ Collect logs safely
       - name: 🧠 Collect logs and reference
         if: always()
-        continue-on-error: true
         run: |
           mkdir -p codox_logs
           gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt || echo "⚠️ No permission or no logs available"
