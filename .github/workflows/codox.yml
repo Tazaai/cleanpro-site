@@ -34,66 +34,30 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
-      # ✅ Diagnostics, deploy, and API validation
-      - name: 🔁 Run diagnostics and deploy (x3)
+      # ✅ Run diagnostic report (collects error count)
+      - name: 📋 Run diagnostic script
+        id: diagnostics
         run: |
-          chmod +x ./review_report.sh ./deploy_backend.sh ./deploy_frontend.sh
-          BACKEND_URL="https://cleanpro-backend-5539254765.europe-west1.run.app"
-          FAIL_COUNT=0
-
-          for i in {1..3}; do
-            echo "🧠 Cycle $i: Running diagnostics..."
-            ./review_report.sh || { echo "⚠️ Diagnostics failed"; FAIL_COUNT=$((FAIL_COUNT+1)); }
-
-            echo "🚀 Deploying backend..."
-            ./deploy_backend.sh || { echo "❌ Backend deploy failed"; FAIL_COUNT=$((FAIL_COUNT+1)); }
-
-            echo "🚀 Deploying frontend..."
-            ./deploy_frontend.sh || { echo "❌ Frontend deploy failed"; FAIL_COUNT=$((FAIL_COUNT+1)); }
-
-            echo "🌐 API checks..."
-            for endpoint in coordination_points pricing bookings; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/api/$endpoint")
-              if [ "$STATUS" = "200" ]; then
-                echo "✅ /api/$endpoint OK"
-              else
-                echo "⚠️ /api/$endpoint failed ($STATUS)"
-                FAIL_COUNT=$((FAIL_COUNT+1))
-              fi
-            done
-          done
-
-          echo "Failures: $FAIL_COUNT"
-          echo "$FAIL_COUNT" > fail_count.txt
+          chmod +x ./review_report.sh
+          ./review_report.sh
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
-      # ✅ Collect logs for AI analysis
-      - name: 🧩 Collect logs and reference
+      # 🧩 Collect logs for AI analysis
+      - name: 🧠 Collect logs and reference
         if: always()
         run: |
           mkdir -p codox_logs
           gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt
-          cat agent.md > codox_logs/review_reference.txt
+          cp agent.md codox_logs/review_reference.txt
           echo "🧠 Logs prepared for Codox GPT analysis."
 
-      # 🛡️ Safety checkpoint to prevent infinite fix loops
-      - name: 🛡️ Ensure Codox safety checkpoint
-        if: always()
-        run: |
-          echo "🧩 Checking for potential infinite loop..."
-          if [ -f ".codox_lock" ]; then
-            echo "⛔ Codox already ran this revision. Skipping."
-            exit 0
-          fi
-          echo "run" > .codox_lock
-
-      # ✅ Auto-Correction via Codox GPT (self-healing)
+      # ✅ Auto-correction only when errors exist
       - name: 🤖 Codox Auto-Correction & Redeploy
-        if: always()
+        if: failure() || steps.diagnostics.outputs.errors != '0'
         run: |
-          echo "🔍 Running Codox smart auto-correction..."
+          echo "🔍 Errors detected (${{ steps.diagnostics.outputs.errors }}). Running Codox self-healing..."
           npx codox fix --auto --commit --push \
             --project cleanpro-site \
             --branch main \
