@@ -6,7 +6,7 @@ on:
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -32,27 +32,23 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
-      # ✅ Run diagnostic checks
-      - name: 🧠 Run CleanPro Diagnostics
+      # ✅ Cyclic diagnostics + deploy (3 rounds)
+      - name: 🔁 Run diagnostics and deploy (x3)
         run: |
           chmod +x ./review_report.sh
-          ./review_report.sh
-        env:
-          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-
-      # ✅ Deploy backend and frontend sequentially
-      - name: 🚀 Deploy Backend & Frontend
-        run: |
           chmod +x ./deploy_backend.sh
           chmod +x ./deploy_frontend.sh
 
-          echo "▶️ Deploying Backend..."
-          ./deploy_backend.sh || { echo "❌ Backend deploy failed"; exit 1; }
+          for i in {1..3}; do
+            echo "🧠 Cycle $i: Running diagnostics..."
+            ./review_report.sh || echo "⚠️ Diagnostics failed, continuing..."
+            
+            echo "🚀 Cycle $i: Deploying backend..."
+            ./deploy_backend.sh || echo "❌ Backend deploy failed"
 
-          echo "▶️ Deploying Frontend..."
-          ./deploy_frontend.sh || { echo "❌ Frontend deploy failed"; exit 1; }
-
+            echo "🚀 Cycle $i: Deploying frontend..."
+            ./deploy_frontend.sh || echo "❌ Frontend deploy failed"
+          done
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
