@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # ✅ Needed for pushing to reports branch
+  contents: write
 
 jobs:
   diagnostics:
@@ -14,19 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ Authenticate to Google Cloud
+      # ✅ Google Cloud authentication
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # ✅ Set up gcloud CLI
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
 
-      # ✅ Verify auth
       - name: 🔎 Verify gcloud authentication
         run: |
           gcloud auth list
@@ -34,7 +32,7 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
-      # ✅ Run diagnostic report (collects error count)
+      # ✅ Run diagnostic report
       - name: 📋 Run diagnostic script
         id: diagnostics
         run: |
@@ -44,31 +42,38 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
-      # 🧩 Collect logs for AI analysis
+      # ✅ Collect logs (non-blocking if no permission)
       - name: 🧠 Collect logs and reference
         if: always()
+        continue-on-error: true
         run: |
           mkdir -p codox_logs
-          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt
-          cp agent.md codox_logs/review_reference.txt
+          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt || echo "⚠️ Unable to fetch Cloud Run logs"
+          cp agent.md codox_logs/review_reference.txt || echo "⚠️ No agent.md found"
           echo "🧠 Logs prepared for Codox GPT analysis."
 
-      # ✅ Auto-correction only when errors exist
-      - name: 🤖 Codox Auto-Correction & Redeploy
+      # ✅ Smart Codox Auto-Correction with retry
+      - name: 🤖 Codox Auto-Correction & Redeploy (smart retry)
         if: failure() || steps.diagnostics.outputs.errors != '0'
-        run: |
-          echo "🔍 Errors detected (${{ steps.diagnostics.outputs.errors }}). Running Codox self-healing..."
-          npx codox fix --auto --commit --push \
-            --project cleanpro-site \
-            --branch main \
-            --use-github \
-            --max-fixes 5 \
-            --redeploy "bash ./deploy_backend.sh && bash ./deploy_frontend.sh" \
-            || echo "⚠️ Codox skipped (no actionable issues)."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Errors detected (${{ steps.diagnostics.outputs.errors }}). Running Codox self-healing..."
+          MAX_RETRIES=2
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "🧠 Attempt $i of $MAX_RETRIES"
+            npx codox fix --auto --commit --push \
+              --project cleanpro-site \
+              --branch main \
+              --use-github \
+              --max-fixes 5 \
+              --redeploy "bash ./deploy_backend.sh && bash ./deploy_frontend.sh" && break
+            echo "⚠️ Codox fix failed (attempt $i)"
+            sleep 10
+          done
+          echo "✅ Codox process complete."
 
-      # ✅ Push diagnostics summary to reports branch
+      # ✅ Push diagnostic summary to reports branch
       - name: 📊 Push diagnostic summary to reports branch
         if: always()
         env:
