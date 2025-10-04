@@ -1,4 +1,3 @@
-# ~/cleanpro-site/deploy_backend.sh
 #!/bin/bash
 set -e
 
@@ -13,9 +12,9 @@ if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
   echo "❌ GOOGLE_MAPS_API_KEY missing"; exit 1;
 fi
 
-# ✅ Use Dockerfile explicitly
 cd backend
-gcloud builds submit --tag $IMAGE --project=$PROJECT_ID -f Dockerfile
+# ✅ correct command — no -f flag needed
+gcloud builds submit --tag $IMAGE --project=$PROJECT_ID
 cd ..
 
 gcloud run deploy $SERVICE_NAME \
