@@ -78,12 +78,29 @@ jobs:
           cat agent.md > codox_logs/review_reference.txt
           echo "🧠 Logs prepared for Codox GPT analysis."
 
-      # ✅ Auto-Correction via Codox GPT
-      - name: 🤖 Codox Auto-Correction
+      # 🛡️ Safety checkpoint to prevent infinite fix loops
+      - name: 🛡️ Ensure Codox safety checkpoint
         if: always()
         run: |
-          echo "🔍 Running Codox Auto-Correction via GitHub connection..."
-          npx codox fix --auto --project cleanpro-site --branch main --use-github || echo "⚠️ Codox auto-correction skipped or not available."
+          echo "🧩 Checking for potential infinite loop..."
+          if [ -f ".codox_lock" ]; then
+            echo "⛔ Codox already ran this revision. Skipping."
+            exit 0
+          fi
+          echo "run" > .codox_lock
+
+      # ✅ Auto-Correction via Codox GPT (self-healing)
+      - name: 🤖 Codox Auto-Correction & Redeploy
+        if: always()
+        run: |
+          echo "🔍 Running Codox smart auto-correction..."
+          npx codox fix --auto --commit --push \
+            --project cleanpro-site \
+            --branch main \
+            --use-github \
+            --max-fixes 5 \
+            --redeploy "bash ./deploy_backend.sh && bash ./deploy_frontend.sh" \
+            || echo "⚠️ Codox skipped (no actionable issues)."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
