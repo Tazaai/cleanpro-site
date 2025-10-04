@@ -6,6 +6,7 @@ on:
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -26,20 +27,22 @@ jobs:
           gcloud auth list
           gcloud config list project
 
-      - name: 🧠 Run CleanPro diagnostics
+      - name: 🧠 Run CleanPro Diagnostics
         run: |
           chmod +x ./review_report.sh
           ./review_report.sh
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
-      - name: 🚀 Deploy backend & frontend
+      - name: 🚀 Deploy Backend & Frontend
         run: |
           chmod +x ./deploy_backend.sh
           chmod +x ./deploy_frontend.sh
-          bash ./deploy_backend.sh
-          bash ./deploy_frontend.sh
+          echo "▶️ Deploying Backend..."
+          bash ./deploy_backend.sh || { echo "❌ Backend deploy failed"; exit 1; }
+          echo "▶️ Deploying Frontend..."
+          bash ./deploy_frontend.sh || { echo "❌ Frontend deploy failed"; exit 1; }
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
