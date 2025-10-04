@@ -1,28 +1,26 @@
 name: Codox Diagnostics
 
 on:
-  workflow_dispatch:   # Manual trigger only
+  workflow_dispatch:
 
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ Set up Google Cloud authentication
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
-      # ✅ Run CleanPro diagnostics & deploy
       - name: Run CleanPro full diagnostics + deploy
         run: |
-          chmod +x ./review_report.sh
-          cd $GITHUB_WORKSPACE
-          ./review_report.sh
+          cd backend || exit 1
+          chmod +x ../review_report.sh
+          ../review_report.sh
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
