@@ -7,7 +7,7 @@ import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configRouter from "./routes/config_api.mjs";
 import mapsRouter from "./routes/maps.js";
 import servicesRouter from "./routes/services_api.mjs";
-import bookingsRouter from "./routes/bookings_api.mjs"; // ✅ unified naming
+import bookingsRouter from "./routes/bookings_api.mjs";
 import quotesRouter from "./routes/quotes_api.mjs";
 import pricingRouter from "./routes/pricing_api.mjs";
 
@@ -39,5 +39,5 @@ app.use((err, req, res, next) => {
 // ✅ Start server (Cloud Run compatible)
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server ready — listening on 0.0.0.0:${PORT}`);
 });
