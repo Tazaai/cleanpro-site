@@ -3,6 +3,9 @@ name: Codox Diagnostics
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write  # ✅ Allow Codox Bot to push commits/reports
+
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
