@@ -3,9 +3,6 @@ name: Codox Diagnostics
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write  # ✅ Allow Codox Bot to push commits/reports
-
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
@@ -20,12 +17,11 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # ✅ Set up gcloud with caching
+      # ✅ Set up gcloud CLI
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
-          export_default_credentials: true
 
       # ✅ Verify auth
       - name: 🔎 Verify gcloud authentication
@@ -62,9 +58,6 @@ jobs:
                 FAIL_COUNT=$((FAIL_COUNT+1))
               fi
             done
-
-            echo "📜 Checking Cloud Run logs (20 lines)..."
-            gcloud logs read "cleanpro-backend" --limit=20 --format="value(textPayload)" || echo "⚠️ Could not fetch logs"
           done
 
           echo "Failures: $FAIL_COUNT"
@@ -73,20 +66,20 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
-      # ✅ Collect logs for AI analysis
+      # ✅ Collect logs for AI analysis (fixed command)
       - name: 🧩 Collect logs and reference
         if: always()
         run: |
           mkdir -p codox_logs
-          gcloud logs read "cleanpro-backend" --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt
+          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt
           cat agent.md > codox_logs/review_reference.txt
           echo "🧠 Logs prepared for Codox GPT analysis."
 
-      # ✅ Auto-Correction via Codox GPT (GitHub connected)
+      # ✅ Auto-Correction via Codox GPT (direct GitHub link)
       - name: 🤖 Codox Auto-Correction
         if: always()
         run: |
-          echo "🔍 Running Codox Auto-Correction directly via GitHub connection..."
+          echo "🔍 Running Codox Auto-Correction via GitHub connection..."
           npx codox fix --auto --project cleanpro-site --branch main --use-github || echo "⚠️ Codox auto-correction skipped or not available."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -102,4 +95,4 @@ jobs:
           git checkout -B reports
           git add reports/
           git commit -m "Add diagnostic report $(date +'%Y-%m-%d %H:%M')"
-          git push origin reports --force
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Tazaai/cleanpro-site.git reports --force
