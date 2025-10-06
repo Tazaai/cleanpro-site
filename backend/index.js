@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 
 import calendarApi from "./routes/calendar_api.mjs";
+import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
 import mapsApi from "./routes/maps.js";
 import servicesApi from "./routes/services_api.mjs";
@@ -14,8 +15,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ✅ Routes
 app.use("/api/calendar", calendarApi);
+app.use("/api/coordination_points", coordinationPointsRouter);
 app.use("/api/config", configApi);
 app.use("/api/maps", mapsApi);
 app.use("/api/services", servicesApi);
@@ -23,13 +25,11 @@ app.use("/api/booking", bookingApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
 
-// Health check
+// ✅ Health check
 app.get("/", (req, res) => {
   res.send("✅ CleanPro Backend is running");
 });
 
-// Start server
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-});
+// ✅ Start server
+};
+const PORT = process.env.PORT || 8080; app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

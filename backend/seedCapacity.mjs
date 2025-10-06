@@ -4,7 +4,6 @@ import { readFileSync } from "fs";
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(
-    readFileSync(new URL("./serviceAccountKey.json", import.meta.url))
   );
 
   admin.initializeApp({
