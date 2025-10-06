@@ -103,7 +103,7 @@ export default function BookingForm() {
 
       {/* Area */}
       <div>
-        <label className="block text-sm font-medium">Area (m²)</label>
+        <label className="block text-sm font-medium">Area (sq ft)</label>
         <input
           type="number"
           value={area}

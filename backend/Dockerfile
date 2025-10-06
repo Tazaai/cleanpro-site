@@ -1,17 +1,21 @@
 # ~/cleanpro-site/backend/Dockerfile
-FROM node:18-alpine
+FROM node:20-slim
 
-WORKDIR /app
+WORKDIR /app/backend
 
-# Copy package files and install deps
+# Copy package files and install only production deps
 COPY package*.json ./
-RUN npm install --production --force
+RUN npm install --production
 
 # Copy backend source code
 COPY . .
 
+# Ensure firebase config is inside image
+COPY firebase_config.json /app/firebase_config.json
+
+# Set environment
 ENV PORT=8080
 EXPOSE 8080
 
-# Start the backend
-CMD ["node", "index.js"]
+# Start backend directly
+CMD ["npm","start"]

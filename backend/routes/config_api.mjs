@@ -1,9 +1,8 @@
 // ~/backend/routes/config_api.mjs
 import express from "express";
-import admin from "firebase-admin";
+import { db } from "../firebase.js";
 
 const router = express.Router();
-const db = admin.firestore();
 
 /**
  * GET /api/config/capacity

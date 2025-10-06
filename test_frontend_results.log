@@ -1,0 +1,47 @@
+Testing frontend at: https://cleanpro-frontend-5539254765.europe-west1.run.app
+
+=== Route / ===
+https://cleanpro-frontend-5539254765.europe-west1.run.app/ → (HTTP 200)
+
+=== Route /booking ===
+https://cleanpro-frontend-5539254765.europe-west1.run.app/booking → (HTTP 200)
+
+=== Route /contact ===
+https://cleanpro-frontend-5539254765.europe-west1.run.app/contact → (HTTP 200)
+
+=== Route /about ===
+https://cleanpro-frontend-5539254765.europe-west1.run.app/about → (HTTP 200)
+
+=== Assets (auto-detected) ===
+assets/index-622bc5f0.css → (HTTP 200)
+assets/index-a6acb798.js → (HTTP 200)
+
+=== Broken links check (homepage only) ===
+https://cleanpro-frontend-5539254765.europe-west1.run.app/assets/index-622bc5f0.css → (HTTP 200)
+https://cleanpro-frontend-5539254765.europe-west1.run.app/vite.svg → (HTTP 200)
+
+=== API base check ===
+
+=== Homepage snippet ===
+<!-- ~/cleanpro-site/frontend/index.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clean Departure</title>
+
+    <!-- Material Design Lite (optional styling) -->
+    <link
+      rel="stylesheet"
+      href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css"
+    />
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- ✅ Only load Google Maps Extended Component Library -->
+    <script
+      type="module"
+      src="https://unpkg.com/@googlemaps/extended-component-library"
+
+=== Browser console errors/warnings ===

@@ -2,11 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+// ✅ Clean version — only rely on VITE_* env vars from .env or .env.production
 export default defineConfig({
   plugins: [react()],
-  define: {
-    __API_BASE__: JSON.stringify(
-      process.env.CLOUD_RUN_URL || "http://localhost:8080"
-    ),
-  },
 });
