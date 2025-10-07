@@ -1,8 +1,28 @@
 #!/bin/bash
 # ~/cleanpro-site/review_report.sh
-# CleanPro Full Auto-Engineer Diagnostic + Codox Integration
-# Deep diagnostics for backend, frontend, Docker, routes, envs, and Firestore.
-# Designed to coordinate with Codox workflow (codox.yml) — DO NOT EDIT MANUALLY.
+# =============================================================================
+# 🧭 CleanPro Codox ⇆ GitHub ⇆ review_report.sh Coordination System
+#
+# This script is the central diagnostic and auto-healing engine.
+# It works in full synchronization with:
+#   1️⃣ `.github/workflows/codox.yml` (GitHub Actions Orchestrator)
+#   2️⃣ `review_report.sh` (this script — GPT diagnostic core)
+#   3️⃣ `deploy_backend.sh` / `deploy_frontend.sh` (runtime deployers)
+#
+# ⚙️ Flow Summary:
+#   • GitHub Actions triggers `review_report.sh`
+#   • This script runs diagnostics, repairs missing routes, fixes ports, etc.
+#   • Creates report `agent.md` for Codox GPT analysis.
+#   • Codox auto-fixes backend/frontend and commits back to main.
+#
+# 🔄 All changes must be committed to `main` — Codox uses main as the only truth.
+#   Example:
+#       git add .github/workflows/codox.yml review_report.sh
+#       git commit -m "sync: update Codox diagnostic + self-healing system"
+#       git push origin main
+#
+# 🚫 Never edit this script during a running Codox workflow.
+# =============================================================================
 
 exec > >(tee agent.md) 2>&1
 set +e
@@ -21,7 +41,7 @@ fi
 echo "run" > .codox_lock
 
 ###############################################################################
-# �� Secrets Validation
+# 🔑 Secrets Validation
 ###############################################################################
 echo "## 🔑 Secrets Check"
 missing=0
@@ -60,8 +80,7 @@ done
 ###############################################################################
 echo
 echo "## 🩺 Backend startup config"
-grep -q "process.env.PORT" backend/index.js || \
-  echo "⚠️ Missing PORT binding check"
+grep -q "process.env.PORT" backend/index.js || echo "⚠️ Missing PORT binding check"
 grep -q "0.0.0.0" backend/index.js || echo "⚠️ Missing host binding"
 grep -q "EXPOSE 8080" backend/Dockerfile || echo "EXPOSE 8080" >> backend/Dockerfile
 
@@ -201,7 +220,7 @@ npx codox fix
 echo "✅ Codox GPT auto-fix complete."
 
 ###############################################################################
-# 🧩 Frontend Build & Deploy Verification
+# �� Frontend Build & Deploy Verification
 ###############################################################################
 echo
 echo "## 🧩 Frontend build"
