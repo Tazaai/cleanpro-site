@@ -1,0 +1,194 @@
+name: Codox Diagnostics & Self-Healing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
+
+    steps:
+      # 📦 Checkout repository
+      - uses: actions/checkout@v4
+
+      # 🔄 Permanent Sync — ensure GitHub uses latest code (prevents stale cache)
+      - name: 🔄 Sync latest main branch
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          echo "✅ Synced with latest code from main."
+
+      # 🔐 Authenticate with Google Cloud
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # ⚙️ Setup gcloud
+      - name: ⚙️ Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      # 🔎 Verify configuration
+      - name: 🔎 Verify gcloud configuration
+        run: |
+          gcloud auth list
+          gcloud config set project $GCP_PROJECT
+          gcloud config set run/region europe-west1
+          gcloud info
+
+      # 🧩 Sync latest Codox GPT fixes
+      - name: 🧩 Sync latest Codox GPT fixes
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull origin main --rebase
+
+      # 💡 Install Codox globally (adds GPT capability)
+      - name: 🧠 Install Codox for GPT self-healing
+        run: npm install -g codox
+
+      # 💡 Ensure diagnostic script is executable and safe
+      - name: 🔧 Ensure review_report.sh executable (safe check)
+        run: |
+          if [ -f ./review_report.sh ]; then
+            chmod +x ./review_report.sh
+            echo "✅ review_report.sh ready"
+          else
+            echo "⚠️ Skipping — review_report.sh not found."
+          fi
+
+      # ✅ Verify secrets before deploy
+      - name: 🧩 Validate required secrets
+        run: |
+          required=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY)
+          missing=0
+          for s in "${required[@]}"; do
+            if [ -z "${!s}" ]; then
+              echo "❌ Missing secret: $s"
+              missing=$((missing+1))
+            else
+              echo "✅ $s is present"
+            fi
+          done
+          if [ $missing -gt 0 ]; then
+            echo "🚫 Aborting: $missing required secrets missing."
+            exit 1
+          fi
+
+      # 🐳 Docker sanity
+      - name: 🐳 Ensure fresh Docker image + Cloud Run sanity
+        run: |
+          echo "🧩 Checking backend Dockerfile sanity..."
+          if grep -q "WORKDIR /app$" backend/Dockerfile; then
+            sed -i 's#WORKDIR /app#WORKDIR /app/backend#' backend/Dockerfile
+            echo "⚙️ WORKDIR fixed → /app/backend"
+          fi
+          if [ "$(grep -c '^CMD' backend/Dockerfile)" -gt 1 ]; then
+            echo "⚡ Removing duplicate CMD lines"
+            sed -i '0,/CMD/s//CMD/' backend/Dockerfile
+            sed -i '/CMD/!b;n;d' backend/Dockerfile
+          fi
+          grep -q 'CMD \["npm","start"\]' backend/Dockerfile || echo 'CMD ["npm","start"]' >> backend/Dockerfile
+          echo "✅ Docker sanity complete."
+
+      # ✅ Run diagnostics safely
+      - name: 📋 Run diagnostic script
+        id: diagnostics
+        run: |
+          if [ -f ./review_report.sh ]; then
+            ./review_report.sh
+          else
+            echo "⚠️ Skipping diagnostics (review_report.sh missing)."
+          fi
+
+      # ✅ Commit Codox auto-fixes and redeploy
+      - name: ♻️ Commit Codox auto-fixes and redeploy
+        if: always()
+        run: |
+          echo "📦 Committing Codox auto-fixes..."
+          git config --global user.name "Codox Bot"
+          git config --global user.email "codox@bot.local"
+          git add backend/ frontend/ || true
+          git commit -m "chore: apply Codox auto-fixes from diagnostics" || echo "ℹ️ No new changes to commit"
+          git push origin main || echo "⚠️ Push skipped (protection or no changes)"
+          echo "🚀 Redeploying backend..."
+          bash ./deploy_backend.sh || echo "⚠️ Redeploy failed, continuing."
+
+      # 🧠 Collect logs
+      - name: 🧠 Collect logs and reference
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p codox_logs
+          gcloud run services logs read cleanpro-backend --limit=300 --format="value(textPayload)" > codox_logs/backend_logs.txt || echo "⚠️ No logs available"
+          [ -f agent.md ] && cp agent.md codox_logs/review_reference.txt || echo "⚠️ Missing agent.md"
+          echo "✅ Logs collected successfully for Codox GPT analysis."
+
+      # 🧠 Codox Auto-Correction & Redeploy (Retry)
+      - name: 🧠 Codox Auto-Correction & Redeploy
+        if: failure()
+        run: |
+          echo "🔍 Starting Codox self-heal..."
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "🧠 Attempt $i of $MAX_RETRIES"
+            npx codox fix
+            bash ./deploy_backend.sh && bash ./deploy_frontend.sh && break
+            echo "⚠️ Attempt $i failed — retrying in 10s..."
+            sleep 10
+          done
+          echo "✅ Codox self-healing cycle completed."
+
+      # 📊 Push diagnostic summary
+      - name: 📊 Push diagnostic summary to reports branch
+        if: always()
+        continue-on-error: true
+        run: |
+          git config --global user.name "Codox Bot"
+          git config --global user.email "codox@bot.local"
+          mkdir -p reports
+          [ -f agent.md ] && cp agent.md reports/$(date +'%Y-%m-%d_%H-%M')_report.md || echo "⚠️ No agent.md found"
+          git checkout -B reports
+          git add reports/
+          git commit -m "Add diagnostic report $(date +'%Y-%m-%d %H:%M')" || echo "ℹ️ No new report changes"
+          git push origin reports --force || echo "⚠️ Push blocked by protection rules"
+
+      # 🔄 Verify backend after redeploy (with retry)
+      - name: 🔄 Verify backend after redeploy
+        if: always()
+        run: |
+          echo "🩺 Running post-deploy health check..."
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend responded 200 OK — deployment healthy."
+              exit 0
+            fi
+            echo "⚠️ Attempt $i: backend not ready yet ($STATUS). Retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Backend never reached healthy state — check Cloud Run logs."
+          exit 1
+
+      # 🔧 Ensure deploy scripts executable
+      - name: 🔧 Ensure deploy scripts executable
+        run: |
+          chmod +x ./deploy_backend.sh || true
+          chmod +x ./deploy_frontend.sh || true
+
+      # 🚀 Deploy backend (final step)
+      - name: 🚀 Deploy backend
+        run: ./deploy_backend.sh
