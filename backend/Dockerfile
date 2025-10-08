@@ -10,12 +10,17 @@ RUN npm install --production
 # Copy backend source code
 COPY . .
 
-# Ensure firebase config is inside image
-COPY firebase_config.json /app/firebase_config.json
+# ✅ Optional firebase config (skip if missing)
+RUN if [ -f firebase_config.json ]; then \
+      cp firebase_config.json /app/firebase_config.json && \
+      echo "✅ firebase_config.json copied"; \
+    else \
+      echo "ℹ️ firebase_config.json not found, skipping copy"; \
+    fi
 
 # Set environment
 ENV PORT=8080
 EXPOSE 8080
 
-# Start backend directly
+# Start backend
 CMD ["npm","start"]
