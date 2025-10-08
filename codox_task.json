@@ -1,0 +1,17 @@
+{
+  "goal": "Ensure full frontend-backend stability and fix 500/404 errors automatically",
+  "details": [
+    "Repair broken imports or missing modules in backend.",
+    "Check API route responses and ensure JSON returns valid 200.",
+    "Verify BookingForm price calculation and map integration.",
+    "Rebuild and redeploy if build fails."
+  ],
+  "files": [
+    "backend/index.js",
+    "backend/routes/*",
+    "frontend/src/components/BookingForm.jsx",
+    "frontend/src/components/BookingMap.jsx",
+    "frontend/src/main.jsx",
+    "frontend/src/App.jsx"
+  ]
+}
