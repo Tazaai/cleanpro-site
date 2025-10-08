@@ -2,26 +2,11 @@
 # ~/cleanpro-site/review_report.sh
 # =============================================================================
 # 🧭 CleanPro Codox ⇆ GitHub ⇆ review_report.sh Coordination System
-#
-# This script is the central diagnostic and auto-healing engine.
-# It works in full synchronization with:
-#   1️⃣ `.github/workflows/codox.yml` (GitHub Actions Orchestrator)
-#   2️⃣ `review_report.sh` (this script — GPT diagnostic core)
-#   3️⃣ `deploy_backend.sh` / `deploy_frontend.sh` (runtime deployers)
-#
-# ⚙️ Flow Summary:
-#   • GitHub Actions triggers `review_report.sh`
-#   • This script runs diagnostics, repairs missing routes, fixes ports, etc.
-#   • Creates report `agent.md` for Codox GPT analysis.
-#   • Codox auto-fixes backend/frontend and commits back to main.
-#
-# 🔄 All changes must be committed to `main` — Codox uses main as the only truth.
-#   Example:
-#       git add .github/workflows/codox.yml review_report.sh
-#       git commit -m "sync: update Codox diagnostic + self-healing system"
-#       git push origin main
-#
-# 🚫 Never edit this script during a running Codox workflow.
+# =============================================================================
+# Central diagnostic & self-healing engine. Works with:
+#   1️⃣ .github/workflows/codox.yml
+#   2️⃣ review_report.sh  ← this file
+#   3️⃣ deploy_backend.sh / deploy_frontend.sh
 # =============================================================================
 
 exec > >(tee agent.md) 2>&1
@@ -94,6 +79,13 @@ app.listen(PORT, '0.0.0.0', () =>
   console.log(`✅ Server running on port ${PORT}`)
 );
 EOF
+fi
+
+# 🧩 Step 2 – Host Binding Auto-Injection
+if grep -q "app.listen" backend/index.js && ! grep -q "0.0.0.0" backend/index.js; then
+  echo "⚙️ Injecting missing host binding into app.listen"
+  sed -i '/app.listen/s/);/,"0.0.0.0");/' backend/index.js
+  echo "✅ Host binding patched (0.0.0.0)"
 fi
 
 ###############################################################################
@@ -220,7 +212,21 @@ npx codox fix
 echo "✅ Codox GPT auto-fix complete."
 
 ###############################################################################
-# �� Frontend Build & Deploy Verification
+# 🧠 JSX Syntax Auto-Repair (BookingForm build errors)
+###############################################################################
+echo
+echo "## 🧠 JSX Syntax Auto-Repair"
+if grep -q 'Expected ";" but found "className"' agent.md 2>/dev/null; then
+  echo "⚙️ Detected JSX build error — fixing BookingForm structure"
+  sed -i '/Auto-added by Codox/,+5s|{/\*.*\*/}||g' frontend/src/components/BookingForm.jsx
+  sed -i '/<div className="mt-2"><label>Bathrooms/ i </div>' frontend/src/components/BookingForm.jsx
+  echo "✅ JSX syntax auto-repair applied."
+else
+  echo "No JSX syntax issue detected."
+fi
+
+###############################################################################
+# 🧩 Frontend Build & Deploy Verification
 ###############################################################################
 echo
 echo "## 🧩 Frontend build"
@@ -256,6 +262,11 @@ git fetch origin main
 git checkout main
 git pull origin main --rebase
 git add .
+
+# 🧩 Step 3 – Secret-Leak Prevention before commit/push
+find . -type f -name "gha-creds-*.json" -delete && echo "🧹 Removed temporary GCP creds"
+git restore --staged gha-creds-*.json 2>/dev/null || true
+
 git commit -m "🤖 Codox auto-sync $(date '+%Y-%m-%d %H:%M')" || true
 git push origin main || echo "⚠️ Push skipped"
 
