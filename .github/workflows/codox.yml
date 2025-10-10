@@ -1,7 +1,7 @@
 name: Codox Diagnostics & Self-Healing
 
 on:
-  workflow_dispatch:   # ✅ Enables manual “Run workflow” button
+  workflow_dispatch:   # ✅ Enables manual "Run workflow" button
 
 permissions:
   contents: write
@@ -107,7 +107,7 @@ jobs:
           for r in "${routes[@]}"; do
             if [ ! -f "backend/routes/$r" ]; then
               echo "⚙️ Creating placeholder route: $r"
-              cat <<EOF > backend/routes/$r
+              cat <<EOF > backend/routes/$r |
 import express from "express";
 const router = express.Router();
 router.get("/", (req, res) => res.json({ message: "Placeholder $r active" }));
