@@ -25,7 +25,7 @@ fi
 echo "## 🔧 Ensuring firebase_config.json exists in all paths"
 for p in ./ ./backend /app; do
   if [[ ! -f "$p/firebase_config.json" ]]; then
-    echo "{}" > "$p/firebase_config.json"
+echo "skip firebase_config.json in local context"
     echo "🩹 Created missing $p/firebase_config.json"
   fi
 done
