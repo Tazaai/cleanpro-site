@@ -106,11 +106,11 @@ jobs:
             if [ ! -f "backend/routes/$r" ]; then
               echo "⚙️ Creating recovery route: $r"
               cat <<'EOF' > "backend/routes/$r"
-import express from "express";
-const router = express.Router();
-router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
-export default router;
-EOF
+          import express from "express";
+          const router = express.Router();
+          router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
+          export default router;
+          EOF
               echo "✅ $r created safely."
             else
               echo "✅ $r exists — verified."
