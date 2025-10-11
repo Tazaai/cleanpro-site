@@ -11,7 +11,6 @@ RUN npm install --production
 COPY . .
 
 # Ensure firebase config is inside image
-COPY firebase_config.json /app/firebase_config.json
 
 # Set environment
 ENV PORT=8080
@@ -19,3 +18,4 @@ EXPOSE 8080
 
 # Start backend directly
 CMD ["npm","start"]
+# firebase_config optional marker only
