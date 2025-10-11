@@ -195,6 +195,12 @@ jobs:
           tail -n 40 agent.md || echo "ℹ️ No agent.md found"
 
       # ✅ Upload diagnostic log
+      - name: 🚨 Global sanity check
+        if: always()
+        run: |
+          grep -q "❌" agent.md && { echo "❌ Errors found in diagnostics"; exit 1; }
+          echo "✅ No critical errors detected"
+
       - name: 📤 Upload diagnostic log
         if: always()
         uses: actions/upload-artifact@v4
