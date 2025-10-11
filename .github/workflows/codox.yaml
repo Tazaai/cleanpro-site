@@ -170,8 +170,8 @@ jobs:
             echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
           fi
 
-      # ✅ Verify backend health
-      - name: - name: 🩺 Verify backend health
+      # ✅ Verify backend health  ← fixed here (no duplicate “- name”)
+      - name: 🩺 Verify backend health
         if: always()
         run: |
           echo "🩺 Checking backend availability..."
@@ -194,13 +194,14 @@ jobs:
           echo "🧾 Codox Diagnostic Summary (last 40 lines)"
           tail -n 40 agent.md || echo "ℹ️ No agent.md found"
 
-      # ✅ Upload diagnostic log
+      # ✅ Global sanity check
       - name: 🚨 Global sanity check
         if: always()
         run: |
           grep -q "❌" agent.md && { echo "❌ Errors found in diagnostics"; exit 1; }
           echo "✅ No critical errors detected"
 
+      # ✅ Upload diagnostic log
       - name: 📤 Upload diagnostic log
         if: always()
         uses: actions/upload-artifact@v4
