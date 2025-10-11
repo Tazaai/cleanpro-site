@@ -1,3 +1,6 @@
+import admin from "firebase-admin";
+import { readFileSync } from "fs";
+try{if(!admin.apps.length){const s=JSON.parse(readFileSync("./backend/serviceAccountKey.json"));admin.initializeApp({credential:admin.credential.cert(s)});console.log("✅ Firebase Admin init");}}catch(e){console.error("⚠️ Firebase init failed:",e.message);}
 // ~/cleanpro-site/backend/index.js
 import express from "express";
 import booking_api from "./routes/booking_api.mjs";
