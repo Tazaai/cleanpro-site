@@ -20,23 +20,27 @@ jobs:
       BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
 
     steps:
+      # ✅ Sync latest code from main
       - uses: actions/checkout@v4
-        name: 🧭 Sync latest code
+      - name: 🧭 Sync latest code
         run: |
           git fetch origin main
           git reset --hard origin/main
           echo "✅ Synced with latest main branch."
 
+      # ✅ Authenticate to Google Cloud
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # ✅ Setup gcloud
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
 
+      # ✅ Verify configuration
       - name: 🔎 Verify gcloud configuration
         run: |
           gcloud auth list
@@ -44,11 +48,13 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
+      # ✅ Install Codox CLI
       - name: 🧠 Install Codox CLI
         run: |
           npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
           codox --version || echo "ℹ️ Codox CLI ready"
 
+      # ✅ Prepare diagnostic script
       - name: 🔧 Prepare diagnostic script
         run: |
           if [ -f ./review_report.sh ]; then
@@ -59,6 +65,7 @@ jobs:
             exit 1
           fi
 
+      # ✅ Validate secrets
       - name: 🗝️ Validate required secrets
         run: |
           secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
@@ -73,6 +80,7 @@ jobs:
           done
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
 
+      # ✅ Self-heal backend Dockerfile
       - name: 🐳 Self-heal backend Dockerfile
         run: |
           echo "🔍 Checking backend/Dockerfile..."
@@ -88,7 +96,8 @@ jobs:
             echo "⚠️ backend/Dockerfile not found"
           fi
 
-      - name: �� Detect or generate missing backend routes
+      # ✅ Detect or generate missing backend routes (echo-based)
+      - name: 🧭 Detect or generate missing backend routes
         run: |
           echo "🔍 Scanning backend/routes for missing API files..."
           mkdir -p backend/routes
@@ -96,10 +105,10 @@ jobs:
           for r in "${routes[@]}"; do
             if [ ! -f "backend/routes/$r" ]; then
               echo "⚙️ Creating recovery route: $r"
-              echo 'import express from "express";
-const router = express.Router();
-router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
-export default router;' > "backend/routes/$r"
+              echo 'import express from "express";' > "backend/routes/$r"
+              echo 'const router = express.Router();' >> "backend/routes/$r"
+              echo 'router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));' >> "backend/routes/$r"
+              echo 'export default router;' >> "backend/routes/$r"
               echo "✅ $r created safely."
             else
               echo "✅ $r exists — verified."
@@ -107,6 +116,7 @@ export default router;' > "backend/routes/$r"
           done
           echo "✅ Backend route structure verified and stable."
 
+      # ✅ Validate YAML syntax before continuing
       - name: 🧩 Validate YAML syntax
         run: |
           echo "🔍 Validating codox.yml syntax..."
@@ -114,6 +124,7 @@ export default router;' > "backend/routes/$r"
           sudo apt-get install -y yamllint
           yamllint .github/workflows/codox.yml || echo "⚠️ YAML validation warnings only"
 
+      # ✅ Validate frontend build
       - name: 🧱 Validate frontend build
         run: |
           if [ -d frontend ]; then
@@ -130,11 +141,13 @@ export default router;' > "backend/routes/$r"
             echo "ℹ️ No frontend directory — skipping build check"
           fi
 
+      # ✅ Run diagnostic script
       - name: 📋 Run Codox diagnostic
         run: |
           echo "🚀 Starting review_report.sh..."
           ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
 
+      # ✅ Commit diagnostic report
       - name: 📦 Commit diagnostic report
         if: always()
         run: |
@@ -144,6 +157,7 @@ export default router;' > "backend/routes/$r"
           git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
           git push origin main || echo "⚠️ Push skipped"
 
+      # ✅ Commit auto-fixes & redeploy backend
       - name: ♻️ Commit Codox auto-fixes & redeploy
         if: always()
         run: |
@@ -156,7 +170,8 @@ export default router;' > "backend/routes/$r"
             echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
           fi
 
-      - name: 🩺 Verify backend health
+      # ✅ Verify backend health
+      - name: �� Verify backend health
         if: always()
         run: |
           echo "🩺 Checking backend availability..."
@@ -172,71 +187,14 @@ export default router;' > "backend/routes/$r"
           echo "❌ Backend failed health check"
           exit 1
 
+      # ✅ Diagnostic summary
       - name: 🧠 Codox summary
         if: always()
         run: |
           echo "🧾 Codox Diagnostic Summary (last 40 lines)"
           tail -n 40 agent.md || echo "ℹ️ No agent.md found"
 
-      - name: 📤 Upload diagnostic log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codox-diagnostics-log
-          path: agent.md
-      - name: ⚙️ Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-
-      - name: 🔎 Verify gcloud configuration
-        run: |
-          gcloud auth list
-          gcloud config set project "$GCP_PROJECT"
-          gcloud config set run/region europe-west1
-          gcloud info
-
-      - name: 🧠 Install Codox CLI
-        run: |
-          npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
-          codox --version || echo "ℹ️ Codox CLI ready"
-
-      - name: 🔧 Prepare diagnostic script
-        run: |
-          if [ -f ./review_report.sh ]; then
-            chmod +x ./review_report.sh
-            echo "✅ review_report.sh ready"
-          else
-            echo "❌ review_report.sh missing!"
-            exit 1
-          fi
-
-      - name: 🗝️ Validate required secrets
-        run: |
-          secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
-          missing=0
-          for s in "${secrets[@]}"; do
-            if [ -z "${!s}" ]; then
-              echo "❌ Missing: $s"
-              missing=$((missing+1))
-            else
-              echo "✅ $s OK"
-            fi
-          done
-          [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
-
-      - name: 🧩 Validate YAML syntax
-        run: |
-          echo "🔍 Validating codox.yml syntax..."
-          sudo apt-get update -y
-          sudo apt-get install -y yamllint
-          yamllint .github/workflows/codox.yml || echo "⚠️ YAML validation warnings only"
-
-      - name: 📋 Run Codox diagnostic
-        run: |
-          echo "🚀 Starting review_report.sh..."
-          ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
-
+      # ✅ Upload diagnostic log
       - name: 📤 Upload diagnostic log
         if: always()
         uses: actions/upload-artifact@v4
