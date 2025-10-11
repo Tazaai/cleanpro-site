@@ -1,393 +1,205 @@
----
----
----
----
-name: Codox Diagnostics & Self-Healing
 name: Codox Diagnostics & Self-Healing
 
 on:
-on:
-  workflow_dispatch:   # ✅ Manual "Run workflow" button
   workflow_dispatch:   # ✅ Manual "Run workflow" button
 
 permissions:
-permissions:
-  contents: write
   contents: write
 
 jobs:
-jobs:
-  diagnostics:
   diagnostics:
     runs-on: ubuntu-latest
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
     timeout-minutes: 90
 
     env:
-    env:
-      GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
-      FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
-      BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
       BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
 
     steps:
-    steps:
-      # ✅ Sync latest code from main
       # ✅ Sync latest code from main
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-      - name: 🧭 Sync latest code
       - name: 🧭 Sync latest code
         run: |
-        run: |
-          git fetch origin main
           git fetch origin main
           git reset --hard origin/main
-          git reset --hard origin/main
-          echo "✅ Synced with latest main branch."
           echo "✅ Synced with latest main branch."
 
       # ✅ Authenticate to Google Cloud
-      # ✅ Authenticate to Google Cloud
-      - name: 🔐 Authenticate to Google Cloud
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
-        uses: google-github-actions/auth@v2
         with:
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       # ✅ Setup gcloud
-      # ✅ Setup gcloud
-      - name: ⚙️ Setup gcloud
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
-        uses: google-github-actions/setup-gcloud@v2
         with:
-        with:
-          project_id: ${{ secrets.GCP_PROJECT }}
           project_id: ${{ secrets.GCP_PROJECT }}
 
       # ✅ Verify configuration
-      # ✅ Verify configuration
-      - name: 🔎 Verify gcloud configuration
       - name: 🔎 Verify gcloud configuration
         run: |
-        run: |
-          gcloud auth list
           gcloud auth list
           gcloud config set project "$GCP_PROJECT"
-          gcloud config set project "$GCP_PROJECT"
           gcloud config set run/region europe-west1
-          gcloud config set run/region europe-west1
-          gcloud info
           gcloud info
 
       # ✅ Install Codox CLI
-      # ✅ Install Codox CLI
-      - name: 🧠 Install Codox CLI
       - name: 🧠 Install Codox CLI
         run: |
-        run: |
           npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
-          npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
-          codox --version || echo "ℹ️ Codox CLI ready"
           codox --version || echo "ℹ️ Codox CLI ready"
 
       # ✅ Prepare diagnostic script
-      # ✅ Prepare diagnostic script
-      - name: 🔧 Prepare diagnostic script
       - name: 🔧 Prepare diagnostic script
         run: |
-        run: |
-          if [ -f ./review_report.sh ]; then
           if [ -f ./review_report.sh ]; then
             chmod +x ./review_report.sh
-            chmod +x ./review_report.sh
-            echo "✅ review_report.sh ready"
             echo "✅ review_report.sh ready"
           else
-          else
-            echo "❌ review_report.sh missing!"
             echo "❌ review_report.sh missing!"
             exit 1
-            exit 1
-          fi
           fi
 
       # ✅ Validate secrets
-      # ✅ Validate secrets
-      - name: 🗝️ Validate required secrets
       - name: 🗝️ Validate required secrets
         run: |
-        run: |
-          secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
           secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
           missing=0
-          missing=0
-          for s in "${secrets[@]}"; do
           for s in "${secrets[@]}"; do
             if [ -z "${!s}" ]; then
-            if [ -z "${!s}" ]; then
-              echo "❌ Missing: $s"
               echo "❌ Missing: $s"
               missing=$((missing+1))
-              missing=$((missing+1))
-            else
             else
               echo "✅ $s OK"
-              echo "✅ $s OK"
-            fi
             fi
           done
-          done
-          [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
 
       # ✅ Self-heal backend Dockerfile
-      # ✅ Self-heal backend Dockerfile
-      - name: 🐳 Self-heal backend Dockerfile
       - name: 🐳 Self-heal backend Dockerfile
         run: |
-        run: |
-          echo "🔍 Checking backend/Dockerfile..."
           echo "🔍 Checking backend/Dockerfile..."
           if [ -f backend/Dockerfile ]; then
-          if [ -f backend/Dockerfile ]; then
-            sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
             sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
             grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
-            grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
-            sed -i '/firebase_config.json/d' backend/Dockerfile || true
             sed -i '/firebase_config.json/d' backend/Dockerfile || true
             if ! grep -q "firebase_config optional marker only" backend/Dockerfile; then
-            if ! grep -q "firebase_config optional marker only" backend/Dockerfile; then
-              echo "# firebase_config optional marker only" >> backend/Dockerfile
               echo "# firebase_config optional marker only" >> backend/Dockerfile
               echo "✅ firebase_config optional marker added"
-              echo "✅ firebase_config optional marker added"
-            fi
             fi
           else
-          else
             echo "⚠️ backend/Dockerfile not found"
-            echo "⚠️ backend/Dockerfile not found"
-          fi
           fi
 
       # ✅ Auto-detect or rebuild backend routes (permanent-safe)
-      # ✅ Auto-detect or rebuild backend routes (permanent-safe)
-      - name: 🧭 Detect or generate missing backend routes
       - name: 🧭 Detect or generate missing backend routes
         run: |
-        run: |
-          echo "🔍 Scanning backend/routes for missing API files..."
           echo "🔍 Scanning backend/routes for missing API files..."
           mkdir -p backend/routes
-          mkdir -p backend/routes
-          routes=(services_api.mjs bookings_api.mjs quotes_api.mjs pricing_api.mjs)
           routes=(services_api.mjs bookings_api.mjs quotes_api.mjs pricing_api.mjs)
           for r in "${routes[@]}"; do
-          for r in "${routes[@]}"; do
-            if [ ! -f "backend/routes/$r" ]; then
             if [ ! -f "backend/routes/$r" ]; then
               echo "⚙️ Creating recovery route: $r"
-              echo "⚙️ Creating recovery route: $r"
               cat <<'EOF' > "backend/routes/$r"
-              cat <<'EOF' > "backend/routes/$r"
-          import express from "express";
-          import express from "express";
-          const router = express.Router();
-          const router = express.Router();
-          router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
-          router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
-          export default router;
-          export default router;
-          EOF
-          EOF
-              echo "✅ $r created safely."
+import express from "express";
+const router = express.Router();
+router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));
+export default router;
+EOF
               echo "✅ $r created safely."
             else
-            else
-              echo "✅ $r exists — verified."
               echo "✅ $r exists — verified."
             fi
-            fi
           done
-          done
-          echo "✅ Backend route structure verified and stable."
           echo "✅ Backend route structure verified and stable."
 
       # ✅ Validate workflow syntax before continuing
-      # ✅ Validate workflow syntax before continuing
-      - name: 🧩 Validate YAML syntax
       - name: 🧩 Validate YAML syntax
         run: |
-        run: |
-          echo "🔍 Validating codox.yml syntax..."
           echo "🔍 Validating codox.yml syntax..."
           sudo apt-get update -y
-          sudo apt-get update -y
           sudo apt-get install -y yamllint
-          sudo apt-get install -y yamllint
-          yamllint .github/workflows/codox.yml || echo "⚠️ YAML validation warnings only"
           yamllint .github/workflows/codox.yml || echo "⚠️ YAML validation warnings only"
 
       # ✅ Validate frontend build
-      # ✅ Validate frontend build
-      - name: 🧱 Validate frontend build
       - name: 🧱 Validate frontend build
         run: |
-        run: |
-          if [ -d frontend ]; then
           if [ -d frontend ]; then
             echo "🧩 Building frontend..."
-            echo "🧩 Building frontend..."
-            cd frontend
             cd frontend
             if [ -f package.json ]; then
-            if [ -f package.json ]; then
-              npm install --legacy-peer-deps
               npm install --legacy-peer-deps
               npm run build || echo "⚠️ Frontend build failed"
-              npm run build || echo "⚠️ Frontend build failed"
-            else
             else
               echo "ℹ️ No package.json — skipping build"
-              echo "ℹ️ No package.json — skipping build"
-            fi
             fi
             cd ..
-            cd ..
-          else
           else
             echo "ℹ️ No frontend directory — skipping build check"
-            echo "ℹ️ No frontend directory — skipping build check"
-          fi
           fi
 
       # ✅ Run diagnostic script
-      # ✅ Run diagnostic script
-      - name: 📋 Run Codox diagnostic
       - name: 📋 Run Codox diagnostic
         run: |
-        run: |
           echo "🚀 Starting review_report.sh..."
-          echo "🚀 Starting review_report.sh..."
-          ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
           ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
 
       # ✅ Commit diagnostic report
-      # ✅ Commit diagnostic report
-      - name: 📦 Commit diagnostic report
       - name: 📦 Commit diagnostic report
         if: always()
-        if: always()
-        run: |
         run: |
           git config user.email "codox-bot@users.noreply.github.com"
-          git config user.email "codox-bot@users.noreply.github.com"
-          git config user.name "Codox Bot"
           git config user.name "Codox Bot"
           git add agent.md || true
-          git add agent.md || true
           git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
-          git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
-          git push origin main || echo "⚠️ Push skipped"
           git push origin main || echo "⚠️ Push skipped"
 
       # ✅ Commit auto-fixes & redeploy backend
-      # ✅ Commit auto-fixes & redeploy backend
-      - name: ♻️ Commit Codox auto-fixes & redeploy
       - name: ♻️ Commit Codox auto-fixes & redeploy
         if: always()
-        if: always()
-        run: |
         run: |
           git add backend/ frontend/ || true
-          git add backend/ frontend/ || true
-          git commit -m "chore: Codox auto-fix applied" || echo "ℹ️ No fixes detected"
           git commit -m "chore: Codox auto-fix applied" || echo "ℹ️ No fixes detected"
           git push origin main || echo "⚠️ Push skipped"
-          git push origin main || echo "⚠️ Push skipped"
-          if [ -f ./deploy_backend.sh ]; then
           if [ -f ./deploy_backend.sh ]; then
             bash ./deploy_backend.sh || echo "⚠️ Redeploy failed (non-fatal)"
-            bash ./deploy_backend.sh || echo "⚠️ Redeploy failed (non-fatal)"
-          else
           else
             echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
-            echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
-          fi
           fi
 
       # ✅ Verify backend health
-      # ✅ Verify backend health
-      - name: 🩺 Verify backend health
       - name: 🩺 Verify backend health
         if: always()
-        if: always()
-        run: |
         run: |
           echo "🩺 Checking backend availability..."
-          echo "🩺 Checking backend availability..."
-          for i in {1..10}; do
           for i in {1..10}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
-            if [ "$STATUS" = "200" ]; then
             if [ "$STATUS" = "200" ]; then
               echo "✅ Backend healthy"
-              echo "✅ Backend healthy"
-              exit 0
               exit 0
             fi
-            fi
-            echo "⚠️ Attempt $i returned HTTP $STATUS"
             echo "⚠️ Attempt $i returned HTTP $STATUS"
             sleep 10
-            sleep 10
-          done
           done
           echo "❌ Backend failed health check"
-          echo "❌ Backend failed health check"
-          exit 1
           exit 1
 
       # ✅ Diagnostic summary
-      # ✅ Diagnostic summary
-      - name: 🧠 Codox summary
       - name: 🧠 Codox summary
         if: always()
-        if: always()
-        run: |
         run: |
           echo "🧾 Codox Diagnostic Summary (last 40 lines)"
-          echo "🧾 Codox Diagnostic Summary (last 40 lines)"
-          tail -n 40 agent.md || echo "ℹ️ No agent.md found"
           tail -n 40 agent.md || echo "ℹ️ No agent.md found"
 
       # ✅ Upload diagnostic log
-      # ✅ Upload diagnostic log
-      - name: 📤 Upload diagnostic log
       - name: 📤 Upload diagnostic log
         if: always()
-        if: always()
-        uses: actions/upload-artifact@v4
         uses: actions/upload-artifact@v4
         with:
-        with:
           name: codox-diagnostics-log
-          name: codox-diagnostics-log
-          path: agent.md
           path: agent.md
