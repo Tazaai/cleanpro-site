@@ -171,7 +171,7 @@ jobs:
           fi
 
       # ✅ Verify backend health
-      - name: �� Verify backend health
+      - name: - name: 🩺 Verify backend health
         if: always()
         run: |
           echo "🩺 Checking backend availability..."
