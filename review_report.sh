@@ -173,6 +173,28 @@ fi
 done
 
 ###############################################################################
+echo "## 🧪 Running backend & frontend tests"
+
+if [ -f "./test_backend.sh" ]; then
+
+  bash ./test_backend.sh || { echo "❌ Backend tests failed"; exit 1; }
+
+else
+
+  echo "⚠️ test_backend.sh missing — skipping backend tests"
+
+fi
+
+if [ -f "./test_frontend.sh" ]; then
+
+  bash ./test_frontend.sh || { echo "❌ Frontend tests failed"; exit 1; }
+
+else
+
+  echo "⚠️ test_frontend.sh missing — skipping frontend tests"
+
+fi
+
 # 📋 Summary + AI Log Summarizer
 ###############################################################################
 echo "──────────────────────────────"
