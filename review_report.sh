@@ -159,6 +159,10 @@ for i in $(seq 1 $MAX_RUNS); do
   if bash ./deploy_backend.sh; then
     echo "✅ Deploy OK"
     gcloud run services describe cleanpro-backend --project "$GCP_PROJECT" --region europe-west1 --format="value(status.url)" 2>/dev/null
+if ! curl -fsSL https://cleanpro-backend-5539254765.europe-west1.run.app/ >/dev/null; then 
+  echo "❌ Cloud Run service not responding – marking workflow failed"; 
+  exit 1; 
+fi
     break
   else
     echo "⚠️ Retry $i failed — reading Cloud Run logs..."
