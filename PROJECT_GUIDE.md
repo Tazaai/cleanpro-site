@@ -1,112 +1,81 @@
-# CleanPro Site – Project Guide
-
-⚠️ IMPORTANT:
-This file is **for context only**.
-It must **never be edited** or used to trigger code changes.
-Codex should read this file to understand project goals, objectives, and structure — not to modify the project.
-
----
+# 🧭 CleanPro Site – Project Guide
+⚠️ SYSTEM CONTEXT FILE — DO NOT EDIT MANUALLY  
+Used by Codox GPT to understand project goals, structure, and workflow for automation and self-healing.
 
 ## 🎯 Goal
-Build a professional **cleaning service platform** for CleanPro that supports:
-- Service presentation (residential, deep, office, move in/out, etc.)
-- Transparent and dynamic pricing
-- Online booking with availability management
-- Integration with Google Maps (distance-based pricing)
-- Integration with Google Calendar (availability & scheduling)
-- Admin panel via AppSheet/Firestore
-
-Future integrations: **Firestore for data**, **Stripe/PayPal** for payments, etc.
-
----
+Build a full cleaning service platform with dynamic services, transparent pricing, Google Maps/Calendar integration, and AppSheet admin control. Future: Stripe/PayPal payments and analytics.
 
 ## ✅ Objectives
-1. **Backend (Node.js / Express)**
-   - REST APIs for services, pricing, bookings, calendar, HQs, maps, config, gcalendar.
-   - Firestore integration for persistent data.
-   - Deployable to Cloud Run (must bind to `$PORT`).
+### Backend (Node.js / Express)
+- REST APIs for services, pricing, bookings, maps, and calendar  
+- Firestore data layer  
+- Cloud Run ready (binds to process.env.PORT || 8080)  
+- Health check: GET / → “✅ CleanPro Backend is running”
+### Frontend (React / Vite)
+- Tailwind or MUI  
+- Booking form: Full Name, Address, Email, Phone, Property Type, Bedrooms, Bathrooms, Date of last cleaning, Frequency (One-time / Weekly / Monthly), Dropdown services, Dynamic price preview, Distance & discount info, Warning if >100 miles from coordination point.
 
-2. **Frontend (React / Vite)**
-   - Clean UI with Tailwind / Material UI.
-   - Booking form with service selection, address, size, frequency, date & time.
-   - Price preview (dynamic from backend).
-   - Mobile-friendly, professional look.
+## 🧼 Service Logic
+### Services
+1. Commercial Cleaning  
+2. Residential Cleaning: Standard, Deep, Move-In/Out  
+→ All priced by total sq ft (not m²).
+### Pricing
+- Base price per sq ft  
+- Free ≤ 40 miles, extra charge per mile after  
+- Discounts managed dynamically via AppSheet  
+Formula:  
+`total = (base_rate * sqft) + (extra_mile_rate * miles_over_40) - discount`
+### Frequency & Discounts
+- One-time: no discount  
+- Weekly: dynamic 10–20% via AppSheet  
+- Monthly: dynamic 5–10% via AppSheet  
+- First booking (by address): no discount  
+- Repeat address: auto-discount applied by backend
 
-3. **Infrastructure**
-   - Backend & frontend in separate Cloud Run services.
-   - Secret Manager for API keys (Google Maps, etc.).
-   - `.gitignore` excludes `node_modules/`.
+## 🧭 Coordination Points
+- Managed via AppSheet: address, active, phone, email  
+- Used for distance and availability  
+- No point within 100 miles → show “No available coordination point nearby”
 
----
+## 🧾 Admin / AppSheet
+- Admins (non-tech) can edit pricing, discounts, coordination points  
+- Auto-syncs to backend Firestore
 
-## 🗂 Project Structure
+## 💳 Payments & Feedback
+- Stripe / PayPal + manual check  
+- Star ratings + reviews per coordination point  
+- “Work With Us” → sends email + phone notification to HQ
 
-### Backend Routes
-- backend/routes/services_api.mjs  
-- backend/routes/pricing_api.mjs  
-- backend/routes/calendar_api.mjs  
-- backend/routes/maps_api.mjs  
-- backend/routes/hqs_api.mjs  
-- backend/routes/bookings_api.mjs   # unified (create + list)  
-- backend/routes/gcalendar_api.mjs  
-- backend/routes/config_api.mjs     # admin only  
+## 🗂 Structure
+Backend: index.js, firebase.js, Dockerfile, deploy_backend.sh, routes/...  
+Frontend: Dockerfile, package.json, vite.config.js, src/main.jsx, App.jsx, components (Services, BookingForm, BookingMap, WorkWithUs)
 
-### Backend Core Files
-- backend/firebase.js  
-- backend/index.js  
-- backend/Dockerfile  
-- backend/deploy_backend.sh  
-- backend/seedCapacity.mjs  
-
-### Frontend Components
-- frontend/src/App.jsx  
-- frontend/src/main.jsx  
-- frontend/src/components/Services.jsx  
-- frontend/src/components/BookingForm.jsx  
-- frontend/src/components/BookingMap.jsx  
-- frontend/src/components/WorkWithUs.jsx  
-
-### Frontend Config
-- frontend/Dockerfile  
-- frontend/package.json  
-- frontend/vite.config.js  
-
----
-
-## ⚙️ Workflow Rules
-- Always run `npm install` in Codespace instead of committing `node_modules/`.
-- Cloud Run must listen on `process.env.PORT || 8080`.
-- Health check endpoint = `GET /` → returns `"✅ CleanPro Backend is running"`.
-- API keys managed via environment variables (not hardcoded).
-- Never push secrets to GitHub.
-- Always deploy using:
-  - `bash deploy_backend.sh`
-  - `bash deploy_frontend.sh`
-
-### Required Environment Variables
-- `GOOGLE_APPLICATION_CREDENTIALS=/app/firebase_config.json`  
-- `CALENDAR_ID=rahpodcast2022@gmail.com`  
-- `GOOGLE_MAPS_API_KEY=<key>`  
-
----
+## ⚙️ Workflow
+- npm install locally (never commit node_modules)  
+- Deploy via:  
+`bash deploy_backend.sh`  
+`bash deploy_frontend.sh`  
+- Env vars:  
+`GOOGLE_APPLICATION_CREDENTIALS=/app/firebase_config.json`  
+`CALENDAR_ID=rahpodcast2022@gmail.com`  
+`GOOGLE_MAPS_API_KEY=<key>`
 
 ## 🚀 Roadmap
-- [x] Basic backend routes  
-- [x] Dynamic pricing API  
-- [x] Booking system with Firestore  
-- [ ] Fix Google Calendar JWT signing issue  
-- [ ] Payment integration (Stripe/PayPal)  
-- [ ] Admin dashboard (AppSheet or custom UI)  
-- [ ] Customer accounts & authentication  
-- [ ] Nearest HQ assignment during booking  
-- [ ] Monitoring & error logging (Cloud Logging)  
-
----
+- [x] Base routes  
+- [x] Dynamic pricing  
+- [ ] Fix Calendar JWT  
+- [ ] Stripe/PayPal  
+- [ ] AppSheet dashboard  
+- [ ] Customer login  
+- [ ] Auto HQ assign  
+- [ ] Cloud logging  
+- [ ] Discount automation
 
 ## 🛡️ Notes
-- `node_modules/` must **never** be in the repo → add `.gitignore`.  
-- This file is the **source of truth** for project goals, objectives, structure, and rules.  
-- Deployment instructions are kept **separately** and should be run manually.  
+Codox GPT reads this file for logic and structure. Do not rename sections. After any manual change, run `bash review_report.sh`.  
+projectguide.md = system blueprint  
+readme.md = public overview  
+agent.md = runtime logs  
 
----
-(End of PROJECT_GUIDE.md – Do not edit)
+**(End of PROJECT_GUIDE.md – Do not edit manually)**
