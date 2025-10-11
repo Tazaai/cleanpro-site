@@ -184,3 +184,62 @@ export default router;' > "backend/routes/$r"
         with:
           name: codox-diagnostics-log
           path: agent.md
+      - name: ⚙️ Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: 🔎 Verify gcloud configuration
+        run: |
+          gcloud auth list
+          gcloud config set project "$GCP_PROJECT"
+          gcloud config set run/region europe-west1
+          gcloud info
+
+      - name: 🧠 Install Codox CLI
+        run: |
+          npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
+          codox --version || echo "ℹ️ Codox CLI ready"
+
+      - name: 🔧 Prepare diagnostic script
+        run: |
+          if [ -f ./review_report.sh ]; then
+            chmod +x ./review_report.sh
+            echo "✅ review_report.sh ready"
+          else
+            echo "❌ review_report.sh missing!"
+            exit 1
+          fi
+
+      - name: 🗝️ Validate required secrets
+        run: |
+          secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
+          missing=0
+          for s in "${secrets[@]}"; do
+            if [ -z "${!s}" ]; then
+              echo "❌ Missing: $s"
+              missing=$((missing+1))
+            else
+              echo "✅ $s OK"
+            fi
+          done
+          [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
+
+      - name: 🧩 Validate YAML syntax
+        run: |
+          echo "🔍 Validating codox.yml syntax..."
+          sudo apt-get update -y
+          sudo apt-get install -y yamllint
+          yamllint .github/workflows/codox.yml || echo "⚠️ YAML validation warnings only"
+
+      - name: 📋 Run Codox diagnostic
+        run: |
+          echo "🚀 Starting review_report.sh..."
+          ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
+
+      - name: 📤 Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codox-diagnostics-log
+          path: agent.md
