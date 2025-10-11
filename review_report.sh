@@ -156,6 +156,15 @@ if [[ -f backend/serviceAccountKey.json ]] && ! grep -q "firebase-admin" backend
 fi
 
 ###############################################################################
+###############################################################################
+# 🎨 Frontend Auto-Fix for Missing API_BASE before Build
+###############################################################################
+echo "## 🎨 Checking frontend API_BASE default"
+if grep -q 'VITE_API_BASE || ""' frontend/src/components/BookingForm.jsx 2>/dev/null; then
+  echo "🩹 Fixing missing API_BASE default URL in BookingForm.jsx"
+  sed -i 's#VITE_API_BASE || ""#VITE_API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app"#' frontend/src/components/BookingForm.jsx
+fi
+
 # 🎨 Frontend Auto-Heal & Build
 ###############################################################################
 echo "## 🎨 Checking frontend"
