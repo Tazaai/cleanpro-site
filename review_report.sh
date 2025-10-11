@@ -10,6 +10,16 @@ MAX_RUNS=3
 err=0
 
 ###############################################################################
+# 🧭 Load Project Guide Context
+###############################################################################
+if [ -f "PROJECT_GUIDE.md" ]; then
+  echo "## �� Reading PROJECT_GUIDE.md for context..."
+  PROJECT_CONTEXT=$(cat PROJECT_GUIDE.md)
+else
+  echo "⚠️ PROJECT_GUIDE.md not found — skipping context load."
+fi
+
+###############################################################################
 # 🧩 Force Mode + Lock
 ###############################################################################
 if [[ "$INPUT_FORCE" == "true" ]]; then
@@ -159,10 +169,10 @@ for i in $(seq 1 $MAX_RUNS); do
   if bash ./deploy_backend.sh; then
     echo "✅ Deploy OK"
     gcloud run services describe cleanpro-backend --project "$GCP_PROJECT" --region europe-west1 --format="value(status.url)" 2>/dev/null
-if ! curl -fsSL https://cleanpro-backend-5539254765.europe-west1.run.app/ >/dev/null; then 
-  echo "❌ Cloud Run service not responding – marking workflow failed"; 
-  exit 1; 
-fi
+    if ! curl -fsSL https://cleanpro-backend-5539254765.europe-west1.run.app/ >/dev/null; then 
+      echo "❌ Cloud Run service not responding – marking workflow failed"; 
+      exit 1; 
+    fi
     break
   else
     echo "⚠️ Retry $i failed — reading Cloud Run logs..."
@@ -176,48 +186,13 @@ done
 echo "## 🧪 Running backend & frontend tests"
 
 if [ -f "./test_backend.sh" ]; then
-
   bash ./test_backend.sh || { echo "❌ Backend tests failed"; exit 1; }
-
 else
-
   echo "⚠️ test_backend.sh missing — skipping backend tests"
-
 fi
 
 if [ -f "./test_frontend.sh" ]; then
-
   bash ./test_frontend.sh || { echo "❌ Frontend tests failed"; exit 1; }
-
 else
-
   echo "⚠️ test_frontend.sh missing — skipping frontend tests"
-
 fi
-
-# 📋 Summary + AI Log Summarizer
-###############################################################################
-echo "──────────────────────────────"
-echo "📋 Codox AI Master completed"
-echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
-echo "✅ Full backend, frontend, DB, deploy cycle done."
-echo "## 🤖 AI Summary" >> agent.md
-tail -n 200 agent.md | grep -E "✅|⚠️|❌" | tail -n 10 >> agent.md
-echo "──────────────────────────────" >> agent.md
-echo "📊 End of Summary (auto-generated)" >> agent.md
-
-###############################################################################
-# 🧩 Syntax Verification + Safe Update + Auto-Fail
-###############################################################################
-bash -n "$0" && echo "✅ review_report.sh syntax verified" || {
-  echo "⚠️ Syntax issue — restoring verified version"
-  git fetch origin main
-  git checkout origin/main -- review_report.sh || true
-}
-sha256sum "$0" > logs/review_report_checksum.txt 2>/dev/null
-
-grep -q "❌" agent.md && { echo "❌ Errors detected — marking failure"; exit 1; }
-
-echo "──────────────────────────────"
-echo "🏁 End of review_report.sh (Codox Master Controller)"
-exit 0
