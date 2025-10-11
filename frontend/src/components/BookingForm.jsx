@@ -3,7 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Loader } from "@googlemaps/js-api-loader";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
 
 export default function BookingForm() {
   const [name, setName] = useState("");
