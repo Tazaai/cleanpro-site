@@ -191,11 +191,11 @@ fi
 
 ###############################################################################
 # ☁️ Deploy Loop + Cloud Run Log Review
-# 🧩 Guarantee /app/firebase_config.json exists inside container context
+# 🧩 Guarantee backend/firebase_config.json exists inside container context
 if [[ -d backend ]]; then
   cp backend/firebase_config.json ./firebase_config.json 2>/dev/null || echo "{}" > ./firebase_config.json
   mkdir -p /app 2>/dev/null
-  cp backend/firebase_config.json /app/firebase_config.json 2>/dev/null || echo "{}" > /app/firebase_config.json
+  cp backend/firebase_config.json backend/firebase_config.json 2>/dev/null || echo "{}" > backend/firebase_config.json
   echo "🧩 Synced firebase_config.json to root and /app/"
 fi
 
