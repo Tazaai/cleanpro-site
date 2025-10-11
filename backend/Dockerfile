@@ -14,6 +14,7 @@ COPY . .
 
 # Set environment
 ENV PORT=8080
+ENV CLOUD_RUN_TIMEOUT=900
 EXPOSE 8080
 
 # Start backend directly
