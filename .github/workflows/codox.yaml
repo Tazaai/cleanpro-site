@@ -19,14 +19,14 @@ jobs:
 diagnostics:
 runs-on: ubuntu-latest
 timeout-minutes: 90
-env:
-GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
-BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
-steps:
+    env:
+    GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+    GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+    GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+    BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
+    steps:
 # ✅ Sync latest code
 - uses: actions/checkout@v4
 - name: 🧭 Sync latest code
@@ -225,12 +225,12 @@ fi
 echo "🔁 Re-running diagnostics..."
 bash ./review_report.sh || echo "⚠️ Diagnostics still show issues."
 echo "✅ Codox Smart Agent finished with universal memory tracking."
-env:
-OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-# ✅ Upload diagnostic log
-- name: 📤 Upload diagnostic log
-if: always()
-uses: actions/upload-artifact@v4
-with:
-name: codox-diagnostics-log
-path: agent.md
+    env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    # ✅ Upload diagnostic log
+    - name: 📤 Upload diagnostic log
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+    name: codox-diagnostics-log
+    path: agent.md
