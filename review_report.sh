@@ -7,6 +7,7 @@ touch agent.md
 exec > >(tee agent.md) 2>&1
 
 MAX_RUNS=3
+find . -maxdepth 2 -name ".codox_lock" -delete
 err=0
 
 ###############################################################################
