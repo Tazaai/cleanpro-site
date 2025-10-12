@@ -214,10 +214,10 @@ EOF
           else
             echo "🧠 Sending recent errors to GPT-4o-mini for adaptive universal fixes..."
             curl -s https://api.openai.com/v1/chat/completions \
+    "model": "gpt-4o-mini",
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $OPENAI_API_KEY" \
               -d "{
-                \"model\": \"gpt-4o-mini\",
                 \"messages\": [
                   {\"role\": \"system\", \"content\": \"You are Codox Smart Agent. Read all logs and fix *any kind* of system, code, YAML, Docker, deployment, or config error safely using bash.\"},
                   {\"role\": \"user\", \"content\": \"$(cat recent_errors.log | sed 's/\"/\\"/g')\"}
