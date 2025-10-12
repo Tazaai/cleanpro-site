@@ -220,10 +220,10 @@ jobs:
           else
             echo "🧠 Sending recent errors to GPT-5 for adaptive fixes..."
             curl -s https://api.openai.com/v1/chat/completions \
+        "model": "gpt-4o-mini",
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $OPENAI_API_KEY" \
               -d "{
-                \"model\": \"gpt-5\",
                 \"messages\": [
                   {\"role\": \"system\", \"content\": \"You are Codox Smart Agent. Read all logs, detect every kind of system or build error, and output safe bash fixes for all of them.\"},
                   {\"role\": \"user\", \"content\": \"$(cat recent_errors.log | sed 's/\"/\\"/g')\"}
