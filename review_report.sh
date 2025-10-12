@@ -13,7 +13,7 @@ err=0
 # 🧭 Load Project Guide Context
 ###############################################################################
 if [ -f "PROJECT_GUIDE.md" ]; then
-  echo "## �� Reading PROJECT_GUIDE.md for context..."
+  echo "## ## Reading PROJECT_GUIDE.md for context..."
   PROJECT_CONTEXT=$(cat PROJECT_GUIDE.md)
 else
   echo "⚠️ PROJECT_GUIDE.md not found — skipping context load."
@@ -58,7 +58,7 @@ if [[ "$INPUT_FORCE" == "true" ]]; then
 fi
 
 if [[ -f .codox_lock ]]; then
-  echo "�� Codox lock present — skipping run"
+  echo "## Codox lock present — skipping run"
   exit 0
 fi
 echo "run" > .codox_lock
@@ -80,7 +80,7 @@ done
 ###############################################################################
 # 🧱 Project Structure Validation
 ###############################################################################
-echo "## �� Validating project structure"
+echo "## ## Validating project structure"
 mkdir -p backend/routes frontend/src logs reports .github/workflows
 
 # basic backend structure
@@ -147,7 +147,7 @@ done
 echo "✅ Route check complete."
 
 ###############################################################################
-# �� Firebase Admin Initialization
+# ## Firebase Admin Initialization
 ###############################################################################
 echo "## 📦 Auto-installing missing backend packages"
 cd backend && npm install firebase-admin puppeteer --save && cd ..
@@ -179,7 +179,7 @@ if [[ -d frontend ]]; then
 fi
 
 ###############################################################################
-# ��️ Firestore / Database Validation
+# ##️ Firestore / Database Validation
 ###############################################################################
 echo "## 🗄️ Checking Firebase structure"
 if [[ -f backend/serviceAccountKey.json ]]; then
