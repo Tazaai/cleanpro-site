@@ -1,16 +1,20 @@
 name: Codox Diagnostics & Self-Healing
 
 on:
-  workflow_dispatch: # ✅ Manual trigger in Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+name: Codox Diagnostics & Self-Healing
+on:
+  workflow_dispatch: # ✅ Manual trigger in Actions tab
+permissions:
+  contents: write
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-
     env:
       GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
@@ -19,7 +23,6 @@ jobs:
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
-
     steps:
       # ✅ Sync latest code
       - uses: actions/checkout@v4
@@ -28,19 +31,16 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           echo "✅ Synced with latest main branch."
-
       # ✅ Authenticate to Google Cloud
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       # ✅ Setup gcloud
       - name: ⚙️ Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
-
       # ✅ Verify configuration
       - name: 🔎 Verify gcloud configuration
         run: |
@@ -48,7 +48,6 @@ jobs:
           gcloud config set project "$GCP_PROJECT"
           gcloud config set run/region europe-west1
           gcloud info
-
       # ✅ Install Codox CLI
       - name: 🧠 Install Codox CLI
         run: |
@@ -56,7 +55,6 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq yamllint
           codox --version || echo "ℹ️ Codox CLI ready"
-
       # ✅ Prepare diagnostic script
       - name: 🔧 Prepare diagnostic script
         run: |
@@ -67,7 +65,6 @@ jobs:
             echo "❌ review_report.sh missing!"
             exit 1
           fi
-
       # ✅ Validate secrets
       - name: 🗝️ Validate required secrets
         run: |
@@ -82,7 +79,6 @@ jobs:
             fi
           done
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
-
       # ✅ Self-heal backend Dockerfile
       - name: 🐳 Self-heal backend Dockerfile
         run: |
@@ -99,7 +95,6 @@ EXPOSE 8080
 CMD ["node","index.js"]
 EOF
           fi
-
       # ✅ Detect or generate missing backend routes
       - name: 🧭 Detect or generate missing backend routes
         run: |
@@ -118,13 +113,11 @@ EOF
               echo "✅ $r exists — verified."
             fi
           done
-
       # ✅ Validate YAML syntax
       - name: 🧩 Validate YAML syntax
         run: |
           echo "🔍 Validating codox.yaml syntax..."
           yamllint .github/workflows/codox.yaml || echo "⚠️ YAML validation warnings only"
-
       # ✅ Validate frontend build
       - name: 🧱 Validate frontend build
         run: |
@@ -141,13 +134,11 @@ EOF
           else
             echo "ℹ️ No frontend directory — skipping build check"
           fi
-
       # ✅ Run diagnostic script
       - name: 📋 Run Codox diagnostic
         run: |
           echo "🚀 Starting review_report.sh..."
           ./review_report.sh
-
       # ✅ Commit diagnostic report
       - name: 📦 Commit diagnostic report
         if: always()
@@ -157,7 +148,6 @@ EOF
           git add agent.md || true
           git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
           git push origin main || echo "⚠️ Push skipped"
-
       # ✅ Commit auto-fixes & redeploy backend
       - name: ♻️ Commit Codox auto-fixes & redeploy
         if: always()
@@ -171,7 +161,6 @@ EOF
           else
             echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
           fi
-
       # ✅ Verify backend health
       - name: 🩺 Verify backend health
         if: always()
@@ -184,25 +173,21 @@ EOF
             echo "❌ Backend returned HTTP $STATUS"
             exit 1
           fi
-
       # ✅ Global sanity check
       - name: �� Global sanity check
         if: always()
         run: |
           grep -q "❌" agent.md && { echo "❌ Errors found in diagnostics"; exit 1; }
           echo "✅ No critical errors detected"
-
       # 🤖 Codox Smart Agent (Universal AI Fixer)
       - name: 🤖 Codox Smart Agent
         if: failure()
         run: |
           echo "🚀 Running Codox GPT Smart Agent with memory..."
           tail -n 200 agent.md > recent_errors.log
-
           if [ ! -f codox_memory.json ]; then
             echo '{"fixed_patterns":[],"run_count":0}' > codox_memory.json
           fi
-
           echo "🧩 Checking for previously fixed patterns..."
           MATCH=$(grep -Ff <(jq -r '.fixed_patterns[].pattern' codox_memory.json) recent_errors.log || true)
           if [ -n "$MATCH" ]; then
@@ -220,22 +205,18 @@ EOF
                 ],
                 \"max_tokens\": 700
               }" | jq -r '.choices[0].message.content' > codox_ai_fix.sh
-
             echo "🛠 Applying AI fixes..."
             grep -E '^(sudo|echo|cp|mv|sed|npm|gcloud|docker|bash|cat|touch|chmod|mkdir)' codox_ai_fix.sh > codox_ai_safe.sh
             chmod +x codox_ai_safe.sh
             bash codox_ai_safe.sh || echo "⚠️ Some AI fixes failed but continuing."
-
             echo "🧠 Updating memory..."
             jq --arg pat "$(head -n 1 recent_errors.log | tr -d '\n')" \
               '.fixed_patterns += [{"pattern":$pat,"time":"'"$(date)"'"}] | .run_count += 1' \
               codox_memory.json > tmp && mv tmp codox_memory.json
           fi
-
           echo "🔁 Re-running diagnostics..."
           bash ./review_report.sh || echo "⚠️ Diagnostics still show issues."
           echo "✅ Codox Smart Agent finished with universal memory tracking."
-
       # ✅ Upload diagnostic log
       - name: 📤 Upload diagnostic log
         if: always()
