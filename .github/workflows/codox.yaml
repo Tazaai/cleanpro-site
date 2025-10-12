@@ -145,7 +145,7 @@ jobs:
       - name: 📋 Run Codox diagnostic
         run: |
           echo "🚀 Starting review_report.sh..."
-          ./review_report.sh || echo "⚠️ Diagnostics completed with warnings"
+          ./review_report.sh 
 
       # ✅ Commit diagnostic report
       - name: 📦 Commit diagnostic report
