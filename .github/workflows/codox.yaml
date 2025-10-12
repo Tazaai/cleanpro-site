@@ -225,7 +225,7 @@ jobs:
               -d "{
                 \"model\": \"gpt-5\",
                 \"messages\": [
-                  {\"role\": \"system\", \"content\": \"You are Codox Smart Agent. Read logs and output only safe bash fixes.\"},
+                  {\"role\": \"system\", \"content\": \"You are Codox Smart Agent. Read all logs, detect every kind of system or build error, and output safe bash fixes for all of them.\"},
                   {\"role\": \"user\", \"content\": \"$(cat recent_errors.log | sed 's/\"/\\"/g')\"}
                 ],
                 \"max_tokens\": 600
