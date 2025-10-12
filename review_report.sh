@@ -149,6 +149,9 @@ echo "✅ Route check complete."
 ###############################################################################
 # �� Firebase Admin Initialization
 ###############################################################################
+echo "## 📦 Auto-installing missing backend packages"
+cd backend && npm install firebase-admin puppeteer --save && cd ..
+
 echo "## 🔥 Firebase Admin init check"
 if [[ -f backend/serviceAccountKey.json ]] && ! grep -q "firebase-admin" backend/index.js; then
   echo "⚙️ Injecting Firebase Admin init..."
