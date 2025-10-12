@@ -163,6 +163,14 @@ fi
 # 🎨 Frontend Auto-Fix for Missing API_BASE before Build
 ###############################################################################
 echo "## 🎨 Checking frontend API_BASE default"
+echo "🩹 Checking frontend dependencies..."
+cd frontend || exit 1
+if ! npm ls puppeteer >/dev/null 2>&1; then
+  echo "⚙️ Installing missing puppeteer..."
+  npm install puppeteer --save
+fi
+cd ..
+
 if grep -q 'VITE_API_BASE || ""' frontend/src/components/BookingForm.jsx 2>/dev/null; then
   echo "🩹 Fixing missing API_BASE default URL in BookingForm.jsx"
   sed -i 's#VITE_API_BASE || ""#VITE_API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app"#' frontend/src/components/BookingForm.jsx
@@ -171,6 +179,14 @@ fi
 # 🎨 Frontend Auto-Heal & Build
 ###############################################################################
 echo "## 🎨 Checking frontend"
+echo "🩹 Checking frontend dependencies..."
+cd frontend || exit 1
+if ! npm ls puppeteer >/dev/null 2>&1; then
+  echo "⚙️ Installing missing puppeteer..."
+  npm install puppeteer --save
+fi
+cd ..
+
 if [[ -d frontend ]]; then
   cd frontend
   npm install --legacy-peer-deps || echo "⚠️ npm install failed"
