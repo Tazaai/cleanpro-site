@@ -246,3 +246,4 @@ if [ -f "./test_frontend.sh" ]; then
 else
   echo "⚠️ test_frontend.sh missing — skipping frontend tests"
 fi
+[[ $err -ne 0 ]] && exit 1
