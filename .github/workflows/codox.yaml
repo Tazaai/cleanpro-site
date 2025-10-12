@@ -51,7 +51,7 @@ jobs:
       # ✅ Install Codox CLI
       - name: 🧠 Install Codox CLI
         run: |
-          npm install -g codox prettier@3 jq || echo "⚠️ Codox CLI install warning"
+          npm install -g codox prettier@3 || echo "⚠️ Codox install warn"; sudo apt-get update -y; sudo apt-get install -y jq || echo "⚠️ Codox CLI install warning"
           codox --version || echo "ℹ️ Codox CLI ready"
 
       # ✅ Prepare diagnostic script
