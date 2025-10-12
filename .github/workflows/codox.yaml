@@ -90,8 +90,7 @@ jobs:
             echo "✅ Dockerfile verified and fixed if needed."
       - name: 🧠 Placeholder fix
         run: echo "YAML syntax normalized"
-
-EXPOSE 8080
+RUN npm install --production
 CMD ["node","index.js"]
 EOF
           fi
