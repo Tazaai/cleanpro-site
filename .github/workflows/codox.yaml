@@ -1,4 +1,6 @@
 name: Codox Diagnostics & Self-Healing
+on:
+  workflow_dispatch:
 
 on:
   workflow_dispatch:   # ✅ Manual "Run workflow" button
