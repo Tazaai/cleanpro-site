@@ -277,6 +277,19 @@ jobs:
 
     echo "✅ Auto-Repair Trigger completed."
 
+        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+
+        echo "EXPOSE 8080" >> backend/Dockerfile
+
+        echo "CMD [\"node\",\"backend/index.js\"]" >> backend/Dockerfile
+
+        git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
+
+        git push || true
+
+      fi
+
+      echo "✅ Auto-Repair Trigger completed."
   # 🤖 Codox Auto-Repair Trigger
 
   - name: 🤖 Codox Auto-Repair Trigger
@@ -291,23 +304,27 @@ jobs:
 
         echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
 
-        echo "FROM node:18" > backend/Dockerfile
+        {
 
-        echo "WORKDIR /app" >> backend/Dockerfile
+          echo "FROM node:18"
 
-        echo "COPY package*.json ./" >> backend/Dockerfile
+          echo "WORKDIR /app"
 
-        echo "RUN npm install --omit=dev" >> backend/Dockerfile
+          echo "COPY package*.json ./"
 
-        echo "COPY . ." >> backend/Dockerfile
+          echo "RUN npm install --omit=dev"
 
-        echo "ENV PORT=8080" >> backend/Dockerfile
+          echo "COPY . ."
 
-        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+          echo "ENV PORT=8080"
 
-        echo "EXPOSE 8080" >> backend/Dockerfile
+          echo "ENV HOST=0.0.0.0"
 
-        echo "CMD [\"node\",\"backend/index.js\"]" >> backend/Dockerfile
+          echo "EXPOSE 8080"
+
+          echo "CMD [\"node\",\"backend/index.js\"]"
+
+        } > backend/Dockerfile
 
         git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
 
@@ -336,6 +353,19 @@ jobs:
 
     echo "✅ Auto-Repair Trigger completed."
 
+        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+
+        echo "EXPOSE 8080" >> backend/Dockerfile
+
+        echo "CMD [\"node\",\"backend/index.js\"]" >> backend/Dockerfile
+
+        git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
+
+        git push || true
+
+      fi
+
+      echo "✅ Auto-Repair Trigger completed."
   # 🤖 Codox Auto-Repair Trigger
 
   - name: 🤖 Codox Auto-Repair Trigger
@@ -350,23 +380,27 @@ jobs:
 
         echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
 
-        echo "FROM node:18" > backend/Dockerfile
+        {
 
-        echo "WORKDIR /app" >> backend/Dockerfile
+          echo "FROM node:18"
 
-        echo "COPY package*.json ./" >> backend/Dockerfile
+          echo "WORKDIR /app"
 
-        echo "RUN npm install --omit=dev" >> backend/Dockerfile
+          echo "COPY package*.json ./"
 
-        echo "COPY . ." >> backend/Dockerfile
+          echo "RUN npm install --omit=dev"
 
-        echo "ENV PORT=8080" >> backend/Dockerfile
+          echo "COPY . ."
 
-        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+          echo "ENV PORT=8080"
 
-        echo "EXPOSE 8080" >> backend/Dockerfile
+          echo "ENV HOST=0.0.0.0"
 
-        echo "CMD [\"node\",\"backend/index.js\"]" >> backend/Dockerfile
+          echo "EXPOSE 8080"
+
+          echo "CMD [\"node\",\"backend/index.js\"]"
+
+        } > backend/Dockerfile
 
         git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
 
