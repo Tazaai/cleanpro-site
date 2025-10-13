@@ -230,6 +230,13 @@ jobs:
             grep -E '^(sudo|echo|cp|mv|sed|npm|gcloud|docker|bash|cat|touch|chmod|mkdir)' codox_ai_fix.sh > codox_ai_safe.sh
             chmod +x codox_ai_safe.sh
             bash codox_ai_safe.sh || true
+echo "🧩 Auto-healing missing runtime packages..."; 
+npm install firebase-admin puppeteer --omit=dev || true; 
+echo "🚀 Auto-deploying frontend..."; 
+cd frontend && npm install --legacy-peer-deps && npm run build && 
+gcloud run deploy cleanpro-frontend --source . --region=europe-west1 || true; 
+cd ..; 
+true
 
             echo "🧠 Updating memory..."
             jq --arg pat "$(head -n 1 recent_errors.log | tr -d '\n')" \
