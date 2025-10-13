@@ -46,7 +46,7 @@ jobs:
           gcloud config set run/region europe-west1
           gcloud info
 
-      - name: �� Install Codox CLI
+      - name: 🧠 Install Codox CLI
         run: |
           npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
           sudo apt-get update -y
