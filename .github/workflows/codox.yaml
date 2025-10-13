@@ -232,3 +232,22 @@ jobs:
       - name: 🤖 Codox Smart Agent
         if: always()
         run: |
+
+# 🔧 Auto-heal Cloud Run Dockerfile for backend
+echo "🚀 Auto-heal Cloud Run Dockerfile for backend...";
+if ! grep -q "backend/index.js" backend/Dockerfile; then
+  cat > backend/Dockerfile <<'EOF'
+  FROM node:18
+  WORKDIR /app
+  COPY package*.json ./
+  RUN npm install --omit=dev
+  COPY . .
+  ENV PORT=8080
+  ENV HOST=0.0.0.0
+  EXPOSE 8080
+  CMD ["node", "backend/index.js"]
+  EOF
+  git add backend/Dockerfile && git commit -m "auto-heal: rebuild Cloud Run Dockerfile for backend" || true
+  git push || true
+fi
+
