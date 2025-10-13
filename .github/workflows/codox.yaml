@@ -138,6 +138,7 @@ jobs:
             if [ -f package.json ]; then
               npm install --legacy-peer-deps
               npm run build || echo "⚠️ Frontend build failed"
+echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — consider migrating to PlaceAutocompleteElement later.";
             else
               echo "ℹ️ No package.json — skipping build"
             fi
@@ -230,12 +231,21 @@ jobs:
             grep -E '^(sudo|echo|cp|mv|sed|npm|gcloud|docker|bash|cat|touch|chmod|mkdir)' codox_ai_fix.sh > codox_ai_safe.sh
             chmod +x codox_ai_safe.sh
             bash codox_ai_safe.sh || true
+echo "🧩 Restoring firebase_config.json if missing..."; 
+[ ! -f backend/firebase_config.json ] && cp firebase_config.json backend/firebase_config.json || true; 
+[ ! -f /app/firebase_config.json ] && cp backend/firebase_config.json /app/firebase_config.json || true; 
+
+echo "🧩 Restoring firebase_config.json if missing..."; 
+[ ! -f backend/firebase_config.json ] && cp firebase_config.json backend/firebase_config.json || true; 
+[ ! -f /app/firebase_config.json ] && cp backend/firebase_config.json /app/firebase_config.json || true; 
+
           echo "🧩 Auto-healing runtime & CI deps..."; 
           npm install firebase-admin puppeteer codox prettier@3 --omit=dev || true; 
           echo "♻️ Retrying backend deploy..."; 
           bash ./deploy_backend.sh || true; 
           echo "🚀 Auto-building & deploying frontend..."; 
           cd frontend && npm install --legacy-peer-deps && npm run build && 
+echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — consider migrating to PlaceAutocompleteElement later.";
           gcloud run deploy cleanpro-frontend --source . --region=europe-west1 || true; 
           cd ..; 
           echo "🧠 Reinforcing diagnostics cycle..."; 
@@ -244,6 +254,7 @@ jobs:
           npm install firebase-admin puppeteer --omit=dev || true; 
           echo "🚀 Auto-deploying frontend..."; 
           cd frontend && npm install --legacy-peer-deps && npm run build && 
+echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — consider migrating to PlaceAutocompleteElement later.";
           gcloud run deploy cleanpro-frontend --source . --region europe-west1 || true; 
           cd ..; true
             
