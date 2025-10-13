@@ -259,15 +259,6 @@ jobs:
           fi
 
 
-      echo "COPY . ." >> backend/Dockerfile
-
-      echo "ENV PORT=8080" >> backend/Dockerfile
-
-      echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
-
-      echo "EXPOSE 8080" >> backend/Dockerfile
-
-      echo "CMD [\"node\",\"backend/index.js\"]" >> backend/Dockerfile
 
       git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
 
@@ -333,6 +324,46 @@ jobs:
       fi
 
       echo "✅ Auto-Repair Trigger completed."
+  # 🤖 Codox Auto-Repair Trigger
+
+  - name: 🤖 Codox Auto-Repair Trigger
+
+    if: failure() || always()
+
+    run: |
+
+      echo "🤖 Smart Agent detected failure, invoking auto-repair..."
+
+      if grep -q "MODULE_NOT_FOUND" agent.md; then
+
+        echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
+
+        echo "FROM node:18" > backend/Dockerfile
+
+        echo "WORKDIR /app" >> backend/Dockerfile
+
+        echo "COPY package*.json ./" >> backend/Dockerfile
+
+        echo "RUN npm install --omit=dev" >> backend/Dockerfile
+
+        echo "COPY . ." >> backend/Dockerfile
+
+        echo "ENV PORT=8080" >> backend/Dockerfile
+
+        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+
+        echo "EXPOSE 8080" >> backend/Dockerfile
+
+        echo "CMD [\"node\", \"backend/index.js\"]" >> backend/Dockerfile
+
+        git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
+
+        git push || true
+
+      fi
+
+      echo "✅ Auto-Repair Trigger completed."
+
       # ✅ Global sanity check
 
       echo "COPY . ." >> backend/Dockerfile
@@ -409,6 +440,46 @@ jobs:
       fi
 
       echo "✅ Auto-Repair Trigger completed."
+  # 🤖 Codox Auto-Repair Trigger
+
+  - name: 🤖 Codox Auto-Repair Trigger
+
+    if: failure() || always()
+
+    run: |
+
+      echo "🤖 Smart Agent detected failure, invoking auto-repair..."
+
+      if grep -q "MODULE_NOT_FOUND" agent.md; then
+
+        echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
+
+        echo "FROM node:18" > backend/Dockerfile
+
+        echo "WORKDIR /app" >> backend/Dockerfile
+
+        echo "COPY package*.json ./" >> backend/Dockerfile
+
+        echo "RUN npm install --omit=dev" >> backend/Dockerfile
+
+        echo "COPY . ." >> backend/Dockerfile
+
+        echo "ENV PORT=8080" >> backend/Dockerfile
+
+        echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+
+        echo "EXPOSE 8080" >> backend/Dockerfile
+
+        echo "CMD [\"node\", \"backend/index.js\"]" >> backend/Dockerfile
+
+        git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile (triggered by MODULE_NOT_FOUND)" || true
+
+        git push || true
+
+      fi
+
+      echo "✅ Auto-Repair Trigger completed."
+
       - name: 🧠 Global sanity check
         if: always()
         run: |
