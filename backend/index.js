@@ -1,10 +1,17 @@
-// ~/cleanpro-site/backend/index.js
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import express from "express";
 import cors from "cors";
 
-// ✅ Firebase initialization
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// ✅ Define PORT first — fixes ReferenceError
+const PORT = process.env.PORT || 8080;
+const HOST = "0.0.0.0";
+
+// ✅ Firebase init
 try {
   if (!admin.apps.length) {
     const serviceAccount = JSON.parse(readFileSync("./backend/serviceAccountKey.json"));
@@ -27,10 +34,6 @@ import bookingApi from "./routes/booking_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
 // ✅ Routes
 app.use("/api/calendar", calendarApi);
 app.use("/api/coordination_points", coordinationPointsRouter);
@@ -46,10 +49,7 @@ app.get("/", (req, res) => {
   res.send("✅ CleanPro Backend is running");
 });
 
-// ✅ Start server (correct order)
-const PORT = process.env.PORT || 8080;
-const HOST = "0.0.0.0";
-
+// ✅ Start server
 app.listen(PORT, HOST, () => {
-  console.log(`✅ CleanPro Backend running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
