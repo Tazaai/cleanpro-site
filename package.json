@@ -1,6 +1,9 @@
 {
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "puppeteer": "^24.22.0"
+    "puppeteer": "^24.24.0"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
   }
 }
