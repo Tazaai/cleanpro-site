@@ -212,5 +212,5 @@ jobs:
 
       # 🤖 Codox Smart Agent (Universal AI Fixer)
       - name: 🤖 Codox Smart Agent
-        if: failure()
+        if: always()
         run: |
