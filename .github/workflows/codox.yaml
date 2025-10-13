@@ -92,14 +92,20 @@ jobs:
               echo "✅ Dockerfile verified and fixed if needed."
             else
               echo "⚠️ backend/Dockerfile not found — creating placeholder..."
-              cat <<'EOF' > backend/Dockerfile
-FROM node:20-slim
+          cat <<'EOF' > backend/Dockerfile
+          FROM node:20-slim
+          WORKDIR /app
+          COPY . .
+          RUN npm install --production
+          EXPOSE 8080
+          CMD ["node","index.js"]
+          EOF
 WORKDIR /app
 COPY . .
 RUN npm install --production
 EXPOSE 8080
 CMD ["node","index.js"]
-DOCKER
+EOF
           fi
 
       # ✅ Detect or generate missing backend routes
