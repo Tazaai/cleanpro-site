@@ -4,7 +4,7 @@
 FROM node:20
 
 # Set working directory
-WORKDIR /app/backend
+WORKDIR /app
 
 # Copy backend package files first (better build cache)
 COPY package*.json ./
