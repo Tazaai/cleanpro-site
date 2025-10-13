@@ -93,8 +93,14 @@ jobs:
             grep -q 'CMD' backend/Dockerfile || echo 'CMD ["node","index.js"]' >> backend/Dockerfile
             echo "✅ Dockerfile verified and fixed if needed."
           else
-            echo "⚠️ backend/Dockerfile not found — creating placeholder..."
-            cat > backend/Dockerfile <<'EOF'
+          cat <<'EOF' > backend/Dockerfile
+          FROM node:20-slim
+          WORKDIR /app
+          COPY . .
+          RUN npm install --production
+          EXPOSE 8080
+          CMD ["node","index.js"]
+          EOF
 FROM node:20-slim
 WORKDIR /app
 COPY . .
