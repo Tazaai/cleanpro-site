@@ -1,7 +1,7 @@
 name: Codox Diagnostics & Self-Healing
 
 on:
-  workflow_dispatch: # ✅ Manual trigger in Actions tab
+  workflow_dispatch:   # ✅ Manual "Run workflow" button
 
 permissions:
   contents: write
@@ -58,7 +58,7 @@ jobs:
           codox --version || echo "ℹ️ Codox CLI ready"
 
       # ✅ Prepare diagnostic script
-      - name: 🔧 Prepare diagnostic script
+      - name: �� Prepare diagnostic script
         run: |
           if [ -f ./review_report.sh ]; then
             chmod +x ./review_report.sh
@@ -83,62 +83,8 @@ jobs:
           done
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
 
-      # ✅ Self-heal backend Dockerfile
-- name: 🐳 Self-heal backend Dockerfile
-  run: |
-    echo "🔍 Checking backend/Dockerfile..."
-    if [ -f backend/Dockerfile ]; then
-      sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
-      grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
-      grep -q 'CMD' backend/Dockerfile || echo 'CMD [\"node\",\"index.js\"]' >> backend/Dockerfile
-      echo "✅ Dockerfile verified and fixed if needed."
-    else
-      echo "⚠️ backend/Dockerfile not found — creating placeholder..."
-      cat <<'EOF' > backend/Dockerfile
-      FROM node:20-slim
-      WORKDIR /app
-      COPY . .
-      RUN npm install --production
-      EXPOSE 8080
-      CMD [\"node\",\"index.js\"]
-      EOF
-    fi
-  run: |
-    echo "🔍 Checking backend/Dockerfile..."
-    if [ -f backend/Dockerfile ]; then
-      sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
-      grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
-      grep -q 'CMD' backend/Dockerfile || echo 'CMD [\"node\",\"index.js\"]' >> backend/Dockerfile
-      echo "✅ Dockerfile verified and fixed if needed."
-    else
-      echo "⚠️ backend/Dockerfile not found — creating placeholder..."
-      cat <<'EOF' > backend/Dockerfile
-      FROM node:20-slim
-      WORKDIR /app
-      COPY . .
-      RUN npm install --production
-      EXPOSE 8080
-      CMD [\"node\",\"index.js\"]
-      EOF
-    fi
-        run: |
-          echo "🔍 Checking backend/Dockerfile..."
-          if [ -f backend/Dockerfile ]; then
-            sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
-            grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
-            grep -q 'CMD' backend/Dockerfile || echo 'CMD [\"node\",\"index.js\"]' >> backend/Dockerfile
-            echo "✅ Dockerfile verified and fixed if needed."
-          else
-            echo "⚠️ backend/Dockerfile not found — creating placeholder..."
-            cat <<'EOF' > backend/Dockerfile
-            FROM node:20-slim
-            WORKDIR /app
-            COPY . .
-            RUN npm install --production
-            EXPOSE 8080
-            CMD [\"node\",\"index.js\"]
-            EOF
-          fi
+      # ✅ Self-heal backend Dockerfile (no EOF heredoc)
+      - name: 🐳 Self-heal backend Dockerfile
         run: |
           echo "🔍 Checking backend/Dockerfile..."
           if [ -f backend/Dockerfile ]; then
@@ -147,21 +93,15 @@ jobs:
             grep -q 'CMD' backend/Dockerfile || echo 'CMD ["node","index.js"]' >> backend/Dockerfile
             echo "✅ Dockerfile verified and fixed if needed."
           else
-          cat <<'EOF' > backend/Dockerfile
-          FROM node:20-slim
-          WORKDIR /app
-          COPY . .
-          RUN npm install --production
-          EXPOSE 8080
-          CMD ["node","index.js"]
-          EOF
-FROM node:20-slim
-WORKDIR /app
-COPY . .
-RUN npm install --production
-EXPOSE 8080
-CMD ["node","index.js"]
-EOF
+            echo "⚠️ backend/Dockerfile not found — creating placeholder..."
+            mkdir -p backend
+            echo 'FROM node:20-slim' > backend/Dockerfile
+            echo 'WORKDIR /app' >> backend/Dockerfile
+            echo 'COPY . .' >> backend/Dockerfile
+            echo 'RUN npm install --production' >> backend/Dockerfile
+            echo 'EXPOSE 8080' >> backend/Dockerfile
+            echo 'CMD ["node","index.js"]' >> backend/Dockerfile
+            echo "✅ New backend/Dockerfile created successfully."
           fi
 
       # ✅ Detect or generate missing backend routes
@@ -237,7 +177,7 @@ EOF
           fi
 
       # ✅ Verify backend health
-      - name: 🩺 Verify backend health
+      - name: �� Verify backend health
         if: always()
         run: |
           echo "🩺 Checking backend availability..."
@@ -250,7 +190,7 @@ EOF
           fi
 
       # ✅ Global sanity check
-      - name: �� Global sanity check
+      - name: 🧠 Global sanity check
         if: always()
         run: |
           grep -q "❌" agent.md && { echo "❌ Errors found in diagnostics"; exit 1; }
