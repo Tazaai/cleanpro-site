@@ -229,7 +229,7 @@ jobs:
             echo "🛠 Applying AI fixes..."
             grep -E '^(sudo|echo|cp|mv|sed|npm|gcloud|docker|bash|cat|touch|chmod|mkdir)' codox_ai_fix.sh > codox_ai_safe.sh
             chmod +x codox_ai_safe.sh
-            bash codox_ai_safe.sh || echo "⚠️ Some AI fixes failed but continuing."
+            bash codox_ai_safe.sh || true
 
             echo "🧠 Updating memory..."
             jq --arg pat "$(head -n 1 recent_errors.log | tr -d '\n')" \
