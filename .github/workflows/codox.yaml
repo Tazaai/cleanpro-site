@@ -200,21 +200,3 @@ jobs:
       - name: 🤖 Codox Smart Agent
         if: failure()
         run: |
-          echo "🚀 Running Codox GPT Smart Agent with memory..."
-          tail -n 200 agent.md > recent_errors.log
-          [ ! -f codox_memory.json ] && echo "{"fixed_patterns":[],"run_count":0}" > codox_memory.json
-          echo "🧩 Checking for previously fixed patterns..."
-          MATCH=$(grep -Ff <(jq -r ".fixed_patterns[].pattern" codox_memory.json) recent_errors.log || true)
-          if [ -z "$MATCH" ]; then
-            echo "🧠 Sending recent errors to GPT-4o-mini..."
-            curl -s https://api.openai.com/v1/chat/completions \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $OPENAI_API_KEY" \
-              -d "{\"model\":\"gpt-4o-mini\",\"messages\":[{\"role\":\"system\",\"content\":\"You are Codox Smart Agent. Fix any system, YAML, Docker, or CI issue using safe bash.\"},{\"role\":\"user\",\"content\":\"$(tail -n 100 agent.md | sed s/"/\"/g)\"}],\"max_tokens\":600}" | jq -r .choices[0].message.content > codox_ai_fix.sh;
-            grep -E "^(sudo|echo|cp|mv|sed|npm|gcloud|docker|bash|cat|touch|chmod|mkdir)" codox_ai_fix.sh > codox_ai_safe.sh;
-            chmod +x codox_ai_safe.sh; bash codox_ai_safe.sh || true;
-          fi
-          echo "✅ Smart-Agent cycle finished (no crash)."
-        with:
-          name: codox-diagnostics-log
-          path: agent.md
