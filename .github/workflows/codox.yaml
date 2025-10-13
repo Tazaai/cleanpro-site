@@ -57,7 +57,15 @@ jobs:
           sudo apt-get install -y jq yamllint
           codox --version || echo "ℹ️ Codox CLI ready"
 
+      - name: 🧭 Load Project Guide
+        run: |
+          PROJECT_CONTEXT=$(cat PROJECT_GUIDE.md || echo "")
+          echo "$PROJECT_CONTEXT" > project_context.log
       # ✅ Prepare diagnostic script
+      - name: 🧭 Load Project Guide
+        run: |
+          PROJECT_CONTEXT=$(cat PROJECT_GUIDE.md || echo "")
+          echo "$PROJECT_CONTEXT" > project_context.log
       - name: �� Prepare diagnostic script
         run: |
           if [ -f ./review_report.sh ]; then
