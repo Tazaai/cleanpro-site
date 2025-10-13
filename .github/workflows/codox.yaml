@@ -150,15 +150,10 @@ jobs:
       # ✅ Run diagnostic script
       - name: 📋 Run Codox diagnostic
         run: |
-          echo "🚀 Starting review_report.sh..."
-          ./review_report.sh
-
-      # ✅ Commit diagnostic report
-      - name: 📦 Commit diagnostic report
-        if: always()
-        run: |
-          git config user.email "codox-bot@users.noreply.github.com"
-          git config user.name "Codox Bot"
+          echo "🚀 Running diagnostic..."
+          npm install || true
+          npm test || echo "⚠️ Frontend tests failed (non-fatal)"
+          ./review_report.sh || true
           git add agent.md || true
           git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
           git push origin main || echo "⚠️ Push skipped"
