@@ -48,6 +48,10 @@ app.get("/", (req, res) => {
 
 // ✅ Start server
 const PORT = process.env.PORT || 8080;
+if (!process.env.PORT) process.env.PORT = 8080;
+const PORT = process.env.PORT;
+const HOST = "0.0.0.0";
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
