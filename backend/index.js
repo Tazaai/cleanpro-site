@@ -47,11 +47,12 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Start server
-const PORT = process.env.PORT || 8080;
+// removed duplicate PORT declaration
 if (!process.env.PORT) process.env.PORT = 8080;
-const PORT = process.env.PORT;
+// removed duplicate PORT declaration
 const HOST = "0.0.0.0";
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+const PORT = process.env.PORT || 8080;
