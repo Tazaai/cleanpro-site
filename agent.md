@@ -37,7 +37,7 @@ found 0 vulnerabilities
 ## 🎨 Checking frontend
 🩹 Checking frontend dependencies...
 
-up to date, audited 345 packages in 817ms
+up to date, audited 345 packages in 791ms
 
 47 packages are looking for funding
   run `npm fund` for details
@@ -60,7 +60,7 @@ computing gzip size...
 [2mdist/[22m[32mindex.html                 [39m[1m[2m  0.70 kB[22m[1m[22m[2m │ gzip:  0.40 kB[22m
 [2mdist/[22m[2massets/[22m[35mindex-39fedcd9.css  [39m[1m[2m 16.10 kB[22m[1m[22m[2m │ gzip:  3.73 kB[22m
 [2mdist/[22m[2massets/[22m[36mindex-b4cf7e65.js   [39m[1m[2m201.34 kB[22m[1m[22m[2m │ gzip: 63.48 kB[22m
-[32m✓ built in 1.99s[39m
+[32m✓ built in 1.91s[39m
 ## 🗄️ Checking Firebase structure
 node:internal/modules/esm/resolve:873
   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
@@ -89,16 +89,16 @@ If you encounter any issues, please report them to https://github.com/sujjeee/co
 ▶️ Deploying Backend...
 🚀 Building and deploying cleanpro-backend...
 Creating temporary archive of 11559 file(s) totalling 203.3 MiB before compression.
-Uploading tarball of [.] to [gs://cleanpro-site_cloudbuild/source/1760349038.926822-6be58223d2e94a718593bd9d083f74d2.tgz]
-Created [https://cloudbuild.googleapis.com/v1/projects/cleanpro-site/locations/global/builds/db805ae4-b70d-429a-8a19-9177ca1f6d64].
-Logs are available at [ https://console.cloud.google.com/cloud-build/builds/db805ae4-b70d-429a-8a19-9177ca1f6d64?project=5539254765 ].
+Uploading tarball of [.] to [gs://cleanpro-site_cloudbuild/source/1760351328.817244-9d71d609fd1746ad9329d85d37063003.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/cleanpro-site/locations/global/builds/1628016d-1750-4318-b89e-533fef6ecd7d].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/1628016d-1750-4318-b89e-533fef6ecd7d?project=5539254765 ].
 Waiting for build to complete. Polling interval: 1 second(s).
 ----------------------------- REMOTE BUILD OUTPUT ------------------------------
-starting build "db805ae4-b70d-429a-8a19-9177ca1f6d64"
+starting build "1628016d-1750-4318-b89e-533fef6ecd7d"
 
 FETCHSOURCE
-Fetching storage object: gs://cleanpro-site_cloudbuild/source/1760349038.926822-6be58223d2e94a718593bd9d083f74d2.tgz#1760349064283597
-Copying gs://cleanpro-site_cloudbuild/source/1760349038.926822-6be58223d2e94a718593bd9d083f74d2.tgz#1760349064283597...
+Fetching storage object: gs://cleanpro-site_cloudbuild/source/1760351328.817244-9d71d609fd1746ad9329d85d37063003.tgz#1760351355103941
+Copying gs://cleanpro-site_cloudbuild/source/1760351328.817244-9d71d609fd1746ad9329d85d37063003.tgz#1760351355103941...
 / [0 files][    0.0 B/ 29.3 MiB]                                                / [1 files][ 29.3 MiB/ 29.3 MiB]                                                
 Operation completed over 1 objects/29.3 MiB.
 BUILD
@@ -111,16 +111,17 @@ c236995d12f2: Pulling fs layer
 ab9c5ae25e4d: Pulling fs layer
 997b350cffa1: Pulling fs layer
 cc663995c53d: Pulling fs layer
-997b350cffa1: Waiting
 cc663995c53d: Waiting
+997b350cffa1: Waiting
 c236995d12f2: Verifying Checksum
 c236995d12f2: Download complete
-997b350cffa1: Download complete
+5c32499ab806: Verifying Checksum
 5c32499ab806: Download complete
 ab9c5ae25e4d: Verifying Checksum
 ab9c5ae25e4d: Download complete
+997b350cffa1: Verifying Checksum
+997b350cffa1: Download complete
 cc663995c53d: Verifying Checksum
-cc663995c53d: Download complete
 5c32499ab806: Pull complete
 c236995d12f2: Pull complete
 ab9c5ae25e4d: Pull complete
@@ -130,17 +131,17 @@ Digest: sha256:f679d7699517426eb148a5698c717477fd3f8a48f6c1eaf771e390a9bb8268c8
 Status: Downloaded newer image for node:20-slim
  ---> 66044c209f92
 Step 2/14 : WORKDIR /app/backend
- ---> Running in bd89070f471c
-Removing intermediate container bd89070f471c
- ---> bd21afb28b81
+ ---> Running in 38d53d5eff51
+Removing intermediate container 38d53d5eff51
+ ---> afb32705dadf
 Step 3/14 : COPY package*.json ./
- ---> 8d3a0c4611cb
+ ---> df9d908fcaa7
 Step 4/14 : RUN npm install --production
- ---> Running in ef58d75819f9
+ ---> Running in 7b8e99eb18f3
 [91mnpm warn config production Use `--omit=dev` instead.
 [0m[91mnpm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
 [0m
-added 319 packages, and audited 320 packages in 21s
+added 319 packages, and audited 320 packages in 18s
 
 37 packages are looking for funding
   run `npm fund` for details
@@ -151,55 +152,55 @@ npm notice New major version of npm available! 10.8.2 -> 11.6.2
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
 npm notice To update run: npm install -g npm@11.6.2
 npm notice
-[0mRemoving intermediate container ef58d75819f9
- ---> e05bb08c9cc0
+[0mRemoving intermediate container 7b8e99eb18f3
+ ---> bc5f584389a9
 Step 5/14 : COPY . .
- ---> 116ca676fa1f
+ ---> 8858cee183f8
 Step 6/14 : ENV PORT=8080
- ---> Running in 8edb37fb0205
-Removing intermediate container 8edb37fb0205
- ---> 06b392309b47
+ ---> Running in 7e99eeaa1409
+Removing intermediate container 7e99eeaa1409
+ ---> a8471e536eaa
 Step 7/14 : ENV CLOUD_RUN_TIMEOUT=1200
- ---> Running in e178f4df480a
-Removing intermediate container e178f4df480a
- ---> d59c0b60eaef
+ ---> Running in a6b32e23a31b
+Removing intermediate container a6b32e23a31b
+ ---> 7a2ef0353400
 Step 8/14 : ENV CLOUD_RUN_CPU_THROTTLING=FALSE
- ---> Running in 6d95157a9e40
-Removing intermediate container 6d95157a9e40
- ---> cb896f957488
+ ---> Running in 696b10fbdcf9
+Removing intermediate container 696b10fbdcf9
+ ---> 1bf9f83aa3c1
 Step 9/14 : ENV CLOUD_RUN_TIMEOUT=1200
- ---> Running in 1c25defdcd58
-Removing intermediate container 1c25defdcd58
- ---> f9753b91840a
+ ---> Running in 90e3b17c5e1c
+Removing intermediate container 90e3b17c5e1c
+ ---> e36d9ef1a789
 Step 10/14 : ENV CLOUD_RUN_TIMEOUT=1200
- ---> Running in 46943940d232
-Removing intermediate container 46943940d232
- ---> 365e38b2fa05
+ ---> Running in b2b20219d341
+Removing intermediate container b2b20219d341
+ ---> 7e0eb0d7c99f
 Step 11/14 : ENV CLOUD_RUN_CPU_THROTTLING=FALSE
- ---> Running in cc3c49ce4e04
-Removing intermediate container cc3c49ce4e04
- ---> bdff62fd4025
+ ---> Running in c69ffdd7962d
+Removing intermediate container c69ffdd7962d
+ ---> 7046a296ae6f
 Step 12/14 : ENV CLOUD_RUN_TIMEOUT=1200
- ---> Running in 5db185df8eec
-Removing intermediate container 5db185df8eec
- ---> 796aeaa69013
+ ---> Running in 0addc682d1dc
+Removing intermediate container 0addc682d1dc
+ ---> 615ca8e215b9
 Step 13/14 : EXPOSE 8080
- ---> Running in e2fc1c7af5e4
-Removing intermediate container e2fc1c7af5e4
- ---> 4667fd026330
+ ---> Running in 2718f7495524
+Removing intermediate container 2718f7495524
+ ---> d46deab070eb
 Step 14/14 : CMD ["npm","start"]
- ---> Running in ae7f2ccd8302
-Removing intermediate container ae7f2ccd8302
- ---> 0cd1b749f491
-Successfully built 0cd1b749f491
+ ---> Running in a7d8c5e8c5ac
+Removing intermediate container a7d8c5e8c5ac
+ ---> af88c440e995
+Successfully built af88c440e995
 Successfully tagged gcr.io/cleanpro-site/cleanpro-backend:latest
 PUSH
 Pushing gcr.io/cleanpro-site/cleanpro-backend
 The push refers to repository [gcr.io/cleanpro-site/cleanpro-backend]
-289ea0240dae: Preparing
-696171bf373c: Preparing
-22105a4a49b2: Preparing
-214d4f34bcd1: Preparing
+834ce18a018b: Preparing
+9ae3c4547adb: Preparing
+0605e4c1951a: Preparing
+0fbe10fb6f7b: Preparing
 5172397fbcd4: Preparing
 e07dd166a3a3: Preparing
 7ace34a4ad78: Preparing
@@ -211,26 +212,26 @@ e07dd166a3a3: Waiting
 aca836066730: Waiting
 5172397fbcd4: Layer already exists
 e07dd166a3a3: Layer already exists
-214d4f34bcd1: Pushed
-22105a4a49b2: Pushed
+0fbe10fb6f7b: Pushed
+0605e4c1951a: Pushed
 7ace34a4ad78: Layer already exists
 8ee6722b9ed5: Layer already exists
 aca836066730: Layer already exists
-289ea0240dae: Pushed
-696171bf373c: Pushed
-latest: digest: sha256:ea400a9564cdb69769dde9ab3d82f4ab1dfb00083a5cb078d18cf1b6e0edaa3a size: 2208
+834ce18a018b: Pushed
+9ae3c4547adb: Pushed
+latest: digest: sha256:b661ac6f7a275897e9914cb411584319959af4afa3767f33ea261b56110935cf size: 2208
 DONE
 --------------------------------------------------------------------------------
 ID                                    CREATE_TIME                DURATION  SOURCE                                                                                       IMAGES                                           STATUS
-db805ae4-b70d-429a-8a19-9177ca1f6d64  2025-10-13T09:51:04+00:00  2M2S      gs://cleanpro-site_cloudbuild/source/1760349038.926822-6be58223d2e94a718593bd9d083f74d2.tgz  gcr.io/cleanpro-site/cleanpro-backend (+1 more)  SUCCESS
+1628016d-1750-4318-b89e-533fef6ecd7d  2025-10-13T10:29:15+00:00  1M54S     gs://cleanpro-site_cloudbuild/source/1760351328.817244-9d71d609fd1746ad9329d85d37063003.tgz  gcr.io/cleanpro-site/cleanpro-backend (+1 more)  SUCCESS
 Deploying container to Cloud Run service [cleanpro-backend] in project [cleanpro-site] region [europe-west1]
 Deploying...
-Setting IAM Policy...............done
-Creating Revision............................................................................................................................................................................................................................................................................failed
+Setting IAM Policy............................done
+Creating Revision..........................................................................................................................................................................................................................................................................................................................................................................................................failed
 Deployment failed
-ERROR: (gcloud.run.deploy) Revision 'cleanpro-backend-00538-stw' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+ERROR: (gcloud.run.deploy) Revision 'cleanpro-backend-00540-t7c' is not ready and cannot serve traffic. The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=cleanpro-site&resource=cloud_run_revision/service_name/cleanpro-backend/revision_name/cleanpro-backend-00538-stw&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22cleanpro-backend%22%0Aresource.labels.revision_name%3D%22cleanpro-backend-00538-stw%22 
+Logs URL: https://console.cloud.google.com/logs/viewer?project=cleanpro-site&resource=cloud_run_revision/service_name/cleanpro-backend/revision_name/cleanpro-backend-00540-t7c&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22cleanpro-backend%22%0Aresource.labels.revision_name%3D%22cleanpro-backend-00540-t7c%22 
 For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
 ⚠️ Retry 1 failed — reading Cloud Run logs...
 ## 🧪 Running backend & frontend tests
