@@ -235,19 +235,19 @@ jobs:
           echo "♻️ Retrying backend deploy..."; 
           bash ./deploy_backend.sh || true; 
           echo "🚀 Auto-building & deploying frontend..."; 
-                      cd frontend && npm install --legacy-peer-deps && npm run build && 
-                      gcloud run deploy cleanpro-frontend --source . --region=europe-west1 || true; 
-                      cd ..; 
-                      echo "🧠 Reinforcing diagnostics cycle..."; 
-                      bash ./review_report.sh || echo "⚠️ Diagnostics recheck failed (non-fatal)."; true
-                      echo "🧩 Auto-healing missing runtime packages..."; 
-                      npm install firebase-admin puppeteer --omit=dev || true; 
-                      echo "🚀 Auto-deploying frontend..."; 
-                      cd frontend && npm install --legacy-peer-deps && npm run build && 
-                      gcloud run deploy cleanpro-frontend --source . --region europe-west1 || true; 
-                      cd ..; true
+          cd frontend && npm install --legacy-peer-deps && npm run build && 
+          gcloud run deploy cleanpro-frontend --source . --region=europe-west1 || true; 
+          cd ..; 
+          echo "🧠 Reinforcing diagnostics cycle..."; 
+          bash ./review_report.sh || echo "⚠️ Diagnostics recheck failed (non-fatal)."; true
+          echo "🧩 Auto-healing missing runtime packages..."; 
+          npm install firebase-admin puppeteer --omit=dev || true; 
+          echo "🚀 Auto-deploying frontend..."; 
+          cd frontend && npm install --legacy-peer-deps && npm run build && 
+          gcloud run deploy cleanpro-frontend --source . --region europe-west1 || true; 
+          cd ..; true
             
-                        echo "🧠 Updating memory..."
+            echo "🧠 Updating memory..."
             jq --arg pat "$(head -n 1 recent_errors.log | tr -d '\n')" \
               '.fixed_patterns += [{"pattern":$pat,"time":"'"$(date)"'"}] | .run_count += 1' \
               codox_memory.json > tmp && mv tmp codox_memory.json
