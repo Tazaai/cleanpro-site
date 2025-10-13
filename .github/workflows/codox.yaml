@@ -83,17 +83,36 @@ jobs:
           done
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
 
-      # ✅ Self-heal backend Dockerfile (no EOF heredoc)
       - name: 🐳 Self-heal backend Dockerfile
         run: |
           echo "🔍 Checking backend/Dockerfile..."
           if [ -f backend/Dockerfile ]; then
+            grep -q "ENV HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+            grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
+            echo "✅ Dockerfile verified and fixed.";
+          fi
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
+          if [ -f backend/Dockerfile ]; then
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             sed -i 's#WORKDIR /app$#WORKDIR /app/backend#' backend/Dockerfile || true
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             grep -q 'EXPOSE 8080' backend/Dockerfile || echo 'EXPOSE 8080' >> backend/Dockerfile
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             grep -q 'CMD' backend/Dockerfile || echo 'CMD ["node","index.js"]' >> backend/Dockerfile
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             echo "✅ Dockerfile verified and fixed if needed."
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
           else
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             echo "⚠️ backend/Dockerfile not found — creating placeholder..."
+          grep -q "HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
+          grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
             mkdir -p backend
             echo 'FROM node:20-slim' > backend/Dockerfile
             echo 'WORKDIR /app' >> backend/Dockerfile
