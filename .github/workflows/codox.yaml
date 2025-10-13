@@ -199,7 +199,17 @@ jobs:
             echo "ℹ️ deploy_backend.sh not found — skipping redeploy"
           fi
 
+      - name: 🩹 Auto-heal Cloud Run startup
+        run: |
+          echo "🩹 Checking backend for startup exit(1)..."
+          gcloud run services update cleanpro-backend --set-env-vars="PORT=8080,HOST=0.0.0.0" --region=europe-west1 || true
+          echo "✅ Startup env ensured."
       # ✅ Verify backend health
+      - name: 🩹 Auto-heal Cloud Run startup
+        run: |
+          echo "🩹 Checking backend for startup exit(1)..."
+          gcloud run services update cleanpro-backend --set-env-vars="PORT=8080,HOST=0.0.0.0" --region=europe-west1 || true
+          echo "✅ Startup env ensured."
       - name: 🩺 Verify backend health
         if: always()
         run: |
