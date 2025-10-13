@@ -162,6 +162,19 @@ jobs:
         if: failure() || always()
         run: |
           echo "🤖 Smart Agent detected failure, invoking auto-repair..."
+          if grep -q "Cannot access .PORT. before initialization" agent.md; then 
+            echo "🧠 Fixing PORT init error and forcing clean deploy..."; 
+            cd backend; 
+            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || true; 
+            gcloud run deploy cleanpro-backend --image gcr.io/$GCP_PROJECT/cleanpro-backend --region europe-west1 --platform managed --allow-unauthenticated || true; 
+            cd ..; 
+          fi; 
+          if grep -q "Dockerfile required when specifying --tag" agent.md; then 
+            echo "⚙️ Re-running build from backend directory..."; 
+            cd backend; 
+            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || true; 
+            cd ..; 
+          fi
           if grep -q "Cannot find module.*backend/backend" agent.md; then 
             echo "🩹 Fixing double-backend path issue..."; 
             sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || true; 
