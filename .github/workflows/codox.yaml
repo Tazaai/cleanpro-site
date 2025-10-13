@@ -162,6 +162,13 @@ jobs:
         if: failure() || always()
         run: |
           echo "🤖 Smart Agent detected failure, invoking auto-repair..."
+          if grep -q "Cannot find module.*backend/backend" agent.md; then 
+            echo "🩹 Fixing double-backend path issue..."; 
+            sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || true; 
+            sed -i "s|backend/backend/index.js|backend/index.js|" backend/Dockerfile || true; 
+            git add backend/Dockerfile && git commit -m "auto-heal: correct Dockerfile workdir path" || true; 
+            git push || true; 
+          fi
           if grep -q "MODULE_NOT_FOUND" agent.md; then
             echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
             echo "FROM node:18" > backend/Dockerfile
