@@ -1,26 +1,26 @@
-# 🧩 CleanPro Backend – Cloud Run Dockerfile
+# 🧩 CleanPro Backend – Final Cloud Run Dockerfile
 
-# Use stable Node LTS
+# Use a stable Node.js LTS image
 FROM node:18
 
-# Create and set working directory
+# Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY backend/package*.json ./
+# Copy backend package files first (for better build cache)
+COPY package*.json ./
 
-# Install only production dependencies
-RUN npm install --production
+# Install production dependencies
+RUN npm install --omit=dev
 
-# Copy the rest of the backend code
-COPY backend/ ./
-
-# Expose Cloud Run port
-EXPOSE 8080
+# Copy backend source code into the container
+COPY . .
 
 # Ensure environment variables for Cloud Run
 ENV PORT=8080
 ENV HOST=0.0.0.0
 
-# Start the backend server
-CMD ["node", "index.js"]
+# Expose Cloud Run port
+EXPOSE 8080
+
+# Start the backend from backend/index.js explicitly
+CMD ["node", "backend/index.js"]
