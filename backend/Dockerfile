@@ -28,4 +28,4 @@ EXPOSE 8080
 HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 
 # Start backend
-CMD ["node", "backend/index.js"]
+CMD ["node", "index.js"]
