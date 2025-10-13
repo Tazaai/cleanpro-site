@@ -148,7 +148,6 @@ echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — consider migr
           fi
 
       # ✅ Run diagnostic script
-      - name: 📋 Run Codox diagnostic
         run: |
           echo "🚀 Starting review_report.sh..."
           ./review_report.sh
