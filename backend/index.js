@@ -1,3 +1,5 @@
+const PORT = process.env.PORT || 8080;
+// /workspaces/cleanpro-site/backend/index.js
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import express from "express";
@@ -14,7 +16,8 @@ const HOST = "0.0.0.0";
 // ✅ Firebase init
 try {
   if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(readFileSync("./backend/serviceAccountKey.json"));
+    // Correct path for Cloud Run build root (/app/backend)
+    const serviceAccount = JSON.parse(readFileSync("./serviceAccountKey.json"));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -51,5 +54,5 @@ app.get("/", (req, res) => {
 
 // ✅ Start server
 app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server running on http://${HOST}:${PORT}`);
 });
