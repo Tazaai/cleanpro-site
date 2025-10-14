@@ -1,7 +1,8 @@
+---
 name: Codox Diagnostics & Self-Healing
 
 on:
-  workflow_dispatch:   # ✅ Manual "Run workflow" button
+  workflow_dispatch: true  # ✅ Manual "Run workflow" button
 
 permissions:
   contents: write
@@ -12,208 +13,410 @@ jobs:
     timeout-minutes: 90
 
     env:
+          | 
       GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          | 
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+          | 
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          | 
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          | 
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+          | 
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          | 
       BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
 
     steps:
       - uses: actions/checkout@v4
       - name: 🧭 Sync latest code
         run: |
+          | 
+        run: |
+          | 
           git fetch origin main
+          | 
           git reset --hard origin/main
+          | 
           echo "✅ Synced with latest main branch."
 
       - name: 🔐 Authenticate to Google Cloud
+        run: |
+          | 
         uses: google-github-actions/auth@v2
+          | 
         with:
+          | 
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: ⚙️ Setup gcloud
+        run: |
+          | 
         uses: google-github-actions/setup-gcloud@v2
+          | 
         with:
+          | 
           project_id: ${{ secrets.GCP_PROJECT }}
 
       - name: 🔎 Verify gcloud configuration
         run: |
+          | 
+        run: |
+          | 
           gcloud auth list
+          | 
           gcloud config set project "$GCP_PROJECT"
+          | 
           gcloud config set run/region europe-west1
+          | 
           gcloud info
 
       - name: 🧠 Install Codox CLI
         run: |
-          npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"
+          | 
+        run: |
+          | 
+          npm install -g codox prettier@3 || echo "⚠️ Codox CLI install warning"\
+  
+          | 
           sudo apt-get update -y
+          | 
           sudo apt-get install -y jq yamllint
+          | 
           codox --version || echo "ℹ️ Codox CLI ready"
 
       - name: 🧭 Load Project Guide
         run: |
+          | 
+        run: |
+          | 
           PROJECT_CONTEXT=$(cat PROJECT_GUIDE.md || echo "")
+          | 
           echo "$PROJECT_CONTEXT" > project_context.log
 
       - name: 🔎 Prepare diagnostic script
         run: |
+          | 
+        run: |
+          | 
           if [ -f ./review_report.sh ]; then
+          | 
             chmod +x ./review_report.sh
+          | 
             echo "✅ review_report.sh ready"
+          | 
           else
+          | 
             echo "❌ review_report.sh missing!"
+          | 
             exit 1
+          | 
           fi
 
       - name: 🗝️ Validate required secrets
         run: |
+          | 
+        run: |
+          | 
           secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
+          | 
           missing=0
+          | 
           for s in "${secrets[@]}"; do
+          | 
             if [ -z "${!s}" ]; then
+          | 
               echo "❌ Missing: $s"
+          | 
               missing=$((missing+1))
+          | 
             else
+          | 
               echo "✅ $s OK"
+          | 
             fi
+          | 
           done
           [ $missing -gt 0 ] && exit 1 || echo "✅ All secrets verified"
 
       - name: 🐳 Self-heal backend Dockerfile
         run: |
+          | 
+        run: |
+          | 
           echo "🔍 Checking backend/Dockerfile..."
+          | 
           if [ -f backend/Dockerfile ]; then
-            grep -q "ENV HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.0.0" >> backend/Dockerfile;
-            grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
+          | 
+            grep -q "ENV HOST=0.0.0.0" backend/Dockerfile || echo "ENV HOST=0.0.\
+  0.0" >> backend/Dockerfile;
+          | 
+            grep -q "HEALTHCHECK CMD curl" backend/Dockerfile || echo "HEALTHCHE\
+  CK CMD curl -f http://localhost:8080/ || exit 1" >> backend/Dockerfile;
+          | 
             echo "✅ Dockerfile verified and fixed.";
+          | 
           else
+          | 
             echo "⚠️ backend/Dockerfile missing — creating default one..."
+          | 
             mkdir -p backend
+          | 
             echo 'FROM node:18' > backend/Dockerfile
+          | 
             echo 'WORKDIR /app' >> backend/Dockerfile
+          | 
             echo 'COPY package*.json ./' >> backend/Dockerfile
+          | 
             echo 'RUN npm install --omit=dev' >> backend/Dockerfile
+          | 
             echo 'COPY . .' >> backend/Dockerfile
+          | 
             echo 'ENV PORT=8080' >> backend/Dockerfile
+          | 
             echo 'ENV HOST=0.0.0.0' >> backend/Dockerfile
+          | 
             echo 'EXPOSE 8080' >> backend/Dockerfile
+          | 
             echo 'CMD ["node","backend/index.js"]' >> backend/Dockerfile
+          | 
             echo "✅ Default Dockerfile recreated."
+          | 
           fi
 
       - name: 🧭 Detect or generate missing backend routes
         run: |
+          | 
+        run: |
+          | 
           echo "🔍 Scanning backend/routes for missing API files..."
+          | 
           mkdir -p backend/routes
-          routes=(services_api.mjs bookings_api.mjs quotes_api.mjs pricing_api.mjs)
+          | 
+          routes=(services_api.mjs bookings_api.mjs quotes_api.mjs pricing_api.m\
+  js)
+          | 
           for r in "${routes[@]}"; do
+          | 
             if [ ! -f "backend/routes/$r" ]; then
+          | 
               echo "⚙️ Creating recovery route: $r"
+          | 
               echo 'import express from "express";' > "backend/routes/$r"
+          | 
               echo 'const router = express.Router();' >> "backend/routes/$r"
-              echo 'router.get("/", (req, res) => res.json({ message: "✅ Auto-recovered route active" }));' >> "backend/routes/$r"
+          | 
+              echo 'router.get("/", (req, res) => res.json({ message: "✅ Auto-re\
+  covered route active" }));' >> "backend/routes/$r"
+          | 
               echo 'export default router;' >> "backend/routes/$r"
+          | 
               echo "✅ $r created safely."
+          | 
             else
+          | 
               echo "✅ $r exists — verified."
+          | 
             fi
+          | 
           done
 
       - name: 🧩 Validate YAML syntax
         run: |
+          | 
+        run: |
+          | 
           echo "🔍 Validating codox.yaml syntax..."
-          yamllint .github/workflows/codox.yaml || echo "⚠️ YAML validation warnings only"
+          | 
+          yamllint .github/workflows/codox.yaml || echo "⚠️ YAML validation warn\
+  ings only"
 
       - name: 🧱 Validate frontend build
         run: |
+          | 
+        run: |
+          | 
           if [ -d frontend ]; then
+          | 
             echo "🧩 Building frontend..."
+          | 
             cd frontend
+          | 
             npm install --legacy-peer-deps
+          | 
             npm run build || echo "⚠️ Frontend build failed (non-fatal)"
-            echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — consider migrating later."
+          | 
+            echo "⚠️ Notice: google.maps.places.Autocomplete is legacy — conside\
+  r migrating later."
+          | 
             cd ..
+          | 
           fi
 
       - name: 📋 Run Codox diagnostic
         run: |
+          | 
+        run: |
+          | 
           echo "🚀 Running diagnostic..."
+          | 
           npm install || true
+          | 
           npm test || echo "⚠️ Tests failed (non-fatal)"
           ./review_report.sh || true
+          | 
           git add agent.md || true
-          git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No report changes"
+          | 
+          git commit -m "chore: Codox diagnostic report update" || echo "ℹ️ No r\
+  eport changes"
+          | 
           git push origin main || echo "⚠️ Push skipped"
 
       - name: ♻️ Commit Codox auto-fixes & redeploy
-        if: always()
         run: |
+          | 
+        if: always()
+          | 
+        run: |
+          | 
           git add backend/ frontend/ || true
-          git commit -m "chore: Codox auto-fix applied" || echo "ℹ️ No fixes detected"
+          | 
+          git commit -m "chore: Codox auto-fix applied" || echo "ℹ️ No fixes det\
+  ected"
+          | 
           git push origin main || echo "⚠️ Push skipped"
+          | 
           if [ -f ./deploy_backend.sh ]; then
+          | 
             echo "🚀 Running backend deploy..."
+          | 
             bash ./deploy_backend.sh || echo "⚠️ Redeploy failed (non-fatal)"
+          | 
           fi
 
       - name: 🤖 Codox Auto-Repair Trigger
-        if: failure() || always()
         run: |
+          | 
+        if: failure() || always()
+          | 
+        run: |
+          | 
           echo "🤖 Smart Agent detected failure, invoking auto-repair..."
-          if grep -q "Cannot access .PORT. before initialization" agent.md; then 
-            echo "🧠 Fixing PORT init error and forcing clean deploy..."; 
-            cd backend; 
-            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || true; 
-            gcloud run deploy cleanpro-backend --image gcr.io/$GCP_PROJECT/cleanpro-backend --region europe-west1 --platform managed --allow-unauthenticated || true; 
-            cd ..; 
-          fi; 
-          if grep -q "Dockerfile required when specifying --tag" agent.md; then 
-            echo "⚙️ Re-running build from backend directory..."; 
-            cd backend; 
-            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || true; 
-            cd ..; 
+          | 
+          if grep -q "Cannot access .PORT. before initialization" agent.md; then\
+  
+          | 
+            echo "🧠 Fixing PORT init error and forcing clean deploy...";
+          | 
+            cd backend;
+          | 
+            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || t\
+  rue;
+          | 
+            gcloud run deploy cleanpro-backend --image gcr.io/$GCP_PROJECT/clean\
+  pro-backend --region europe-west1 --platform managed --allow-unauthenticated || true;
+          | 
+            cd ..;
+          | 
+          fi;
+          | 
+          if grep -q "Dockerfile required when specifying --tag" agent.md; then
+          | 
+            echo "⚙️ Re-running build from backend directory...";
+          | 
+            cd backend;
+          | 
+            gcloud builds submit --tag gcr.io/$GCP_PROJECT/cleanpro-backend || t\
+  rue;
+          | 
+            cd ..;
+          | 
           fi
-          if grep -q "Cannot find module.*backend/backend" agent.md; then 
-            echo "🩹 Fixing double-backend path issue..."; 
-            sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || true; 
-            sed -i "s|backend/backend/index.js|backend/index.js|" backend/Dockerfile || true; 
-            git add backend/Dockerfile && git commit -m "auto-heal: correct Dockerfile workdir path" || true; 
-            git push || true; 
+          | 
+          if grep -q "Cannot find module.*backend/backend" agent.md; then
+          | 
+            echo "🩹 Fixing double-backend path issue...";
+          | 
+            sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || \
+  true;
+          | 
+            sed -i "s|backend/backend/index.js|backend/index.js|" backend/Docker\
+  file || true;
+          | 
+            git add backend/Dockerfile && git commit -m "auto-heal: correct Dock\
+  erfile workdir path" || true;
+          | 
+            git push || true;
+          | 
           fi
+          | 
           if grep -q "MODULE_NOT_FOUND" agent.md; then
+          | 
             echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
+          | 
             echo "FROM node:18" > backend/Dockerfile
+          | 
             echo "WORKDIR /app" >> backend/Dockerfile
+          | 
             echo "COPY package*.json ./" >> backend/Dockerfile
+          | 
             echo "RUN npm install --omit=dev" >> backend/Dockerfile
+          | 
             echo "COPY . ." >> backend/Dockerfile
+          | 
             echo "ENV PORT=8080" >> backend/Dockerfile
+          | 
             echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+          | 
             echo "EXPOSE 8080" >> backend/Dockerfile
+          | 
             echo 'CMD ["node","backend/index.js"]' >> backend/Dockerfile
-            git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile" || true
+          | 
+            git add backend/Dockerfile && git commit -m "auto-heal: rebuild back\
+  end Dockerfile" || true
+          | 
             git push || true
+          | 
           fi
+          | 
           echo "✅ Auto-Repair Trigger completed."
 
       - name: 🩺 Verify backend health
         run: |
+          | 
+        run: |
+          | 
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL")
+          | 
           if [ "$STATUS" = "200" ]; then
+          | 
             echo "✅ Backend healthy"
+          | 
           else
+          | 
             echo "❌ Backend returned HTTP $STATUS"
+          | 
             exit 1
+          | 
           fi
 
       - name: 🧠 Global sanity check
-        if: always()
         run: |
-          grep -q "❌" agent.md && echo "❌ Errors found" || echo "✅ No critical errors detected"
+          | 
+        if: always()
+          | 
+        run: |
+          | 
+          grep -q "❌" agent.md && echo "❌ Errors found" || echo "✅ No critical e\
+  rrors detected"
       - name: 🩺 Verify backend health
         run: |
+          | 
+        run: |
+          | 
           echo "🔍 Checking service health..."
+          | 
           curl -f $BACKEND_URL || (echo "❌ Health check failed" && exit 1)
+          | 
           echo "✅ Backend is healthy and reachable."
