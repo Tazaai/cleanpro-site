@@ -1,7 +1,7 @@
 name: Codox Diagnostics & Self-Healing
 
 on:
-  workflow_dispatch: true
+  workflow_dispatch:
 
 permissions:
   contents: write
