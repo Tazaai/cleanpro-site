@@ -1,5 +1,3 @@
-import http from "http"; const PORT = process.env.PORT || 8080;
-const PORT = process.env.PORT || 8080;
 // /workspaces/cleanpro-site/backend/index.js
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
@@ -10,8 +8,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Define PORT first — fixes ReferenceError
-const PORT = process.env.PORT || 8080;
 const HOST = "0.0.0.0";
 
 // ✅ Firebase init
@@ -54,7 +50,4 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Start server
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running on http://${HOST}:${PORT}`);
-});
 const PORT = process.env.PORT || 8080;
