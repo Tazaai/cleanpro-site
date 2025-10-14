@@ -212,3 +212,8 @@ jobs:
         if: always()
         run: |
           grep -q "❌" agent.md && echo "❌ Errors found" || echo "✅ No critical errors detected"
+      - name: 🩺 Verify backend health
+        run: |
+          echo "🔍 Checking service health..."
+          curl -f $BACKEND_URL || (echo "❌ Health check failed" && exit 1)
+          echo "✅ Backend is healthy and reachable."
