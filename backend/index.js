@@ -20,8 +20,10 @@ const HOST = "0.0.0.0";
 // ✅ Firebase init
 try {
   if (!admin.apps.length) {
-    // ✅ Corrected path for Cloud Run
-    const serviceAccount = JSON.parse(readFileSync("/app/backend/serviceAccountKey.json"));
+    // ✅ Corrected absolute path for Cloud Run
+    const serviceAccount = JSON.parse(
+      readFileSync("/app/backend/serviceAccountKey.json")
+    );
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -58,4 +60,6 @@ app.get("/", (req, res) => {
 
 // ✅ Start server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, HOST, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, HOST, () =>
+  console.log(`✅ Server running on port ${PORT}`)
+);
