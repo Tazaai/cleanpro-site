@@ -132,6 +132,20 @@ git add agent.md || true
 git commit -m "chore(codox): automated review & deploy report" || echo "ℹ️ Nothing to commit"
 git push origin main || echo "⚠️ Push skipped"
 
+# �� Auto Git sync + error display
+
+git pull --rebase || echo "⚠️ Git rebase failed — showing conflicts..."
+
+if git push 2>&1 | tee push.log | grep -q "rejected"; then
+
+  echo "❌ Push rejected — branch behind remote"
+
+  git pull --rebase
+
+  git push
+
+fi
+
 # --- Final error check ---
 if grep -q "⚠️" agent.md || grep -q "❌" agent.md; then
   echo "❌ Codox run detected issues — review agent.md"
