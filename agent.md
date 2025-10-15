@@ -407,3 +407,11 @@ Service URL: https://cleanpro-frontend-5539254765.europe-west1.run.app
 ## 🩺 Health test...
 ✅ CleanPro Backend is running✅ Backend healthy
 ## 📦 Commit diagnostic report...
+[main 186f3f0] chore(codox): automated review & deploy report
+ 1 file changed, 155 insertions(+), 158 deletions(-)
+To https://github.com/Tazaai/cleanpro-site
+   5d15e98..186f3f0  main -> main
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+⚠️ Git rebase failed — showing conflicts...
+❌ Codox run detected issues — review agent.md
