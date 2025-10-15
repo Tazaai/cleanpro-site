@@ -21,7 +21,7 @@ const HOST = "0.0.0.0";
 try {
   if (!admin.apps.length) {
     // ✅ Corrected path for Cloud Run
-    const serviceAccount = JSON.parse(readFileSync("./serviceAccountKey.json"));
+    const serviceAccount = JSON.parse(readFileSync("/app/backend/serviceAccountKey.json"));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
