@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v7.1 — GPT-guided, 3-cycle)
+# 🧠 Codox Master Review & Self-Healing Runner (v7.2 — GPT-guided, 3-cycle, auto-trigger)
 set +e
 exec > >(tee agent.md) 2>&1
 
@@ -14,11 +14,12 @@ else
   echo "⚠️ PROJECT_GUIDE.md missing — limited mode."
 fi
 
+# 🔁 Core repair cycle
 run_cycle() {
   echo "### 🔁 Codox Cycle $CYCLE of $MAX_CYCLES"
   mkdir -p backend/routes frontend/src logs .github/workflows
 
-  # ✅ Ensure backend/index.js exists
+  # ✅ Backend fallback
   if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
     echo "🩹 Recreating backend/index.js"
     cat > backend/index.js <<'EOF'
@@ -35,7 +36,7 @@ EOF
 
   [[ ! -f backend/package.json ]] && echo '{"type":"module"}' > backend/package.json
 
-  # ✅ Ensure backend Dockerfile exists
+  # ✅ Docker sanity
   if [ ! -f backend/Dockerfile ]; then
     echo "🩹 Creating backend/Dockerfile"
     cat > backend/Dockerfile <<'EOF'
@@ -51,7 +52,7 @@ CMD ["node","index.js"]
 EOF
   fi
 
-  # ✅ Validate secrets
+  # ✅ Secrets validation
   echo "## 🔑 Checking required secrets..."
   ERR=0
   for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
@@ -59,7 +60,7 @@ EOF
   done
   [[ $ERR -eq 1 ]] && return 1
 
-  # ✅ Frontend build
+  # ✅ Build frontend
   echo "## 🎨 Building frontend..."
   if [ -d frontend ]; then
     cd frontend
@@ -68,12 +69,12 @@ EOF
     cd ..
   fi
 
-  # ✅ Run backend/frontend tests
+  # ✅ Test backend/frontend
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
   [ -f test_frontend.sh ] && bash test_frontend.sh | tee logs/test_frontend.log
 
-  # ✅ Detect missing routes
+  # ✅ Missing routes fix
   if grep -q "404" logs/test_backend.log; then
     echo "⚠️ Detected missing routes — auto-creating stubs"
     for e in services pricing calendar coordination_points; do
@@ -82,7 +83,7 @@ EOF
     done
   fi
 
-  # ✅ CORS fix
+  # ✅ Enforce global CORS
   if grep -q "CORS" logs/test_backend.log || grep -q "CORS" logs/test_frontend.log; then
     echo "⚠️ Enforcing universal CORS middleware"
     grep -q "app.use(cors" backend/index.js || \
@@ -91,14 +92,14 @@ import cors from "cors";\
 app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 
-  # ✅ Auto-create Firebase key before deploy
+  # ✅ Write Firebase key for deploy
   if [ -n "$FIREBASE_KEY" ]; then
     echo "$FIREBASE_KEY" > backend/serviceAccountKey.json
     echo "🗝️ Firebase key written for Cloud Run"
   fi
 
   # ✅ Commit & deploy
-  echo "## 📦 Committing & deploying..."
+  echo "## 📦 Commit & deploy..."
   git config --global user.email "bot@codox.system"
   git config --global user.name "Codox Auto"
   git add backend frontend logs agent.md || true
@@ -110,6 +111,7 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   gcloud run deploy cleanpro-backend --source . --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Backend deploy failed"
   gcloud run deploy cleanpro-frontend --source ./frontend --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Frontend deploy failed"
 
+  # ✅ Health test
   echo "## 🩺 Health test..."
   if curl -fsSL "https://cleanpro-backend-5539254765.europe-west1.run.app/" >/dev/null; then
     echo "✅ Backend healthy"
@@ -120,7 +122,7 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 }
 
-# 🔁 Run up to 3 self-healing cycles
+# 🔁 3 self-healing cycles
 while [ $CYCLE -le $MAX_CYCLES ]; do
   run_cycle
   if grep -q "✅ Backend healthy" agent.md; then
@@ -134,6 +136,12 @@ while [ $CYCLE -le $MAX_CYCLES ]; do
   fi
   echo "🔁 Re-running cycle ($CYCLE)..."
 done
+
+# ✅ Auto-trigger GitHub Actions run if available
+if [ -d .github/workflows ]; then
+  echo "⚙️ Triggering GitHub Actions (Codox GPT Workflow)..."
+  gh workflow run codox.yaml || echo "⚠️ GitHub CLI not configured — skipping trigger"
+fi
 
 echo "## 🤖 GPT-guided final audit (Codox GPT inside GitHub)"
 echo "Running Codox GPT review based on PROJECT_GUIDE.md..."
