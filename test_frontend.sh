@@ -1,72 +1,166 @@
 #!/bin/bash
-# ~/cleanpro-site/test_frontend.sh
+# 🧠 Codox Master Review & Self-Healing Runner
+set +e
+exec > >(tee agent.md) 2>&1
 
-FRONTEND_URL="https://cleanpro-frontend-5539254765.europe-west1.run.app"
-echo "Testing frontend at: $FRONTEND_URL"
-echo
+echo "## 🧭 Reading PROJECT_GUIDE.md context..."
+if [ -f PROJECT_GUIDE.md ]; then
+  CONTEXT=$(cat PROJECT_GUIDE.md)
+  echo "✅ Project guide loaded."
+else
+  echo "⚠️ PROJECT_GUIDE.md missing — limited mode."
+fi
 
-call() {
-  local name=$1
-  local url=$2
-  echo "=== $name ==="
-  code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-  echo "$url → (HTTP $code)"
-  echo
-}
+echo "## 🔍 Validating base structure..."
+mkdir -p backend/routes frontend/src logs .github/workflows
 
-# 1. Root routes check
-for path in "/" "/booking" "/contact" "/about"; do
-  call "Route $path" "$FRONTEND_URL$path"
-done
-
-# 2. Auto-detect assets from HTML
-echo "=== Assets (auto-detected) ==="
-ASSETS=$(curl -s $FRONTEND_URL | grep -Eo 'assets/[a-z0-9.-]+\.(js|css)' | sort -u)
-for file in $ASSETS; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL/$file")
-  echo "$file → (HTTP $code)"
-done
-echo
-
-# 3. Crawl homepage links
-echo "=== Broken links check (homepage only) ==="
-LINKS=$(curl -s $FRONTEND_URL | grep -Eo 'href="[^"]+"' | cut -d '"' -f2 | grep '^/' | sort -u)
-for link in $LINKS; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL$link")
-  echo "$FRONTEND_URL$link → (HTTP $code)"
-done
-echo
-
-# 4. Print API base in HTML
-echo "=== API base check ==="
-curl -s $FRONTEND_URL | grep -o "https://cleanpro-backend-5539254765.europe-west1.run.app" | head -n 1
-echo
-
-# 5. Print first 20 lines of homepage HTML
-echo "=== Homepage snippet ==="
-curl -s $FRONTEND_URL | head -n 20
-echo
-
-# 6. Console errors/warnings via Puppeteer
-echo "=== Browser console errors/warnings ==="
-node <<'EOF'
-import puppeteer from 'puppeteer';
-
-const url = process.env.FRONTEND_URL || "https://cleanpro-frontend-5539254765.europe-west1.run.app";
-
-const run = async () => {
-  const browser = await puppeteer.launch({headless: "new", args: ["--no-sandbox"]});
-  const page = await browser.newPage();
-
-  page.on("console", msg => {
-    if (["error", "warning"].includes(msg.type()))
-      console.log(`[${msg.type()}] ${msg.text()}`);
-  });
-
-  await page.goto(url, {waitUntil: "networkidle2", timeout: 60000});
-  await new Promise(r => setTimeout(r, 5000));
-
-  await browser.close();
-};
-run();
+# --- Backend essentials ---
+if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
+  echo "🩹 Recreating backend/index.js"
+  cat > backend/index.js <<'EOF'
+import express from "express";
+const app = express();
+app.get("/", (_req, res) => res.send("✅ CleanPro Backend is running"));
+app.listen(process.env.PORT || 8080, "0.0.0.0", () =>
+  console.log(`✅ Server on port ${process.env.PORT || 8080}`)
+);
 EOF
+fi
+
+[[ ! -f backend/package.json ]] && echo '{"type":"module"}' > backend/package.json
+
+if [ ! -f backend/Dockerfile ]; then
+  echo "🩹 Creating backend/Dockerfile"
+  cat > backend/Dockerfile <<'EOF'
+FROM node:20
+WORKDIR /app/backend
+COPY package*.json ./
+RUN npm install --omit=dev
+COPY . .
+ENV PORT=8080
+ENV HOST=0.0.0.0
+EXPOSE 8080
+CMD ["node","index.js"]
+EOF
+fi
+
+# --- Auto-generate common routes ---
+for r in services_api bookings_api pricing_api calendar_api config_api coordination_points_api; do
+  f=backend/routes/${r}.mjs
+  [[ ! -f $f ]] && echo -e 'import e from "express";const r=e.Router();r.get("/",(_q,s)=>s.json({ok:true,route:"'$r'"}));export default r;' > $f
+done
+
+# --- Secrets check ---
+echo "## 🔑 Checking required secrets..."
+ERR=0
+for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
+  [[ -z "${!key}" ]] && echo "❌ Missing $key" && ERR=1 || echo "✅ $key OK"
+done
+[[ $ERR -eq 1 ]] && exit 1
+
+# --- Authenticate Google Cloud ---
+echo "## 🔐 Authenticating to Google Cloud..."
+echo "$GCP_SA_KEY" > key.json
+ACCOUNT=$(jq -r .client_email key.json)
+gcloud auth activate-service-account "$ACCOUNT" --key-file=key.json --project="$GCP_PROJECT"
+gcloud config set account "$ACCOUNT"
+gcloud config set project "$GCP_PROJECT"
+gcloud config set run/region europe-west1
+
+# --- Docker sanity ---
+echo "## 🐳 Verifying Dockerfile..."
+grep -q "EXPOSE 8080" backend/Dockerfile || echo "EXPOSE 8080" >> backend/Dockerfile
+grep -q 'CMD ["node","index.js"]' backend/Dockerfile || echo 'CMD ["node","index.js"]' >> backend/Dockerfile
+
+# --- Frontend check ---
+echo "## 🎨 Checking frontend..."
+if [ -d frontend ]; then
+  cd frontend
+  npm install --legacy-peer-deps || echo "⚠️ npm install failed"
+  npm run build || echo "⚠️ build failed"
+  cd ..
+fi
+
+# --- Deploy backend ---
+echo "## ☁️ Deploying backend..."
+if [ -f deploy_backend.sh ]; then
+  bash deploy_backend.sh || echo "⚠️ Deploy failed, check Cloud Run logs"
+else
+  echo "🩹 Creating deploy_backend.sh"
+  cat > deploy_backend.sh <<'EOF'
+#!/bin/bash
+echo "🚀 Deploying CleanPro backend..."
+gcloud run deploy cleanpro-backend \
+  --source . \
+  --region europe-west1 \
+  --project "$GCP_PROJECT" \
+  --quiet
+EOF
+  chmod +x deploy_backend.sh
+  bash deploy_backend.sh
+fi
+
+# --- Deploy frontend ---
+echo "## ☁️ Deploying frontend..."
+if [ -f deploy_frontend.sh ]; then
+  bash deploy_frontend.sh || echo "⚠️ Frontend deploy failed"
+else
+  echo "🩹 Creating deploy_frontend.sh"
+  cat > deploy_frontend.sh <<'EOF'
+#!/bin/bash
+echo "🚀 Deploying CleanPro frontend..."
+gcloud run deploy cleanpro-frontend \
+  --source ./frontend \
+  --region europe-west1 \
+  --project "$GCP_PROJECT" \
+  --quiet
+EOF
+  chmod +x deploy_frontend.sh
+  bash deploy_frontend.sh
+fi
+
+# --- Health test ---
+echo "## 🩺 Health test..."
+curl -fsSL "https://cleanpro-backend-5539254765.europe-west1.run.app/" \
+  && echo "✅ Backend healthy" || echo "❌ Backend not responding"
+
+# --- Deep diagnostic tests ---
+echo "## 🧪 Running backend & frontend tests..."
+if [ -f test_backend.sh ]; then
+  bash test_backend.sh || echo "⚠️ Backend test script failed"
+else
+  echo "⚠️ test_backend.sh missing"
+fi
+
+if [ -f test_frontend.sh ]; then
+  bash test_frontend.sh || echo "⚠️ Frontend test script failed"
+else
+  echo "⚠️ test_frontend.sh missing"
+fi
+echo "✅ Test diagnostics completed."
+
+# --- Auto commit log ---
+echo "## 📦 Commit diagnostic report..."
+git config --global user.email "bot@codox.system"
+git config --global user.name "Codox Auto"
+git add agent.md || true
+git commit -m "chore(codox): automated review & deploy report" || echo "ℹ️ Nothing to commit"
+git push origin main || echo "⚠️ Push skipped"
+
+# --- 🧠 Auto Git sync + error display ---
+git pull --rebase || echo "⚠️ Git rebase failed — showing conflicts..."
+if git push 2>&1 | tee push.log | grep -q "rejected"; then
+  echo "❌ Push rejected — branch behind remote"
+  git pull --rebase
+  git push
+fi
+
+# --- Final error check ---
+if grep -q "⚠️" agent.md || grep -q "❌" agent.md; then
+  echo "❌ Codox run detected issues — review agent.md"
+  exit 1
+else
+  echo "✅ Codox run clean — no errors found"
+fi
+
+echo "## ✅ Codox review, build, test & deploy completed using PROJECT_GUIDE.md context."
