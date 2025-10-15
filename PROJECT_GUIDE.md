@@ -17,6 +17,7 @@ Create a **self-maintaining cleaning platform** with dynamic services, Google Ma
 - Cloud Run ready (`process.env.PORT || 8080`)  
 - Health check: `GET /` → “✅ CleanPro Backend is running”  
 - Auto-patched routes: `/api/services`, `/api/bookings`, `/api/calendar`
+- **Auto-fix rule:** ensure `app.listen(process.env.PORT || 8080, "0.0.0.0")` is present in `index.js`
 
 ### 🎨 Frontend (React / Vite)
 - Tailwind / MUI styling  
@@ -76,9 +77,10 @@ Formula:
 - Detects CORS, build errors, route loss, Docker misconfig, YAML issues  
 
 ### 2️⃣ Auto-Repair
-- Rebuilds backend Dockerfile (`Node 18 LTS`, `EXPOSE 8080`, `CMD node index.js`)  
+- Rebuilds backend Dockerfile (`Node 20 LTS`, `WORKDIR /app/backend`, `EXPOSE 8080`, `CMD ["node","index.js"]`)  
+- Ensures presence of `ENV PORT=8080` and `ENV HOST=0.0.0.0`  
 - Restores missing routes or modules  
-- Fixes Cloud Run startup and env vars (`PORT=8080`, `HOST=0.0.0.0`)  
+- Fixes Cloud Run startup and port binding automatically  
 
 ### 3️⃣ Frontend Validation
 - Verifies `frontend/package.json`  
