@@ -98,7 +98,7 @@ jobs:
             echo "⚠️ backend/Dockerfile missing — creating default one..."
             mkdir -p backend
             cat <<'EOF' > backend/Dockerfile
-FROM node:18
+          FROM node:18
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
