@@ -145,6 +145,27 @@ Validates presence and syntax of:
 
 ---
 
+### 🧩 CI/CD Flow
+- Trigger: GitHub Action → `review_report.sh`  
+- Validation order: **secrets → backend → frontend → deploy → health test → report**  
+- On failure: auto-repair + redeploy  
+
+---
+
+### 🧰 AI Integration
+- Codox GPT reads `PROJECT_GUIDE.md` and `agent.md`  
+- Suggests or commits code fixes through GitHub PR  
+- Future: auto-patch via OpenAI API  
+
+---
+
+### 📦 Data / Firestore Collections
+- `services`, `bookings`, `pricing`, `coordination_points`, `reviews`  
+- Auto-create missing collections if empty  
+- Sync daily with AppSheet  
+
+---
+
 ## 🛡️ Notes
 Codox GPT reads this file for logic and structure.  
 Do **not rename sections or edit manually**.  
