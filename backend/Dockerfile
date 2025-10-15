@@ -32,3 +32,4 @@ HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 # Start backend
 # ✅ Start backend
 CMD ["node", "index.js"]
+CMD ["node","index.js"]
