@@ -1,9 +1,9 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v6 — GPT-guided, 5-cycle)
+# 🧠 Codox Master Review & Self-Healing Runner (v7 — GPT-guided, 3-cycle)
 set +e
 exec > >(tee agent.md) 2>&1
 
-MAX_CYCLES=5
+MAX_CYCLES=3
 CYCLE=1
 
 echo "## 🧭 Reading PROJECT_GUIDE.md context..."
@@ -16,11 +16,8 @@ fi
 
 run_cycle() {
   echo "### 🔁 Codox Cycle $CYCLE of $MAX_CYCLES"
-
-  echo "## 🔍 Validating base structure..."
   mkdir -p backend/routes frontend/src logs .github/workflows
 
-  # --- Backend essentials ---
   if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
     echo "🩹 Recreating backend/index.js"
     cat > backend/index.js <<'EOF'
@@ -51,7 +48,6 @@ CMD ["node","index.js"]
 EOF
   fi
 
-  # --- Secret check ---
   echo "## 🔑 Checking required secrets..."
   ERR=0
   for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
@@ -59,8 +55,7 @@ EOF
   done
   [[ $ERR -eq 1 ]] && return 1
 
-  # --- Frontend build ---
-  echo "## 🎨 Checking frontend..."
+  echo "## 🎨 Building frontend..."
   if [ -d frontend ]; then
     cd frontend
     npm install --legacy-peer-deps || echo "⚠️ npm install failed"
@@ -68,12 +63,10 @@ EOF
     cd ..
   fi
 
-  # --- Backend & Frontend tests ---
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
   [ -f test_frontend.sh ] && bash test_frontend.sh | tee logs/test_frontend.log
 
-  # --- Auto repair from detected issues ---
   if grep -q "404" logs/test_backend.log; then
     echo "⚠️ Detected missing routes — auto-creating stubs"
     for e in services pricing calendar coordination_points; do
@@ -90,7 +83,6 @@ import cors from "cors";\
 app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 
-  # --- Commit & deploy ---
   echo "## 📦 Committing & deploying..."
   git config --global user.email "bot@codox.system"
   git config --global user.name "Codox Auto"
@@ -104,11 +96,15 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   gcloud run deploy cleanpro-frontend --source ./frontend --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Frontend deploy failed"
 
   echo "## 🩺 Health test..."
-  curl -fsSL "https://cleanpro-backend-5539254765.europe-west1.run.app/" \
-    && echo "✅ Backend healthy" || echo "❌ Backend not responding"
+  if curl -fsSL "https://cleanpro-backend-5539254765.europe-west1.run.app/" >/dev/null; then
+    echo "✅ Backend healthy"
+    return 0
+  else
+    echo "❌ Backend not responding"
+    return 1
+  fi
 }
 
-# 🔁 Run up to 5 self-healing cycles
 while [ $CYCLE -le $MAX_CYCLES ]; do
   run_cycle
   if grep -q "✅ Backend healthy" agent.md; then
@@ -116,12 +112,13 @@ while [ $CYCLE -le $MAX_CYCLES ]; do
     break
   fi
   ((CYCLE++))
+  if [ $CYCLE -gt $MAX_CYCLES ]; then
+    echo "❌ Max cycles ($MAX_CYCLES) reached — stopping."
+    break
+  fi
   echo "🔁 Re-running cycle ($CYCLE)..."
 done
 
-# --- Final GPT-guided analysis ---
 echo "## 🤖 GPT-guided final audit (Codox GPT inside GitHub)"
-echo "Running Codox GPT review based on PROJECT_GUIDE.md context..."
-# (Codox GPT handles reasoning & root-cause fixes automatically in GitHub)
-
-echo "## ✅ Codox GPT-guided self-healing completed."
+echo "Running Codox GPT review based on PROJECT_GUIDE.md..."
+echo "## ✅ Codox GPT self-healing completed (max 3 cycles)."
