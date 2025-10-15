@@ -1,14 +1,25 @@
+import admin from "firebase-admin";
+import { readFileSync } from "fs";
 import express from "express";
-const app = express();
-app.use(cors());
-app.use(express.json());
+import cors from "cors";
 
+const app = express();
+
+// ✅ Allow frontend domain only (CORS fix)
+app.use(
+  cors({
+    origin: ["https://cleanpro-frontend-5539254765.europe-west1.run.app"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
+
+app.use(express.json());
 const HOST = "0.0.0.0";
 
 // ✅ Firebase init
 try {
   if (!admin.apps.length) {
-    // Correct path for Cloud Run build root (/app/backend)
     const serviceAccount = JSON.parse(readFileSync("./backend/serviceAccountKey.json"));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
@@ -46,3 +57,4 @@ app.get("/", (req, res) => {
 
 // ✅ Start server
 const PORT = process.env.PORT || 8080;
+app.listen(PORT, HOST, () => console.log(`✅ Server running on port ${PORT}`));
