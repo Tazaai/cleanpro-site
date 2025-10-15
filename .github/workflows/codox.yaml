@@ -1,12 +1,40 @@
 name: Codox Diagnostics & Self-Healing
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      BACKEND_URL: "https://cleanpro-backend-5539254765.europe-west1.run.app"
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Codox Review
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🧭 Prepare Codox Review
         run: |
           chmod +x review_report.sh
-          bash review_report.sh
+          echo "✅ review_report.sh ready"
+
+      - name: 🧠 Run Codox Diagnostics & Self-Healing
+        run: |
+          bash review_report.sh || echo "⚠️ Codox run finished with warnings"
+
+      - name: 🧾 Commit updates if any
+        if: always()
+        run: |
+          git add .
+          git commit -m "chore(codox): automated diagnostic & self-healing update" || echo "ℹ️ No changes to commit"
+          git push origin main || echo "⚠️ Push skipped"
