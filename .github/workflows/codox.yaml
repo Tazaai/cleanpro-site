@@ -160,50 +160,51 @@ jobs:
           git push origin main || echo "⚠️ Push skipped"
           if [ -f ./deploy_backend.sh ]; then
             echo "🚀 Running backend deploy..."
-            bash ./deploy_backend.sh || echo "⚠️ Redeploy failed (non-fatal)"
-          fi
-
-      - name: 🤖 Codox Auto-Repair Trigger
-        if: ${{ failure() || always() }}
-        run: |
-          echo "🤖 Smart Agent detected failure, invoking auto-repair..."
-          if grep -q "Cannot access .PORT. before initialization" agent.md; then
-            echo "🧠 Fixing PORT init error and forcing clean deploy..."
-            cd backend
-            gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend || true
-            gcloud run deploy cleanpro-backend --image gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend --region europe-west1 --platform managed --allow-unauthenticated || true
-            cd ..
-          fi
-          if grep -q "Dockerfile required when specifying --tag" agent.md; then
-            echo "⚙️ Re-running build from backend directory..."
-            cd backend
-            gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend || true
-            cd ..
-          fi
-          if grep -q "Cannot find module.*backend/backend" agent.md; then
-            echo "🩹 Fixing double-backend path issue..."
-            sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || true
-            sed -i "s|backend/backend/index.js|backend/index.js|" backend/Dockerfile || true
-            git add backend/Dockerfile && git commit -m "auto-heal: correct Dockerfile workdir path" || true
-            git push || true
-          fi
-          if grep -q "MODULE_NOT_FOUND" agent.md; then
-            echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
-            echo "FROM node:18" > backend/Dockerfile
-            echo "WORKDIR /app" >> backend/Dockerfile
-            echo "COPY package*.json ./" >> backend/Dockerfile
-            echo "RUN npm install --omit=dev" >> backend/Dockerfile
-            echo "COPY . ." >> backend/Dockerfile
-            echo "ENV PORT=8080" >> backend/Dockerfile
-            echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
-            echo "EXPOSE 8080" >> backend/Dockerfile
-            echo 'CMD ["node","backend/index.js"]' >> backend/Dockerfile
-            git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile" || true
-            git push || true
-          fi
-          echo "✅ Auto-Repair Trigger completed."
-
-      - name: 🩺 Verify backend health
+  echo "${{ secrets.GCP_SA_KEY }}" > backend/serviceAccountKey.json
+              bash ./deploy_backend.sh || echo "⚠️ Redeploy failed (non-fatal)"
+            fi
+  
+        - name: 🤖 Codox Auto-Repair Trigger
+          if: ${{ failure() || always() }}
+          run: |
+            echo "🤖 Smart Agent detected failure, invoking auto-repair..."
+            if grep -q "Cannot access .PORT. before initialization" agent.md; then
+              echo "🧠 Fixing PORT init error and forcing clean deploy..."
+              cd backend
+              gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend || true
+              gcloud run deploy cleanpro-backend --image gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend --region europe-west1 --platform managed --allow-unauthenticated || true
+              cd ..
+            fi
+            if grep -q "Dockerfile required when specifying --tag" agent.md; then
+              echo "⚙️ Re-running build from backend directory..."
+              cd backend
+              gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend || true
+              cd ..
+            fi
+            if grep -q "Cannot find module.*backend/backend" agent.md; then
+              echo "🩹 Fixing double-backend path issue..."
+              sed -i "s|WORKDIR /app/backend|WORKDIR /app|" backend/Dockerfile || true
+              sed -i "s|backend/backend/index.js|backend/index.js|" backend/Dockerfile || true
+              git add backend/Dockerfile && git commit -m "auto-heal: correct Dockerfile workdir path" || true
+              git push || true
+            fi
+            if grep -q "MODULE_NOT_FOUND" agent.md; then
+              echo "⚙️ Missing entrypoint — rebuilding backend Dockerfile"
+              echo "FROM node:18" > backend/Dockerfile
+              echo "WORKDIR /app" >> backend/Dockerfile
+              echo "COPY package*.json ./" >> backend/Dockerfile
+              echo "RUN npm install --omit=dev" >> backend/Dockerfile
+              echo "COPY . ." >> backend/Dockerfile
+              echo "ENV PORT=8080" >> backend/Dockerfile
+              echo "ENV HOST=0.0.0.0" >> backend/Dockerfile
+              echo "EXPOSE 8080" >> backend/Dockerfile
+              echo 'CMD ["node","backend/index.js"]' >> backend/Dockerfile
+              git add backend/Dockerfile && git commit -m "auto-heal: rebuild backend Dockerfile" || true
+              git push || true
+            fi
+            echo "✅ Auto-Repair Trigger completed."
+  
+        - name: 🩺 Verify backend health
         run: |
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$BACKEND_URL")
           if [ "$STATUS" = "200" ]; then
