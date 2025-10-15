@@ -58,6 +58,15 @@ for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
 done
 [[ $ERR -eq 1 ]] && exit 1
 
+# --- Authenticate Google Cloud ---
+echo "## 🔐 Authenticating to Google Cloud..."
+echo "$GCP_SA_KEY" > key.json
+ACCOUNT=$(jq -r .client_email key.json)
+gcloud auth activate-service-account "$ACCOUNT" --key-file=key.json --project="$GCP_PROJECT"
+gcloud config set account "$ACCOUNT"
+gcloud config set project "$GCP_PROJECT"
+gcloud config set run/region europe-west1
+
 # --- Docker sanity ---
 echo "## 🐳 Verifying Dockerfile..."
 grep -q "EXPOSE 8080" backend/Dockerfile || echo "EXPOSE 8080" >> backend/Dockerfile
@@ -114,5 +123,13 @@ fi
 echo "## 🩺 Health test..."
 curl -fsSL "https://cleanpro-backend-5539254765.europe-west1.run.app/" \
   && echo "✅ Backend healthy" || echo "❌ Backend not responding"
+
+# --- Auto commit log ---
+echo "## 📦 Commit diagnostic report..."
+git config --global user.email "bot@codox.system"
+git config --global user.name "Codox Auto"
+git add agent.md || true
+git commit -m "chore(codox): automated review & deploy report" || echo "ℹ️ Nothing to commit"
+git push origin main || echo "⚠️ Push skipped"
 
 echo "## ✅ Codox review, build & deploy completed using PROJECT_GUIDE.md context."
