@@ -34,3 +34,4 @@ HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 CMD ["node", "index.js"]
 CMD ["node","index.js"]
 CMD ["node","index.js"]
+CMD ["node","index.js"]
