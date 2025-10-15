@@ -20,7 +20,8 @@ const HOST = "0.0.0.0";
 // ✅ Firebase init
 try {
   if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(readFileSync("./backend/serviceAccountKey.json"));
+    // ✅ Corrected path for Cloud Run
+    const serviceAccount = JSON.parse(readFileSync("./serviceAccountKey.json"));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
