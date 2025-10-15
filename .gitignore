@@ -4,3 +4,4 @@ dist/
 backend/firebase_config.json
 node_modules/
 serviceAccountKey.json
+key.json
