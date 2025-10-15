@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v7 — GPT-guided, 3-cycle)
+# 🧠 Codox Master Review & Self-Healing Runner (v7.1 — GPT-guided, 3-cycle)
 set +e
 exec > >(tee agent.md) 2>&1
 
@@ -18,6 +18,7 @@ run_cycle() {
   echo "### 🔁 Codox Cycle $CYCLE of $MAX_CYCLES"
   mkdir -p backend/routes frontend/src logs .github/workflows
 
+  # ✅ Ensure backend/index.js exists
   if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
     echo "🩹 Recreating backend/index.js"
     cat > backend/index.js <<'EOF'
@@ -34,6 +35,7 @@ EOF
 
   [[ ! -f backend/package.json ]] && echo '{"type":"module"}' > backend/package.json
 
+  # ✅ Ensure backend Dockerfile exists
   if [ ! -f backend/Dockerfile ]; then
     echo "🩹 Creating backend/Dockerfile"
     cat > backend/Dockerfile <<'EOF'
@@ -44,10 +46,12 @@ RUN npm install --omit=dev
 COPY . .
 ENV PORT=8080
 EXPOSE 8080
+HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 CMD ["node","index.js"]
 EOF
   fi
 
+  # ✅ Validate secrets
   echo "## 🔑 Checking required secrets..."
   ERR=0
   for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
@@ -55,6 +59,7 @@ EOF
   done
   [[ $ERR -eq 1 ]] && return 1
 
+  # ✅ Frontend build
   echo "## 🎨 Building frontend..."
   if [ -d frontend ]; then
     cd frontend
@@ -63,10 +68,12 @@ EOF
     cd ..
   fi
 
+  # ✅ Run backend/frontend tests
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
   [ -f test_frontend.sh ] && bash test_frontend.sh | tee logs/test_frontend.log
 
+  # ✅ Detect missing routes
   if grep -q "404" logs/test_backend.log; then
     echo "⚠️ Detected missing routes — auto-creating stubs"
     for e in services pricing calendar coordination_points; do
@@ -75,6 +82,7 @@ EOF
     done
   fi
 
+  # ✅ CORS fix
   if grep -q "CORS" logs/test_backend.log || grep -q "CORS" logs/test_frontend.log; then
     echo "⚠️ Enforcing universal CORS middleware"
     grep -q "app.use(cors" backend/index.js || \
@@ -83,6 +91,13 @@ import cors from "cors";\
 app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 
+  # ✅ Auto-create Firebase key before deploy
+  if [ -n "$FIREBASE_KEY" ]; then
+    echo "$FIREBASE_KEY" > backend/serviceAccountKey.json
+    echo "🗝️ Firebase key written for Cloud Run"
+  fi
+
+  # ✅ Commit & deploy
   echo "## 📦 Committing & deploying..."
   git config --global user.email "bot@codox.system"
   git config --global user.name "Codox Auto"
@@ -105,6 +120,7 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 }
 
+# 🔁 Run up to 3 self-healing cycles
 while [ $CYCLE -le $MAX_CYCLES ]; do
   run_cycle
   if grep -q "✅ Backend healthy" agent.md; then
