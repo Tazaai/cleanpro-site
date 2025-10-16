@@ -38,3 +38,18 @@ jobs:
           git add .
           git commit -m "chore(codox): automated diagnostic & self-healing update" || echo "ℹ️ No changes to commit"
           git push origin main || echo "⚠️ Push skipped"
+
+      - name: 🧠 Summarize Codox GPT Self-Healing Results
+        if: always()
+        run: |
+          echo "🧠 **Codox GPT Self-Healing Results**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 Below is a brief summary of the Codox GPT automated repair run:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f agent.md ]; then
+            tail -n 50 agent.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No agent.md log found — Codox script may have failed before logging." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Workflow finished — check detailed logs under 'Run Codox Diagnostics & Self-Healing' above." >> $GITHUB_STEP_SUMMARY
