@@ -1,3 +1,6 @@
+import { writeFileSync, existsSync } from "fs";
+if (!existsSync("./backend/firebase_config.json")) writeFileSync("./backend/firebase_config.json", process.env.FIREBASE_KEY || "{}");
+
 // =============================================================
 // 🧩 CleanPro Backend – Firebase Init (Cloud Run Safe Version)
 // =============================================================
