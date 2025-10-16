@@ -34,6 +34,7 @@ const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
 const TEMPLATE_PATH = "/app/backend/firebase_template.json";
 
 try {
+  // 1️⃣ Ensure service account key exists
   if (!existsSync(SERVICE_ACCOUNT_PATH)) {
     if (process.env.FIREBASE_KEY) {
       writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
@@ -43,6 +44,7 @@ try {
     }
   }
 
+  // 2️⃣ Ensure firebase_config.json exists
   if (!existsSync(FIREBASE_CONFIG_PATH)) {
     if (process.env.FIREBASE_KEY) {
       writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY);
@@ -51,9 +53,15 @@ try {
       writeFileSync(FIREBASE_CONFIG_PATH, readFileSync(TEMPLATE_PATH, "utf8"));
       console.log("📄 Created firebase_config.json from template fallback");
     } else {
-      console.warn("⚠️ No Firebase config found — creating empty object.");
+      console.warn("⚠️ No Firebase config found — creating empty fallback.");
       writeFileSync(FIREBASE_CONFIG_PATH, "{}");
     }
+  }
+
+  // ✅ Always ensure file exists even if previous steps fail
+  if (!existsSync(FIREBASE_CONFIG_PATH)) {
+    writeFileSync(FIREBASE_CONFIG_PATH, "{}");
+    console.log("🩹 Created empty /app/firebase_config.json fallback");
   }
 } catch (err) {
   console.error("⚠️ Firebase config generation error:", err.message);
