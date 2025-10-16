@@ -29,15 +29,15 @@ const PORT = process.env.PORT || 8080;
 // -------------------------------------------------------------
 // 🔐 Firebase config & initialization
 // -------------------------------------------------------------
-const SERVICE_ACCOUNT_PATH = "/app/backend/serviceAccountKey.json";
-const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
+const SERVICE_ACCOUNT_PATH = "./backend/serviceAccountKey.json";
+const FIREBASE_CONFIG_PATH = "./backend/firebase_config.json";
 
 try {
   if (!existsSync(SERVICE_ACCOUNT_PATH))
     writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
   if (!existsSync(FIREBASE_CONFIG_PATH))
     writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
-  console.log("��️ Firebase config ensured");
+  console.log("🔥 Firebase config ensured");
 } catch (e) {
   console.error("⚠️ Firebase config error:", e.message);
 }
@@ -83,4 +83,6 @@ app.get("/", (_, res) => res.send("✅ CleanPro Backend running on Cloud Run"));
 // -------------------------------------------------------------
 // 🚀 Start server
 // -------------------------------------------------------------
-app.listen(PORT, HOST, () => console.log(`✅ Server listening on ${HOST}:${PORT}`));
+app.listen(PORT, HOST, () =>
+  console.log(`✅ Server listening on ${HOST}:${PORT}`)
+);
