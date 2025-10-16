@@ -1,16 +1,35 @@
-# Ignore dependencies and build cache
+# 🧩 CleanPro Backend – .dockerignore
+# -------------------------------------------------
+# Exclude unnecessary files from the Docker build context
+# to reduce image size and speed up Cloud Run deployments.
+# -------------------------------------------------
+
+# Dependencies & logs
 node_modules
 npm-debug.log
 yarn-error.log
 .pnpm-debug.log
 
-# Ignore build output (will be regenerated inside container)
+# Build artifacts (regenerated inside container)
 dist
 build
 
-# Editor & system files
+# Local environment & secrets (never send to Cloud Run)
+.env
+serviceAccountKey.json
+firebase_config.json
+firebase_template.json
+
+# System & editor junk
 .DS_Store
 *.swp
 *.swo
 .vscode
 .idea
+
+# Temporary / development scripts
+*.local
+*.bak
+*.tmp
+logs
+__pycache__

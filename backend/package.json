@@ -1,25 +1,26 @@
 {
   "name": "cleanpro-backend",
   "version": "1.0.0",
+  "description": "CleanPro Backend – Cloud Run optimized Express + Firebase Admin server",
   "type": "module",
-  "main": "index.js",
+  "main": "backend/index.js",
   "scripts": {
-    "test": "echo tests skipped",
-    "test": "echo tests skipped",
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node backend/index.js",
+    "dev": "nodemon backend/index.js",
+    "test": "echo 'tests skipped'",
     "test:backend": "bash ../test_backend.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "firebase-admin": "^13.5.0",
     "googleapis": "^144.0.0",
     "node-fetch": "^3.3.2",
-    "puppeteer": "^24.24.1"
+    "puppeteer": "^24.4.0"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
-  }
+  "engines": {
+    "node": ">=20.x"
+  },
+  "license": "MIT"
 }
