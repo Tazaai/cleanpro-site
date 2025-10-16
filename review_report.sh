@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v7.3 – GPT-guided, route-consistency audit)
+# 🧠 Codox Master Review & Self-Healing Runner (v7.4 – GPT-guided, Docker CMD auto-fix + route audit)
 
 set +e
 exec > >(tee agent.md) 2>&1
@@ -15,7 +15,6 @@ else
   echo "⚠️ PROJECT_GUIDE.md missing — limited mode."
 fi
 
-
 ###############################################################################
 # 🔁 CORE SELF-HEAL CYCLE
 ###############################################################################
@@ -25,7 +24,7 @@ run_cycle() {
 
   # ✅ Backend fallback
   if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
-    echo "🩹 Recreating backend/index.js"
+    echo "�� Recreating backend/index.js"
     cat > backend/index.js <<'EOF'
 import express from "express";
 import cors from "cors";
@@ -56,6 +55,15 @@ CMD ["node","index.js"]
 EOF
   fi
 
+  # 🐳 Auto-fix Dockerfile CMD duplication
+  if [ -f backend/Dockerfile ]; then
+    echo "🩹 Checking Dockerfile CMD..."
+    if grep -q "CMD" backend/Dockerfile; then
+      sed -i '/CMD/d' backend/Dockerfile
+    fi
+    echo -e '\n# ✅ Start backend\nCMD ["node", "index.js"]' >> backend/Dockerfile
+    echo "✅ Dockerfile CMD fixed."
+  fi
 
   #############################################################################
   # 🔑 Secrets validation
@@ -67,7 +75,6 @@ EOF
   done
   [[ $ERR -eq 1 ]] && return 1
 
-
   #############################################################################
   # 🧩 Route consistency & duplicate cleanup
   #############################################################################
@@ -75,7 +82,6 @@ EOF
   ROUTES_DIR="backend/routes"
   INDEX_FILE="backend/index.js"
 
-  # Detect duplicates like booking_api vs bookings_api, maps.js vs maps_api
   duplicates=$(find "$ROUTES_DIR" -type f -name "*_api.mjs" | \
     sed -E 's#.*/##' | sed -E 's/s_api\.mjs$/_api.mjs/' | sort | uniq -d)
 
@@ -93,18 +99,16 @@ EOF
     done
   fi
 
-  # Auto-correct import paths in index.js to match existing route files
   for routefile in $(ls "$ROUTES_DIR" | grep -E "_api\.mjs$|maps_api\.mjs"); do
     basename=$(echo "$routefile" | sed 's/\.mjs$//')
     short=$(echo "$basename" | sed 's/_api$//')
     if ! grep -q "$basename" "$INDEX_FILE"; then
       echo "🔧 Adding missing import for $basename"
-      sed -i "/Import all route modules/a import ${short}Api from \"./routes/${routefile}\";" "$INDEX_FILE"
       sed -i "/Mount API routes/a app.use(\"/api/${short}\", ${short}Api);" "$INDEX_FILE"
+      sed -i "/Import all route modules/a import ${short}Api from \"./routes/${routefile}\";" "$INDEX_FILE"
     fi
   done
   echo "✅ Route audit completed."
-
 
   #############################################################################
   # 🎨 Build frontend
@@ -117,14 +121,12 @@ EOF
     cd ..
   fi
 
-
   #############################################################################
   # 🧪 Backend & frontend tests
   #############################################################################
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
   [ -f test_frontend.sh ] && bash test_frontend.sh | tee logs/test_frontend.log
-
 
   #############################################################################
   # 🩹 Auto-create missing stubs if 404s found
@@ -137,7 +139,6 @@ EOF
     done
   fi
 
-
   #############################################################################
   # 🌐 Universal CORS enforcement
   #############################################################################
@@ -149,7 +150,6 @@ import cors from "cors";\
 app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 
-
   #############################################################################
   # 🔥 Firebase key setup for Cloud Run
   #############################################################################
@@ -157,7 +157,6 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
     echo "$FIREBASE_KEY" > backend/serviceAccountKey.json
     echo "🗝️ Firebase key written for Cloud Run"
   fi
-
 
   #############################################################################
   # 📦 Commit & Deploy
@@ -174,7 +173,6 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   gcloud run deploy cleanpro-backend  --source .           --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Backend deploy failed"
   gcloud run deploy cleanpro-frontend --source ./frontend  --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Frontend deploy failed"
 
-
   #############################################################################
   # 🩺 Health test
   #############################################################################
@@ -187,7 +185,6 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
     return 1
   fi
 }
-
 
 ###############################################################################
 # 🔁 SELF-HEAL LOOP (max 3 cycles)
@@ -206,7 +203,6 @@ while [ $CYCLE -le $MAX_CYCLES ]; do
   echo "🔁 Re-running cycle ($CYCLE)..."
 done
 
-
 ###############################################################################
 # ⚙️ GitHub Actions Trigger
 ###############################################################################
@@ -214,7 +210,6 @@ if [ -d .github/workflows ]; then
   echo "⚙️ Triggering GitHub Actions (Codox GPT Workflow)..."
   gh workflow run codox.yaml || echo "⚠️ GitHub CLI not configured — skipping trigger"
 fi
-
 
 ###############################################################################
 # 🤖 Final GPT Audit
