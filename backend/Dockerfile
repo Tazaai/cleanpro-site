@@ -6,14 +6,14 @@ FROM node:20
 # Set working directory
 WORKDIR /app/backend
 
-# Copy package files first (better build cache)
-COPY package*.json ./
+# Copy backend package files first (better build cache)
+COPY backend/package*.json ./
 
 # Install production dependencies
 RUN npm install --omit=dev
 
-# Copy backend source code into container
-COPY . .
+# Copy backend source code
+COPY backend ./
 
 # ✅ Environment for Cloud Run
 ENV PORT=8080
@@ -28,4 +28,4 @@ EXPOSE 8080
 HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 
 # ✅ Start backend
-CMD ["node", "index.js"]
+CMD ["node", "backend/index.js"]
