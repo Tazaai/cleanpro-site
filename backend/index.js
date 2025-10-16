@@ -16,10 +16,13 @@ app.use(
 );
 
 app.use(express.json());
+
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
-// ✅ Ensure both Firebase key files exist (for backward compatibility)
+// =============================================================
+// 🔐 Ensure Firebase configuration files exist
+// =============================================================
 const SERVICE_ACCOUNT_PATH = "/app/backend/serviceAccountKey.json";
 const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
 
@@ -40,7 +43,9 @@ try {
   console.error("⚠️ Could not create Firebase config files:", err.message);
 }
 
-// ✅ Initialize Firebase Admin
+// =============================================================
+// 🔥 Initialize Firebase Admin
+// =============================================================
 try {
   if (!admin.apps.length) {
     const serviceAccount = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
@@ -53,17 +58,22 @@ try {
   console.error("⚠️ Firebase init failed:", err.message);
 }
 
-// ✅ Import all routers
+// =============================================================
+// 🧩 Import all route modules
+// =============================================================
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
-import mapsApi from "./routes/maps.js";
+import mapsApi from "./routes/maps_api.mjs";           // ✅ corrected import
 import servicesApi from "./routes/services_api.mjs";
 import bookingApi from "./routes/booking_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
+import gcalendarApi from "./routes/gcalendar_api.mjs"; // ✅ add Google Calendar API
 
-// ✅ Mount routes
+// =============================================================
+// 🚏 Mount API routes
+// =============================================================
 app.use("/api/calendar", calendarApi);
 app.use("/api/coordination_points", coordinationPointsRouter);
 app.use("/api/config", configApi);
@@ -72,13 +82,18 @@ app.use("/api/services", servicesApi);
 app.use("/api/bookings", bookingApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
+app.use("/api/gcalendar", gcalendarApi);
 
-// ✅ Health check
+// =============================================================
+// 🩺 Health check endpoint
+// =============================================================
 app.get("/", (req, res) => {
   res.send("✅ CleanPro Backend is running");
 });
 
-// ✅ Start server
-app.listen(PORT, HOST, () =>
-  console.log(`✅ Server running on port ${PORT}`)
-);
+// =============================================================
+// �� Start Express server
+// =============================================================
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT}`);
+});
