@@ -1,20 +1,18 @@
-# 🧩 CleanPro Backend – Final Cloud Run Dockerfile
+# 🧩 CleanPro Backend – Cloud Run Root Start (Final)
 
 FROM node:20
 
-# Set working directory inside container
-WORKDIR /app
+# Work inside default Cloud Run root
+WORKDIR /workspace
 
-# Copy package files first for better caching
-COPY backend/package*.json ./backend/
+# Copy backend
+COPY backend ./backend
 
 # Install dependencies
-RUN cd backend && npm install --omit=dev
+WORKDIR /workspace/backend
+RUN npm install --omit=dev
 
-# Copy entire project (backend + routes)
-COPY . .
-
-# Cloud Run default port
+# Env + port
 ENV PORT=8080
 EXPOSE 8080
 
@@ -22,4 +20,4 @@ EXPOSE 8080
 HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 
 # ✅ Start backend
-CMD ["node", "backend/index.js"]
+CMD ["node", "index.js"]
