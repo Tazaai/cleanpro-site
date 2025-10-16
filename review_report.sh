@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v7.4 – GPT-guided, Docker CMD auto-fix + route audit)
+# 🧠 Codox Master Review & Self-Healing Runner (v7.5 – GPT-guided, Firebase template auto-fix + route audit)
 
 set +e
 exec > >(tee agent.md) 2>&1
@@ -24,7 +24,7 @@ run_cycle() {
 
   # ✅ Backend fallback
   if ! grep -q "app.listen" backend/index.js 2>/dev/null; then
-    echo "�� Recreating backend/index.js"
+    echo "🩹 Recreating backend/index.js"
     cat > backend/index.js <<'EOF'
 import express from "express";
 import cors from "cors";
@@ -111,6 +111,28 @@ EOF
   echo "✅ Route audit completed."
 
   #############################################################################
+  # 🧩 Auto-create Firebase template (safe)
+  #############################################################################
+  if [ ! -f "backend/firebase_template.json" ]; then
+    echo "🩹 Creating safe firebase_template.json placeholder"
+    cat > backend/firebase_template.json <<'EOF'
+{
+  "type": "service_account",
+  "project_id": "cleanpro-site",
+  "client_email": "github-deployer@cleanpro-site.iam.gserviceaccount.com",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+EOF
+    echo "✅ firebase_template.json auto-created"
+  fi
+
+  # 🔥 Firebase key setup for Cloud Run
+  if [ -n "$FIREBASE_KEY" ]; then
+    echo "$FIREBASE_KEY" > backend/serviceAccountKey.json
+    echo "🗝️ Firebase key written for Cloud Run"
+  fi
+
+  #############################################################################
   # 🎨 Build frontend
   #############################################################################
   echo "## 🎨 Building frontend..."
@@ -122,7 +144,7 @@ EOF
   fi
 
   #############################################################################
-  # 🧪 Backend & frontend tests
+  # �� Backend & frontend tests
   #############################################################################
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
@@ -151,14 +173,6 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   fi
 
   #############################################################################
-  # 🔥 Firebase key setup for Cloud Run
-  #############################################################################
-  if [ -n "$FIREBASE_KEY" ]; then
-    echo "$FIREBASE_KEY" > backend/serviceAccountKey.json
-    echo "🗝️ Firebase key written for Cloud Run"
-  fi
-
-  #############################################################################
   # 📦 Commit & Deploy
   #############################################################################
   echo "## 📦 Commit & deploy..."
@@ -170,8 +184,8 @@ app.use(cors({ origin: "*", methods: "GET,POST,OPTIONS" }));' backend/index.js
   git push origin main || echo "⚠️ Push skipped"
 
   echo "## ☁️ Redeploying..."
-  gcloud run deploy cleanpro-backend  --source .           --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Backend deploy failed"
-  gcloud run deploy cleanpro-frontend --source ./frontend  --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Frontend deploy failed"
+  gcloud run deploy cleanpro-backend  --source .          --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Backend deploy failed"
+  gcloud run deploy cleanpro-frontend --source ./frontend --region europe-west1 --project "$GCP_PROJECT" --quiet || echo "⚠️ Frontend deploy failed"
 
   #############################################################################
   # 🩺 Health test
