@@ -6,24 +6,38 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-process.env.FIREBASE_KEY ||= "{}"; // 🩹 prevents /app/firebase_config.json error
 
-process.env.FIREBASE_KEY ||= "{}"; // ✅ Prevent crash if secret missing
+// 🩹 Prevent Firebase crash if secret missing
+process.env.FIREBASE_KEY ||= "{}";
 
+// -------------------------------------------------------------
+// ⚙️ Server setup
+// -------------------------------------------------------------
 const app = express();
-app.use(cors({ origin: ["https://cleanpro-frontend-5539254765.europe-west1.run.app"], methods: ["GET", "POST", "OPTIONS"], credentials: true }));
+app.use(
+  cors({
+    origin: ["https://cleanpro-frontend-5539254765.europe-west1.run.app"],
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
+// -------------------------------------------------------------
+// 🔐 Firebase config & initialization
+// -------------------------------------------------------------
 const SERVICE_ACCOUNT_PATH = "/app/backend/serviceAccountKey.json";
 const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
-const TEMPLATE_PATH = "/app/backend/firebase_template.json";
 
 try {
-  if (!existsSync(SERVICE_ACCOUNT_PATH)) writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
-  if (!existsSync(FIREBASE_CONFIG_PATH)) writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
+  if (!existsSync(SERVICE_ACCOUNT_PATH))
+    writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
+  if (!existsSync(FIREBASE_CONFIG_PATH))
+    writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
+  console.log("��️ Firebase config ensured");
 } catch (e) {
   console.error("⚠️ Firebase config error:", e.message);
 }
@@ -38,7 +52,9 @@ try {
   console.warn("⚠️ Firebase init skipped (empty config).");
 }
 
-// Routes
+// -------------------------------------------------------------
+// 🚏 Routes
+// -------------------------------------------------------------
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
@@ -59,5 +75,12 @@ app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/gcalendar", gcalendarApi);
 
+// -------------------------------------------------------------
+// 🩺 Health check
+// -------------------------------------------------------------
 app.get("/", (_, res) => res.send("✅ CleanPro Backend running on Cloud Run"));
-app.listen(PORT, HOST, () => console.log(`✅ Server on ${HOST}:${PORT}`));
+
+// -------------------------------------------------------------
+// 🚀 Start server
+// -------------------------------------------------------------
+app.listen(PORT, HOST, () => console.log(`✅ Server listening on ${HOST}:${PORT}`));
