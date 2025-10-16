@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
+process.env.FIREBASE_KEY ||= "{}"; // 🩹 prevents /app/firebase_config.json error
 
 process.env.FIREBASE_KEY ||= "{}"; // ✅ Prevent crash if secret missing
 
