@@ -1,6 +1,7 @@
 # 🧭 CleanPro Site + Codox System – Project Guide
-⚠️ SYSTEM CONTEXT FILE — DO NOT EDIT MANUALLY  
-Used by **Codox GPT** to understand project goals, structure, and workflow for **automation, diagnostics, and self-healing**.
+⚠️ SYSTEM CONTEXT FILE — **READ-ONLY (Auto-edit disabled)**  
+Used by **Codox GPT** to understand project goals, structure, and workflow for **automation, diagnostics, and self-healing**.  
+⛔️ This file may only be *read*, not modified automatically.
 
 ---
 
@@ -108,6 +109,14 @@ Validates presence and syntax of:
 
 ---
 
+## 🔧 review_report.sh Control
+- Codox may modify this script automatically.  
+- Allowed edits: diagnostics, self-healing logic, route validation, deployment commands.  
+- Protected sections: Cloud auth, secret validation, and GCP deploy syntax.  
+- **PROJECT_GUIDE.md itself is locked** — Codox can only *read*, never write.
+
+---
+
 ## 🗂 Structure
 
 **Backend:**  
@@ -122,7 +131,6 @@ Validates presence and syntax of:
 ---
 
 ## ⚙️ Workflow
-
 - Local install: `npm install` (never commit `node_modules`)  
 - Deploy via:  
   - `bash deploy_backend.sh`  
@@ -134,7 +142,7 @@ Validates presence and syntax of:
 
 ---
 
-## 🚀 Roadmap
+## �� Roadmap
 - [x] Core routes  
 - [x] Dynamic pricing  
 - [x] Codox Auto-Repair Trigger  
@@ -147,21 +155,21 @@ Validates presence and syntax of:
 
 ---
 
-### 🧩 CI/CD Flow
+## 🧩 CI/CD Flow
 - Trigger: GitHub Action → `review_report.sh`  
 - Validation order: **secrets → backend → frontend → deploy → health test → report**  
 - On failure: auto-repair + redeploy  
 
 ---
 
-### 🧰 AI Integration
+## 🧰 AI Integration
 - Codox GPT reads `PROJECT_GUIDE.md` and `agent.md`  
 - Suggests or commits code fixes through GitHub PR  
-- Future: auto-patch via OpenAI API  
+- Auto-editing of this file is **strictly prohibited**
 
 ---
 
-### 📦 Data / Firestore Collections
+## 📦 Data / Firestore Collections
 - `services`, `bookings`, `pricing`, `coordination_points`, `reviews`  
 - Auto-create missing collections if empty  
 - Sync daily with AppSheet  
@@ -170,12 +178,9 @@ Validates presence and syntax of:
 
 ## 🛡️ Notes
 Codox GPT reads this file for logic and structure.  
-Do **not rename sections or edit manually**.  
-After any manual modification, run:  
-`bash review_report.sh`  
+Do **not rename sections or edit automatically**.  
+Only manual updates allowed by authorized developer.  
+After any manual change, run:  
+`bash review_report.sh`
 
-- `PROJECT_GUIDE.md` = system blueprint  
-- `README.md` = public overview  
-- `agent.md` = runtime diagnostic log  
-
-**(End of PROJECT_GUIDE.md – Do not edit manually)**
+**(End of PROJECT_GUIDE.md – Auto-editing permanently disabled)**  
