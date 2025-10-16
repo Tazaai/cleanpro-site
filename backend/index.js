@@ -34,17 +34,15 @@ const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
 const TEMPLATE_PATH = "/app/backend/firebase_template.json";
 
 try {
-  // 1️⃣ Create serviceAccountKey.json from FIREBASE_KEY if missing
   if (!existsSync(SERVICE_ACCOUNT_PATH)) {
     if (process.env.FIREBASE_KEY) {
       writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
       console.log("🗝️ Created serviceAccountKey.json from FIREBASE_KEY");
     } else {
-      console.warn("⚠️ No FIREBASE_KEY secret provided, using template fallback.");
+      console.warn("⚠️ No FIREBASE_KEY provided — using template fallback.");
     }
   }
 
-  // 2️⃣ Create firebase_config.json if missing
   if (!existsSync(FIREBASE_CONFIG_PATH)) {
     if (process.env.FIREBASE_KEY) {
       writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY);
@@ -53,12 +51,12 @@ try {
       writeFileSync(FIREBASE_CONFIG_PATH, readFileSync(TEMPLATE_PATH, "utf8"));
       console.log("📄 Created firebase_config.json from template fallback");
     } else {
-      console.warn("⚠️ No firebase_config.json or template found — using safe empty object.");
+      console.warn("⚠️ No Firebase config found — creating empty object.");
       writeFileSync(FIREBASE_CONFIG_PATH, "{}");
     }
   }
 } catch (err) {
-  console.error("⚠️ Could not create Firebase config files:", err.message);
+  console.error("⚠️ Firebase config generation error:", err.message);
 }
 
 // =============================================================
@@ -79,7 +77,7 @@ try {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountData),
     });
-    console.log("✅ Firebase Admin initialized successfully");
+    console.log("✅ Firebase Admin initialized");
   }
 } catch (err) {
   console.error("❌ Firebase initialization failed:", err.message);
@@ -114,7 +112,7 @@ app.use("/api/gcalendar", gcalendarApi);
 // =============================================================
 // 🩺 Health check endpoint
 // =============================================================
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("✅ CleanPro Backend is running on Cloud Run");
 });
 
@@ -122,5 +120,5 @@ app.get("/", (req, res) => {
 // 🚀 Start Express Server
 // =============================================================
 app.listen(PORT, HOST, () => {
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+  console.log(`✅ Server listening on http://${HOST}:${PORT}`);
 });
