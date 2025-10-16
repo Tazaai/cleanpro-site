@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Copy backend files
 
-COPY backend ./backend
+COPY . .
 
 
 
