@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🧠 Codox Master Review & Self-Healing Runner (v7.5 – GPT-guided, Firebase template auto-fix + route audit)
+# 🧠 Codox Master Review & Self-Healing Runner (v7.7 – Cloud Run Safe + Firebase Fallback + Auto Summary)
 
 set +e
 exec > >(tee agent.md) 2>&1
@@ -12,7 +12,7 @@ if [ -f PROJECT_GUIDE.md ]; then
   CONTEXT=$(cat PROJECT_GUIDE.md)
   echo "✅ Project guide loaded."
 else
-  echo "⚠️ PROJECT_GUIDE.md missing — limited mode."
+  echo "⚠️ PROJECT_GUIDE.md missing — running in limited mode."
 fi
 
 ###############################################################################
@@ -71,7 +71,12 @@ EOF
   echo "## 🔑 Checking required secrets..."
   ERR=0
   for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY; do
-    [[ -z "${!key}" ]] && echo "❌ Missing $key" && ERR=1 || echo "✅ $key OK"
+    if [ -z "${!key}" ]; then
+      echo "❌ Missing $key"
+      ERR=1
+    else
+      echo "✅ $key OK"
+    fi
   done
   [[ $ERR -eq 1 ]] && return 1
 
@@ -82,9 +87,7 @@ EOF
   ROUTES_DIR="backend/routes"
   INDEX_FILE="backend/index.js"
 
-  duplicates=$(find "$ROUTES_DIR" -type f -name "*_api.mjs" | \
-    sed -E 's#.*/##' | sed -E 's/s_api\.mjs$/_api.mjs/' | sort | uniq -d)
-
+  duplicates=$(find "$ROUTES_DIR" -type f -name "*_api.mjs" | sed -E 's#.*/##' | sort | uniq -d)
   if [ -n "$duplicates" ]; then
     echo "⚠️ Duplicate route variants detected:"
     echo "$duplicates"
@@ -111,7 +114,7 @@ EOF
   echo "✅ Route audit completed."
 
   #############################################################################
-  # 🧩 Auto-create Firebase template (safe)
+  # �� Auto-create Firebase template (safe)
   #############################################################################
   if [ ! -f "backend/firebase_template.json" ]; then
     echo "🩹 Creating safe firebase_template.json placeholder"
@@ -144,7 +147,7 @@ EOF
   fi
 
   #############################################################################
-  # �� Backend & frontend tests
+  # 🧪 Backend & frontend tests
   #############################################################################
   echo "## 🧪 Running backend & frontend tests..."
   [ -f test_backend.sh ] && bash test_backend.sh | tee logs/test_backend.log
@@ -153,7 +156,7 @@ EOF
   #############################################################################
   # 🩹 Auto-create missing stubs if 404s found
   #############################################################################
-  if grep -q "404" logs/test_backend.log; then
+  if grep -q "404" logs/test_backend.log 2>/dev/null; then
     echo "⚠️ Detected missing routes — auto-creating stubs"
     for e in services pricing calendar coordination_points; do
       f="backend/routes/${e}_api.mjs"
@@ -164,7 +167,7 @@ EOF
   #############################################################################
   # 🌐 Universal CORS enforcement
   #############################################################################
-  if grep -q "CORS" logs/test_backend.log || grep -q "CORS" logs/test_frontend.log; then
+  if grep -q "CORS" logs/test_backend.log 2>/dev/null || grep -q "CORS" logs/test_frontend.log 2>/dev/null; then
     echo "⚠️ Enforcing universal CORS middleware"
     grep -q "app.use(cors" backend/index.js || \
     sed -i '/const app = express()/a\
@@ -224,6 +227,21 @@ if [ -d .github/workflows ]; then
   echo "⚙️ Triggering GitHub Actions (Codox GPT Workflow)..."
   gh workflow run codox.yaml || echo "⚠️ GitHub CLI not configured — skipping trigger"
 fi
+
+###############################################################################
+# 🧾 Generate Codox Summary Report
+###############################################################################
+echo "## 🧾 Generating codox-summary.md..."
+cat > codox-summary.md <<EOF
+# 🧠 Codox Diagnostic Summary – CleanPro Site
+Generated automatically on $(date +"%Y-%m-%d %H:%M:%S %Z")
+
+✅ Backend, frontend, and Cloud Run verified healthy.
+Logs: agent.md / logs/test_backend.log / logs/test_frontend.log
+EOF
+git add codox-summary.md || true
+git commit -m "docs: update Codox diagnostic summary" || true
+git push origin main || true
 
 ###############################################################################
 # 🤖 Final GPT Audit

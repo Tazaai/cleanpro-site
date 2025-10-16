@@ -17,7 +17,7 @@ Create a **self-maintaining cleaning platform** with dynamic services, Google Ma
 - Firestore data layer  
 - Cloud Run ready (`process.env.PORT || 8080`)  
 - Health check: `GET /` → “✅ CleanPro Backend is running”  
-- Auto-patched routes: `/api/services`, `/api/bookings`, `/api/calendar`
+- Auto-patched routes: `/api/services`, `/api/bookings`, `/api/calendar`  
 - **Auto-fix rule:** ensure `app.listen(process.env.PORT || 8080, "0.0.0.0")` is present in `index.js`
 
 ### 🎨 Frontend (React / Vite)
@@ -142,7 +142,7 @@ Validates presence and syntax of:
 
 ---
 
-## �� Roadmap
+## 🗺️ Roadmap
 - [x] Core routes  
 - [x] Dynamic pricing  
 - [x] Codox Auto-Repair Trigger  

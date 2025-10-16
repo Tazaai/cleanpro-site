@@ -66,7 +66,7 @@ jobs:
 
       - name: 🗝️ Validate required secrets
         run: |
-          secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN)
+          secrets=(GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY GITHUB_TOKEN FIREBASE_KEY OPENAI_API_KEY)
           missing=0
           for s in "${secrets[@]}"; do
             if [ -z "${!s}" ]; then
@@ -101,10 +101,12 @@ jobs:
             echo 'app.listen(process.env.PORT || 8080, "0.0.0.0", ()=>console.log(`✅ Server running on ${process.env.PORT||8080}`));' >> backend/index.js
 
           # 🔧 Fix Dockerfile WORKDIR and CMD
-          sed -i '/WORKDIR \/app\/backend/{n;d;}' backend/Dockerfile || true
-          sed -i '1,200{/WORKDIR \/app\/backend/ N;d;}' backend/Dockerfile || true
-          sed -i '/CMD/d' backend/Dockerfile || true
-          echo 'CMD ["node","index.js"]' >> backend/Dockerfile
+          if [ -f backend/Dockerfile ]; then
+            sed -i '/WORKDIR \/app\/backend/d' backend/Dockerfile || true
+            sed -i '/CMD/d' backend/Dockerfile || true
+            echo 'WORKDIR /app/backend' >> backend/Dockerfile
+            echo 'CMD ["node","index.js"]' >> backend/Dockerfile
+          fi
 
           # 🔧 Add missing routes
           mkdir -p backend/routes
@@ -121,10 +123,12 @@ jobs:
           git push || true
 
           echo "🚀 Redeploying container..."
-          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend backend/ || true
+          gcloud builds submit --tag gcr.io/${GCP_PROJECT}/cleanpro-backend backend/ || true
           gcloud run deploy cleanpro-backend \
-            --image gcr.io/${{ secrets.GCP_PROJECT }}/cleanpro-backend \
-            --region europe-west1 --platform managed --allow-unauthenticated || true
+            --image gcr.io/${GCP_PROJECT}/cleanpro-backend \
+            --region europe-west1 \
+            --platform managed \
+            --allow-unauthenticated || true
 
           echo "✅ Auto-Repair Trigger completed."
 

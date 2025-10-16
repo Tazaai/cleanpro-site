@@ -1,12 +1,18 @@
-import admin from "firebase-admin";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+// =============================================================
+// 🧩 CleanPro Backend – Final Cloud Run Safe Version
+// =============================================================
+
 import express from "express";
 import cors from "cors";
 import path from "path";
+import admin from "firebase-admin";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 
+// -------------------------------------------------------------
+// ⚙️ Basic server setup
+// -------------------------------------------------------------
 const app = express();
 
-// ✅ Strict CORS – allow only the deployed frontend
 app.use(
   cors({
     origin: ["https://cleanpro-frontend-5539254765.europe-west1.run.app"],
@@ -21,22 +27,34 @@ const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
 // =============================================================
-// 🔐 Ensure Firebase configuration files exist
+// 🔐 Firebase Configuration Handling
 // =============================================================
 const SERVICE_ACCOUNT_PATH = "/app/backend/serviceAccountKey.json";
 const FIREBASE_CONFIG_PATH = "/app/firebase_config.json";
+const TEMPLATE_PATH = "/app/backend/firebase_template.json";
 
 try {
+  // 1️⃣ Create serviceAccountKey.json from FIREBASE_KEY if missing
   if (!existsSync(SERVICE_ACCOUNT_PATH)) {
-    if (!process.env.FIREBASE_KEY) throw new Error("Missing FIREBASE_KEY secret");
-    writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
-    console.log("🗝️ Created serviceAccountKey.json from FIREBASE_KEY");
+    if (process.env.FIREBASE_KEY) {
+      writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
+      console.log("🗝️ Created serviceAccountKey.json from FIREBASE_KEY");
+    } else {
+      console.warn("⚠️ No FIREBASE_KEY secret provided, using template fallback.");
+    }
   }
 
+  // 2️⃣ Create firebase_config.json if missing
   if (!existsSync(FIREBASE_CONFIG_PATH)) {
     if (process.env.FIREBASE_KEY) {
       writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY);
       console.log("🗝️ Created firebase_config.json from FIREBASE_KEY");
+    } else if (existsSync(TEMPLATE_PATH)) {
+      writeFileSync(FIREBASE_CONFIG_PATH, readFileSync(TEMPLATE_PATH, "utf8"));
+      console.log("📄 Created firebase_config.json from template fallback");
+    } else {
+      console.warn("⚠️ No firebase_config.json or template found — using safe empty object.");
+      writeFileSync(FIREBASE_CONFIG_PATH, "{}");
     }
   }
 } catch (err) {
@@ -44,18 +62,27 @@ try {
 }
 
 // =============================================================
-// 🔥 Initialize Firebase Admin
+// 🔥 Initialize Firebase Admin SDK
 // =============================================================
 try {
   if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
+    let serviceAccountData = {};
+
+    if (existsSync(SERVICE_ACCOUNT_PATH)) {
+      serviceAccountData = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
+    } else if (existsSync(FIREBASE_CONFIG_PATH)) {
+      serviceAccountData = JSON.parse(readFileSync(FIREBASE_CONFIG_PATH, "utf8"));
+    } else if (existsSync(TEMPLATE_PATH)) {
+      serviceAccountData = JSON.parse(readFileSync(TEMPLATE_PATH, "utf8"));
+    }
+
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert(serviceAccountData),
     });
-    console.log("✅ Firebase Admin initialized");
+    console.log("✅ Firebase Admin initialized successfully");
   }
 } catch (err) {
-  console.error("⚠️ Firebase init failed:", err.message);
+  console.error("❌ Firebase initialization failed:", err.message);
 }
 
 // =============================================================
@@ -64,12 +91,12 @@ try {
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
-import mapsApi from "./routes/maps_api.mjs";           // ✅ corrected import
+import mapsApi from "./routes/maps_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
 import bookingApi from "./routes/booking_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
-import gcalendarApi from "./routes/gcalendar_api.mjs"; // ✅ add Google Calendar API
+import gcalendarApi from "./routes/gcalendar_api.mjs";
 
 // =============================================================
 // 🚏 Mount API routes
@@ -88,12 +115,12 @@ app.use("/api/gcalendar", gcalendarApi);
 // 🩺 Health check endpoint
 // =============================================================
 app.get("/", (req, res) => {
-  res.send("✅ CleanPro Backend is running");
+  res.send("✅ CleanPro Backend is running on Cloud Run");
 });
 
 // =============================================================
-// �� Start Express server
+// 🚀 Start Express Server
 // =============================================================
 app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running on http://${HOST}:${PORT}`);
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
 });
