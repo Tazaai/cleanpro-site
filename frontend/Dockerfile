@@ -1,11 +1,14 @@
-# 🧩 CleanPro Frontend – Correct Build Context
-
 FROM node:20 AS build
 WORKDIR /app
-COPY . .
-RUN cd frontend && npm install && npm run build
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend ./
+RUN npm run build || npm run build:prod
 
 FROM nginx:1.25-alpine
-COPY --from=build /app/frontend/build /usr/share/nginx/html
+# Copy whichever folder exists
+COPY --from=build /app/frontend/build /usr/share/nginx/html/
+COPY --from=build /app/frontend/dist /usr/share/nginx/html/
 EXPOSE 8080
+HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
 CMD ["nginx", "-g", "daemon off;"]
