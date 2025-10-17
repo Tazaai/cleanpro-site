@@ -3,3 +3,4 @@ dist
 *.log
 *.bak
 .env*
+backend/firebase_config.json
