@@ -1,15 +1,32 @@
-# Step 1: Build React/Vite app
-FROM node:20-alpine AS build
+# 🧩 CleanPro Frontend – Final Cloud Run Dockerfile
+
+# Use official Node.js 20 image
+FROM node:20 AS build
+
+# Set working directory inside container
 WORKDIR /app
-COPY package*.json ./
+
+# Copy only frontend files first
+COPY frontend/package*.json ./
 RUN npm install
-COPY . .
+
+# Copy frontend source code
+COPY frontend ./
+
+# Build static files for production
 RUN npm run build
 
-# Step 2: Serve with nginx
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# --- Serve with lightweight Nginx ---
+FROM nginx:1.25-alpine
 
+# Copy built static files to Nginx HTML directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose default port for Cloud Run
 EXPOSE 8080
+
+# Health check
+HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
+
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
