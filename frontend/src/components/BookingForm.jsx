@@ -3,7 +3,10 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Loader } from "@googlemaps/js-api-loader";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
+// ✅ Updated backend endpoint (active Cloud Run service)
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  "https://cleanpro-backend-5539254765-ew.a.run.app";
 
 export default function BookingForm() {
   const [name, setName] = useState("");
@@ -25,15 +28,14 @@ export default function BookingForm() {
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
 
-  // 📅 Fetch calendar availability
+  // 📅 Calendar availability
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/calendar?days=30`);
         const data = await res.json();
-        if (data.ok && Array.isArray(data.availability)) {
+        if (data.ok && Array.isArray(data.availability))
           setAvailability(data.availability);
-        }
       } catch (err) {
         console.error("Calendar fetch error:", err);
       }
@@ -41,15 +43,13 @@ export default function BookingForm() {
     fetchCalendar();
   }, []);
 
-  // 📍 Fetch HQs dynamically
+  // 📍 Coordination HQs
   useEffect(() => {
     const fetchHQs = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/coordination_points`);
         const data = await res.json();
-        if (data.ok) {
-          setHqs(data.hqs);
-        }
+        if (data.ok) setHqs(data.hqs);
       } catch (err) {
         console.error("Error fetching HQs:", err);
       }
@@ -57,7 +57,7 @@ export default function BookingForm() {
     fetchHQs();
   }, []);
 
-  // 📍 Initialize Google Autocomplete
+  // 📍 Google Autocomplete
   useEffect(() => {
     const loader = new Loader({
       apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -66,24 +66,24 @@ export default function BookingForm() {
 
     loader.load().then(() => {
       const input = document.getElementById("address-input");
-      if (input) {
-        const autocomplete = new window.google.maps.places.Autocomplete(input, {
-          types: ["address"],
-          componentRestrictions: { country: "us" }, // 🇺🇸 restrict if needed
-        });
-        autocomplete.setFields(["formatted_address", "geometry"]);
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (place.formatted_address) {
-            setAddress(place.formatted_address);
-            fetchDistance(place.formatted_address);
-          }
-        });
-      }
+      if (!input) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        types: ["address"],
+        componentRestrictions: { country: "us" },
+      });
+      autocomplete.setFields(["formatted_address", "geometry"]);
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.formatted_address) {
+          setAddress(place.formatted_address);
+          fetchDistance(place.formatted_address);
+        }
+      });
     });
   }, [hqs]);
 
-  // 🌍 Distance (multi-HQ nearest check)
+  // 🌍 Distance & nearest HQ
   const fetchDistance = async (dest) => {
     if (!dest || hqs.length === 0) return;
     try {
@@ -98,9 +98,8 @@ export default function BookingForm() {
         const data = await res.json();
         if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
           let miles = data.rows[0].elements[0].distance.value / 1609.34;
-          if (miles < nearest.miles) {
+          if (miles < nearest.miles)
             nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
-          }
         }
       }
 
@@ -110,10 +109,10 @@ export default function BookingForm() {
       }
 
       if (nearest.miles > 150) {
-        setWarning("❌ Sorry, service not available in your area yet.");
+        setWarning("❌ Service not available in your area yet.");
+        setWaitlist(true);
         setDistance(0);
         setNearestHQ(null);
-        setWaitlist(true);
         return;
       }
 
@@ -152,13 +151,14 @@ export default function BookingForm() {
     fetchPreview();
   }, [name, service, area, distance, frequency, nearestHQ]);
 
-  // ✅ Submit booking
+  // ✅ Booking submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (waitlist) {
-      alert("📋 You have been added to our waiting list. We’ll contact you when we expand!");
+      alert("📋 Added to waitlist — we’ll contact you soon!");
       return;
     }
+
     setSubmitting(true);
     setSuccessMsg("");
     try {
@@ -179,13 +179,13 @@ export default function BookingForm() {
         }),
       });
       const data = await res.json();
+
       if (data.ok) {
         setSuccessMsg(
           `✅ Thank you, ${name}! Your booking is confirmed.\n\n` +
-            `Nearest coordination point: ${nearestHQ?.name} (${distance} miles)\n\n` +
-            `Total price: $${data.breakdown.finalPrice}.\n\n` +
-            `Breakdown: Base $${data.breakdown.basePrice} + Distance $${data.breakdown.distanceFee} - Discount $${data.breakdown.discount}\n\n` +
-            `We will contact you shortly via SMS, call, or email.`
+            `Nearest HQ: ${nearestHQ?.name} (${distance} miles)\n\n` +
+            `Total: $${data.breakdown.finalPrice}\n` +
+            `Breakdown: Base $${data.breakdown.basePrice} + Distance $${data.breakdown.distanceFee} - Discount $${data.breakdown.discount}`
         );
       } else {
         setWarning(`❌ Booking failed: ${data.message || data.error}`);
@@ -208,17 +208,16 @@ export default function BookingForm() {
     return availability.find((d) => d.date === isoDate);
   };
 
-  if (successMsg) {
+  if (successMsg)
     return (
       <div className="p-6 bg-white rounded-xl shadow-md text-center space-y-4">
         <h2 className="text-xl font-bold text-green-700">Booking Confirmed</h2>
         <p className="whitespace-pre-line text-gray-700">{successMsg}</p>
         <p className="text-sm text-gray-500">
-          🔒 Your details are private. We never share your contact information.
+          🔒 We never share your contact info.
         </p>
       </div>
     );
-  }
 
   return (
     <form
@@ -275,7 +274,6 @@ export default function BookingForm() {
         className="w-full border p-2 rounded"
       />
 
-      {/* Google Places Autocomplete */}
       <input
         id="address-input"
         type="text"
@@ -298,20 +296,15 @@ export default function BookingForm() {
 
       <div>
         <label className="block text-sm font-medium">Choose Date & Time</label>
-        <Calendar
-          locale="en-US"
-          minDate={new Date()}
-          onChange={setDate}
-          value={date}
-        />
+        <Calendar locale="en-US" minDate={new Date()} onChange={setDate} value={date} />
         {date && (
           <div className="mt-3 flex gap-4">
             {(() => {
               const avail = getAvailabilityForDate(date);
-              if (!avail) return <p className="text-sm text-gray-500">No availability</p>;
-              if (avail.closed) {
+              if (!avail)
+                return <p className="text-sm text-gray-500">No availability</p>;
+              if (avail.closed)
                 return <p className="text-sm text-red-600">🚫 Closed</p>;
-              }
               return (
                 <>
                   <button
@@ -328,7 +321,7 @@ export default function BookingForm() {
                     disabled={avail.PM.available <= 0}
                     className={`px-4 py-2 rounded ${getSlotClass(avail.PM)}`}
                   >
-                    🌙 PM ({avail.PM.available} left)
+                    �� PM ({avail.PM.available} left)
                   </button>
                 </>
               );
@@ -339,7 +332,7 @@ export default function BookingForm() {
 
       {nearestHQ && (
         <div className="p-3 bg-gray-50 rounded text-sm">
-          <p>📍 Nearest coordination point: <b>{nearestHQ.name}</b></p>
+          <p>📍 Nearest HQ: <b>{nearestHQ.name}</b></p>
           <p>📏 Distance: {distance} miles</p>
         </div>
       )}
@@ -351,7 +344,7 @@ export default function BookingForm() {
             Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount: -${preview.discount}
           </p>
           <p className="text-xs text-gray-600">
-            ℹ️ Policy: up to 40 miles free, thereafter managed via admin settings.
+            ℹ️ Up to 40 miles free; extra handled by admin.
           </p>
         </div>
       )}
