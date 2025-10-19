@@ -6,19 +6,27 @@ export default function App() {
   const bookingRef = useRef(null);
   const mapRef = useRef(null);
 
-  // ✅ Initialize map using already-loaded Google Maps script
+  // ✅ Initialize map safely
   useEffect(() => {
-    if (window.google && window.google.maps) {
-      new google.maps.Map(mapRef.current, {
-        center: { lat: 55.6761, lng: 12.5683 }, // Copenhagen
-        zoom: 10,
-      });
-    } else {
-      console.error("Google Maps not loaded");
-    }
+    const initMap = () => {
+      if (window.google && window.google.maps) {
+        new window.google.maps.Map(mapRef.current, {
+          center: { lat: 55.6761, lng: 12.5683 }, // Copenhagen
+          zoom: 10,
+        });
+      } else {
+        console.error("Google Maps script not loaded properly");
+      }
+    };
+
+    if (document.readyState === "complete") initMap();
+    else window.addEventListener("load", initMap);
+
+    return () => window.removeEventListener("load", initMap);
   }, []);
 
-  const scrollToBooking = () => bookingRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBooking = () =>
+    bookingRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const handleShare = () => {
     if (navigator.share) {
@@ -87,8 +95,17 @@ export default function App() {
             <li>✅ Flexible scheduling to fit your needs</li>
           </ul>
 
-          {/* ✅ Google Map */}
-          <div ref={mapRef} id="map" style={{ width: "100%", height: "400px", marginTop: "2rem", borderRadius: "10px" }}></div>
+          {/* Google Map */}
+          <div
+            ref={mapRef}
+            id="map"
+            style={{
+              width: "100%",
+              height: "400px",
+              marginTop: "2rem",
+              borderRadius: "10px",
+            }}
+          ></div>
 
           {/* Booking Form */}
           <div className="mt-8" id="booking-form">

@@ -16,7 +16,10 @@ process.env.FIREBASE_KEY ||= "{}";
 const app = express();
 app.use(
   cors({
-    origin: ["https://cleanpro-frontend-5539254765.europe-west1.run.app"],
+    origin: [
+      "https://cleanpro-frontend-5539254765.europe-west1.run.app",
+      "https://cleanpro-frontend-2a5pka5baa-ew.a.run.app",
+    ],
     methods: ["GET", "POST", "OPTIONS"],
     credentials: true,
   })
