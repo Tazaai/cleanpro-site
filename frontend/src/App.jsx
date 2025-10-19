@@ -1,17 +1,24 @@
-// ~/cleanpro-site/frontend/src/App.jsx
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import BookingForm from "./components/BookingForm";
-
 import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt } from "react-icons/fa";
 
 export default function App() {
   const bookingRef = useRef(null);
+  const mapRef = useRef(null);
 
-  const scrollToBooking = () => {
-    if (bookingRef.current) {
-      bookingRef.current.scrollIntoView({ behavior: "smooth" });
+  // ✅ Initialize map using already-loaded Google Maps script
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      new google.maps.Map(mapRef.current, {
+        center: { lat: 55.6761, lng: 12.5683 }, // Copenhagen
+        zoom: 10,
+      });
+    } else {
+      console.error("Google Maps not loaded");
     }
-  };
+  }, []);
+
+  const scrollToBooking = () => bookingRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const handleShare = () => {
     if (navigator.share) {
@@ -27,76 +34,39 @@ export default function App() {
   };
 
   const services = [
-    {
-      key: "standard_cleaning",
-      icon: "🏠",
-      title: "Residential Cleaning",
-      desc: "Keep your home spotless and fresh.",
-    },
-    {
-      key: "deep_cleaning",
-      icon: "🧼",
-      title: "Deep Cleaning",
-      desc: "Thorough cleaning for every corner.",
-    },
-    {
-      key: "office_cleaning",
-      icon: "🏢",
-      title: "Office Cleaning",
-      desc: "Reliable cleaning for your workplace.",
-    },
-    {
-      key: "move_cleaning",
-      icon: "📦",
-      title: "Move In/Out Cleaning",
-      desc: "Stress-free cleaning when moving.",
-    },
+    { key: "standard_cleaning", icon: "🏠", title: "Residential Cleaning", desc: "Keep your home spotless and fresh." },
+    { key: "deep_cleaning", icon: "🧼", title: "Deep Cleaning", desc: "Thorough cleaning for every corner." },
+    { key: "office_cleaning", icon: "🏢", title: "Office Cleaning", desc: "Reliable cleaning for your workplace." },
+    { key: "move_cleaning", icon: "📦", title: "Move In/Out Cleaning", desc: "Stress-free cleaning when moving." },
   ];
 
   return (
     <div className="flex flex-col min-h-screen font-sans bg-gray-50">
       {/* Hero */}
       <header className="relative mb-8 text-center text-white">
-        <img
-          src="/cleandeparture.jpg"
-          alt="Cleaning Services"
-          className="w-full h-72 object-cover"
-        />
+        <img src="/cleandeparture.jpg" alt="Cleaning Services" className="w-full h-72 object-cover" />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/60 to-black/30 px-4">
-          {/* 👇 include emoji + plain text so tests pass */}
-          <h1 className="text-3xl md:text-5xl font-bold">
-            🚀 Clean Departure <span className="sr-only">Clean Departure</span>
-          </h1>
-          <p className="mt-2 text-lg md:text-xl">
-            Your trusted cleaning partner
-          </p>
+          <h1 className="text-3xl md:text-5xl font-bold">🚀 Clean Departure</h1>
+          <p className="mt-2 text-lg md:text-xl">Your trusted cleaning partner</p>
           <button
             onClick={scrollToBooking}
-            className="mt-4 px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 transition text-white shadow"
+            className="mt-4 px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow"
           >
             Book Now
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="flex-1 flex flex-col items-center gap-6 px-4">
-        {/* Services + Booking merged */}
-        <section
-          ref={bookingRef}
-          className="w-full max-w-5xl bg-white rounded-lg shadow p-6"
-        >
-          <h2 className="text-2xl font-semibold mb-4">
-            🧹 Our Services <span className="sr-only">Our Services</span>
-          </h2>
+        <section ref={bookingRef} className="w-full max-w-5xl bg-white rounded-lg shadow p-6">
+          <h2 className="text-2xl font-semibold mb-4">🧹 Our Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {services.map((s) => (
               <div
                 key={s.key}
                 onClick={() => {
-                  const serviceSelect = document.querySelector(
-                    "select[name='service']"
-                  );
+                  const serviceSelect = document.querySelector("select[name='service']");
                   if (serviceSelect) serviceSelect.value = s.key;
                 }}
                 className="cursor-pointer p-4 border rounded-lg bg-gray-50 hover:shadow-md transition"
@@ -117,20 +87,18 @@ export default function App() {
             <li>✅ Flexible scheduling to fit your needs</li>
           </ul>
 
+          {/* ✅ Google Map */}
+          <div ref={mapRef} id="map" style={{ width: "100%", height: "400px", marginTop: "2rem", borderRadius: "10px" }}></div>
+
           {/* Booking Form */}
           <div className="mt-8" id="booking-form">
             <BookingForm />
           </div>
         </section>
 
-        <section className="w-full max-w-xl">
-        </section>
-
-        {/* Direct Contact */}
+        {/* Contact */}
         <section className="w-full max-w-lg bg-white rounded-lg shadow p-6 text-center">
-          <h2 className="text-2xl font-semibold mb-4">
-            📞 Get in Touch <span className="sr-only">Contact Us</span>
-          </h2>
+          <h2 className="text-2xl font-semibold mb-4">📞 Get in Touch</h2>
           <p>
             📱 Call us:{" "}
             <a href="tel:+123456789" className="text-blue-600 hover:underline">
@@ -139,20 +107,12 @@ export default function App() {
           </p>
           <p>
             ✉️ Email:{" "}
-            <a
-              href="mailto:info@cleandeparture.com"
-              className="text-blue-600 hover:underline"
-            >
+            <a href="mailto:info@cleandeparture.com" className="text-blue-600 hover:underline">
               info@cleandeparture.com
             </a>
           </p>
           <div className="flex justify-center space-x-4 mt-4">
-            <a
-              href="https://wa.me/123456789"
-              target="_blank"
-              rel="noreferrer"
-              className="text-green-500"
-            >
+            <a href="https://wa.me/123456789" target="_blank" rel="noreferrer" className="text-green-500">
               <FaWhatsapp className="text-3xl hover:scale-110 transition" />
             </a>
             <a href="https://facebook.com" target="_blank" rel="noreferrer">
@@ -161,11 +121,7 @@ export default function App() {
             <a href="https://instagram.com" target="_blank" rel="noreferrer">
               <FaInstagram className="text-pink-500 text-3xl hover:scale-110 transition" />
             </a>
-            <button
-              onClick={handleShare}
-              className="text-gray-600"
-              title="Share"
-            >
+            <button onClick={handleShare} className="text-gray-600" title="Share">
               <FaShareAlt className="text-2xl hover:scale-110 transition" />
             </button>
           </div>
