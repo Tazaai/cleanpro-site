@@ -6,3 +6,4 @@ node_modules/
 serviceAccountKey.json
 key.json
 backend/firebase_config.json
+frontend/.env
