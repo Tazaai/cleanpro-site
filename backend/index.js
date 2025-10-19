@@ -1,4 +1,4 @@
-// =============================================================
+// ============================================================= 
 // 🧩 CleanPro Backend – Cloud Run Safe Version (Final)
 // =============================================================
 
@@ -19,9 +19,10 @@ app.use(
     origin: [
       "https://cleanpro-frontend-5539254765.europe-west1.run.app",
       "https://cleanpro-frontend-2a5pka5baa-ew.a.run.app",
+      "http://localhost:5173",
     ],
     methods: ["GET", "POST", "OPTIONS"],
-    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json());
