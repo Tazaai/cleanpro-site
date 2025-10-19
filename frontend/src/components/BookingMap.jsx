@@ -4,7 +4,7 @@ import BookingSummary from "./BookingSummary";
 import BookingMap from "./BookingMap";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const ORIGIN = "Van Nuys, CA"; // HQ / starting point
+const ORIGIN = "Van Nuys, CA";
 
 export default function BookingForm() {
   const [name, setName] = useState("");
@@ -16,7 +16,6 @@ export default function BookingForm() {
   const [lastCleaningDate, setLastCleaningDate] = useState("");
   const [warning, setWarning] = useState("");
 
-  // --- Pricing model ---
   const servicePricing = {
     standard_cleaning: { pricePerM2: 2.0, pricePerMile: 2.5 },
     deep_cleaning: { pricePerM2: 3.0, pricePerMile: 2.5 },
@@ -25,28 +24,27 @@ export default function BookingForm() {
 
   const { pricePerM2, pricePerMile } = servicePricing[service] || {};
 
-  // --- Frequency discount mapping ---
   const frequencyDiscountRate = {
     one_time: 0,
     weekly: 0.1,
     monthly: 0.08,
   }[frequency];
 
-  // 📍 Fetch distance from Google Maps
   const fetchDistance = async () => {
     if (!address) return;
-
     if (!GOOGLE_MAPS_API_KEY) {
       setWarning("⚠️ Missing Google Maps API key, using manual distance.");
       return;
     }
 
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
-      ORIGIN
-    )}&destinations=${encodeURIComponent(address)}&units=imperial&key=${GOOGLE_MAPS_API_KEY}`;
-
     try {
-      const res = await fetch(url);
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
+          ORIGIN
+        )}&destinations=${encodeURIComponent(
+          address
+        )}&units=imperial&key=${GOOGLE_MAPS_API_KEY}`
+      );
       const data = await res.json();
       if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
         const miles = data.rows[0].elements[0].distance.value / 1609.34;
@@ -63,7 +61,7 @@ export default function BookingForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Booking submitted! (backend integration goes here)");
+    alert("Booking submitted!");
   };
 
   return (
@@ -75,7 +73,6 @@ export default function BookingForm() {
 
       {warning && <div className="text-red-600 text-sm">{warning}</div>}
 
-      {/* Name */}
       <div>
         <label className="block text-sm font-medium">Name</label>
         <input
@@ -87,7 +84,6 @@ export default function BookingForm() {
         />
       </div>
 
-      {/* Service */}
       <div>
         <label className="block text-sm font-medium">Service</label>
         <select
@@ -101,7 +97,6 @@ export default function BookingForm() {
         </select>
       </div>
 
-      {/* Area */}
       <div>
         <label className="block text-sm font-medium">Area (sq ft)</label>
         <input
@@ -112,7 +107,6 @@ export default function BookingForm() {
         />
       </div>
 
-      {/* Address */}
       <div>
         <label className="block text-sm font-medium">Customer Address</label>
         <input
@@ -128,7 +122,6 @@ export default function BookingForm() {
         </p>
       </div>
 
-      {/* Distance (fallback / manual override) */}
       <div>
         <label className="block text-sm font-medium">Distance (miles)</label>
         <input
@@ -139,7 +132,6 @@ export default function BookingForm() {
         />
       </div>
 
-      {/* Frequency */}
       <div>
         <label className="block text-sm font-medium">Frequency</label>
         <select
@@ -153,7 +145,6 @@ export default function BookingForm() {
         </select>
       </div>
 
-      {/* Last Cleaning Date */}
       <div>
         <label className="block text-sm font-medium">
           Date of Last Professional Cleaning (optional)
@@ -169,7 +160,6 @@ export default function BookingForm() {
         </p>
       </div>
 
-      {/* Booking Summary */}
       <BookingSummary
         area={area}
         distance={distance}
@@ -180,10 +170,8 @@ export default function BookingForm() {
         serviceType={service}
       />
 
-      {/* Booking Map */}
       <BookingMap address={address} />
 
-      {/* Submit */}
       <button
         type="submit"
         className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
