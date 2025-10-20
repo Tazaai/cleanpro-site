@@ -3,7 +3,8 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import toast, { Toaster } from "react-hot-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+// ✅ Use Cloud Run base URL only
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function BookingForm() {
   const [name, setName] = useState("");
@@ -41,7 +42,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
-  // 📍 Initialize Google Autocomplete (script already loaded in main.jsx)
+  // 📍 Google Autocomplete
   useEffect(() => {
     if (!window.google?.maps?.places) return;
     const input = document.getElementById("address-input");
@@ -75,10 +76,7 @@ export default function BookingForm() {
           nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
       }
     }
-    if (nearest.miles === Infinity) {
-      setWarning("⚠️ Could not fetch distance.");
-      return;
-    }
+    if (nearest.miles === Infinity) return setWarning("⚠️ Could not fetch distance.");
     if (nearest.miles > 150) {
       setWarning("❌ Service not available in your area yet.");
       setWaitlist(true);
@@ -90,7 +88,7 @@ export default function BookingForm() {
     setWaitlist(false);
   };
 
-  // 💰 Live price preview
+  // 💰 Price preview
   useEffect(() => {
     if (!area || !service || !nearestHQ) return;
     fetch(`${API_BASE}/api/bookings/preview`, {
@@ -109,7 +107,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, [name, service, area, distance, frequency, nearestHQ]);
 
-  // ✅ Booking submit
+  // ✅ Submit booking
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (waitlist) return toast("📋 Added to waitlist.");
@@ -300,7 +298,7 @@ export default function BookingForm() {
       {nearestHQ && (
         <div className="p-3 bg-gray-50 rounded text-sm text-center">
           <p>📍 Nearest HQ: <b>{nearestHQ.name}</b></p>
-          <p>�� Distance: {distance} miles</p>
+          <p>🚗 Distance: {distance} miles</p>
         </div>
       )}
 
@@ -327,7 +325,7 @@ export default function BookingForm() {
 
       {preview && (
         <p className="text-center text-gray-700 text-sm">
-          💰 Estimated total: <b>${preview.finalPrice}</b>
+          �� Estimated total: <b>${preview.finalPrice}</b>
         </p>
       )}
       <p className="text-center text-xs text-gray-500 mt-1">
