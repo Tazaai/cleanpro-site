@@ -1,20 +1,25 @@
-# 🧩 CleanPro Backend – Cloud Run Working Fix
+# 🧩 CleanPro Backend – Cloud Run Final Fix
 
 FROM node:20
 
-# ✅ Set work directory
-WORKDIR /workspace
 
-# ✅ Copy backend source
+
+WORKDIR /app
+
 COPY . .
 
-# ✅ Install only production deps
 RUN npm install --omit=dev
 
-# ✅ Expose and run
+
+
 ENV PORT=8080
+
 EXPOSE 8080
 
-HEALTHCHECK CMD curl -f http://localhost:8080/ || exit 1
+
+
+HEALTHCHECK CMD curl -f http://localhost:$PORT/ || exit 1
+
+
 
 CMD ["node", "index.js"]
