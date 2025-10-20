@@ -3,7 +3,6 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Loader } from "@googlemaps/js-api-loader";
 
-// ✅ Updated backend endpoint (active Cloud Run service)
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   "https://cleanpro-backend-5539254765-ew.a.run.app";
@@ -28,7 +27,7 @@ export default function BookingForm() {
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
 
-  // 📅 Calendar availability
+  // 📅 Load calendar availability
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
@@ -43,7 +42,7 @@ export default function BookingForm() {
     fetchCalendar();
   }, []);
 
-  // 📍 Coordination HQs
+  // 🏢 Coordination HQs
   useEffect(() => {
     const fetchHQs = async () => {
       try {
@@ -67,12 +66,9 @@ export default function BookingForm() {
     loader.load().then(() => {
       const input = document.getElementById("address-input");
       if (!input) return;
-
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
         types: ["address"],
-        componentRestrictions: { country: "us" },
       });
-      autocomplete.setFields(["formatted_address", "geometry"]);
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
         if (place.formatted_address) {
@@ -83,12 +79,11 @@ export default function BookingForm() {
     });
   }, [hqs]);
 
-  // 🌍 Distance & nearest HQ
+  // 🌍 Distance to nearest HQ
   const fetchDistance = async (dest) => {
     if (!dest || hqs.length === 0) return;
     try {
       let nearest = { miles: Infinity, hq: null };
-
       for (const HQ of hqs) {
         const res = await fetch(
           `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
@@ -97,25 +92,20 @@ export default function BookingForm() {
         );
         const data = await res.json();
         if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
-          let miles = data.rows[0].elements[0].distance.value / 1609.34;
+          const miles = data.rows[0].elements[0].distance.value / 1609.34;
           if (miles < nearest.miles)
             nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
         }
       }
-
       if (nearest.miles === Infinity) {
         setWarning("⚠️ Could not fetch distance.");
         return;
       }
-
       if (nearest.miles > 150) {
         setWarning("❌ Service not available in your area yet.");
         setWaitlist(true);
-        setDistance(0);
-        setNearestHQ(null);
         return;
       }
-
       setDistance(nearest.miles);
       setNearestHQ(nearest.hq);
       setWarning("");
@@ -126,12 +116,12 @@ export default function BookingForm() {
     }
   };
 
-  // 🧾 Live price preview
+  // 💰 Live price preview
   useEffect(() => {
     const fetchPreview = async () => {
       if (!area || !service || !nearestHQ) return;
       try {
-        const res = await fetch(`${API_BASE}/api/bookings`, {
+        const res = await fetch(`${API_BASE}/api/bookings/preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -154,13 +144,19 @@ export default function BookingForm() {
   // ✅ Booking submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setWarning("");
+
     if (waitlist) {
       alert("📋 Added to waitlist — we’ll contact you soon!");
       return;
     }
 
+    if (!date || !timeSlot) {
+      setWarning("⚠️ Please select both a date and time slot.");
+      return;
+    }
+
     setSubmitting(true);
-    setSuccessMsg("");
     try {
       const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
@@ -172,27 +168,30 @@ export default function BookingForm() {
           service,
           sqMeters: Number(area),
           frequency,
-          date,
+          date: date.toISOString().split("T")[0],
           timeSlot,
           address,
-          nearestHQ: nearestHQ ? nearestHQ.name : null,
+          nearestHQ: nearestHQ?.name || "",
         }),
       });
+
       const data = await res.json();
 
       if (data.ok) {
         setSuccessMsg(
           `✅ Thank you, ${name}! Your booking is confirmed.\n\n` +
-            `Nearest HQ: ${nearestHQ?.name} (${distance} miles)\n\n` +
+            `Nearest HQ: ${nearestHQ?.name} (${distance} miles)\n` +
+            `Date: ${date.toDateString()} (${timeSlot})\n\n` +
             `Total: $${data.breakdown.finalPrice}\n` +
-            `Breakdown: Base $${data.breakdown.basePrice} + Distance $${data.breakdown.distanceFee} - Discount $${data.breakdown.discount}`
+            `Base: $${data.breakdown.basePrice} | Distance: $${data.breakdown.distanceFee} | Discount: -$${data.breakdown.discount}`
         );
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setWarning(`❌ Booking failed: ${data.message || data.error}`);
+        setWarning(`❌ Booking failed: ${data.message || "Unknown error"}`);
       }
     } catch (err) {
       console.error("Booking submit error:", err);
-      setWarning("❌ Error submitting booking");
+      setWarning("❌ Network error submitting booking.");
     } finally {
       setSubmitting(false);
     }
@@ -213,9 +212,7 @@ export default function BookingForm() {
       <div className="p-6 bg-white rounded-xl shadow-md text-center space-y-4">
         <h2 className="text-xl font-bold text-green-700">Booking Confirmed</h2>
         <p className="whitespace-pre-line text-gray-700">{successMsg}</p>
-        <p className="text-sm text-gray-500">
-          🔒 We never share your contact info.
-        </p>
+        <p className="text-sm text-gray-500">🔒 We never share your contact info.</p>
       </div>
     );
 
@@ -227,68 +224,21 @@ export default function BookingForm() {
       <h2 className="text-lg font-bold">Create a Booking</h2>
       {warning && <div className="text-red-600 text-sm">{warning}</div>}
 
-      <input
-        type="text"
-        placeholder="Full Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
+      <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required className="w-full border p-2 rounded" />
+      <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full border p-2 rounded" />
+      <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full border p-2 rounded" />
 
-      <input
-        type="tel"
-        placeholder="Phone Number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-
-      <input
-        type="email"
-        placeholder="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-
-      <select
-        value={service}
-        onChange={(e) => setService(e.target.value)}
-        className="w-full border p-2 rounded"
-      >
+      <select value={service} onChange={(e) => setService(e.target.value)} className="w-full border p-2 rounded">
         <option value="standard_cleaning">Residential Cleaning</option>
         <option value="deep_cleaning">Deep Cleaning</option>
         <option value="office_cleaning">Office Cleaning</option>
         <option value="move_cleaning">Move In/Out Cleaning</option>
       </select>
 
-      <input
-        type="number"
-        placeholder="Area in sq ft"
-        value={area}
-        onChange={(e) => setArea(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
+      <input type="number" placeholder="Area in sq ft" value={area} onChange={(e) => setArea(e.target.value)} required className="w-full border p-2 rounded" />
+      <input id="address-input" type="text" placeholder="Enter your address" value={address} onChange={(e) => setAddress(e.target.value)} required className="w-full border p-2 rounded" />
 
-      <input
-        id="address-input"
-        type="text"
-        placeholder="Enter your address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-
-      <select
-        value={frequency}
-        onChange={(e) => setFrequency(e.target.value)}
-        className="w-full border p-2 rounded"
-      >
+      <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full border p-2 rounded">
         <option value="one_time">One-time</option>
         <option value="weekly">Weekly</option>
         <option value="monthly">Monthly</option>
@@ -301,10 +251,8 @@ export default function BookingForm() {
           <div className="mt-3 flex gap-4">
             {(() => {
               const avail = getAvailabilityForDate(date);
-              if (!avail)
-                return <p className="text-sm text-gray-500">No availability</p>;
-              if (avail.closed)
-                return <p className="text-sm text-red-600">🚫 Closed</p>;
+              if (!avail) return <p className="text-sm text-gray-500">No availability</p>;
+              if (avail.closed) return <p className="text-sm text-red-600">🚫 Closed</p>;
               return (
                 <>
                   <button
@@ -321,7 +269,7 @@ export default function BookingForm() {
                     disabled={avail.PM.available <= 0}
                     className={`px-4 py-2 rounded ${getSlotClass(avail.PM)}`}
                   >
-                    �� PM ({avail.PM.available} left)
+                    🌙 PM ({avail.PM.available} left)
                   </button>
                 </>
               );
@@ -340,32 +288,18 @@ export default function BookingForm() {
       {preview && (
         <div className="p-3 bg-gray-100 rounded text-sm">
           <p>🧾 Estimated Price: ${preview.finalPrice}</p>
-          <p>
-            Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount: -${preview.discount}
-          </p>
-          <p className="text-xs text-gray-600">
-            ℹ️ Up to 40 miles free; extra handled by admin.
-          </p>
+          <p>Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount: -${preview.discount}</p>
+          <p className="text-xs text-gray-600">ℹ️ Up to 40 miles free; extra handled by admin.</p>
         </div>
       )}
 
-      {waitlist ? (
-        <button
-          type="button"
-          onClick={() => alert("📋 Added to waiting list!")}
-          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-        >
-          Join Waiting List
-        </button>
-      ) : (
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {submitting ? "Submitting..." : "Submit Booking"}
-        </button>
-      )}
+      <button
+        type="submit"
+        disabled={submitting}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+      >
+        {submitting ? "Submitting..." : "Submit Booking"}
+      </button>
     </form>
   );
 }
