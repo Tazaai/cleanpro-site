@@ -28,6 +28,7 @@ export default function BookingForm() {
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
 
+  // 🗓 Load calendar availability
   useEffect(() => {
     fetch(`${API_BASE}/api/calendar?days=30`)
       .then((r) => r.json())
@@ -35,6 +36,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
+  // 🏢 Load HQs
   useEffect(() => {
     fetch(`${API_BASE}/api/coordination_points`)
       .then((r) => r.json())
@@ -42,6 +44,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
+  // 📍 Google Autocomplete
   useEffect(() => {
     const loader = new Loader({
       apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -63,6 +66,7 @@ export default function BookingForm() {
     });
   }, [hqs]);
 
+  // 🌍 Distance check
   const fetchDistance = async (dest) => {
     if (!dest || !hqs.length) return;
     let nearest = { miles: Infinity, hq: null };
@@ -94,6 +98,7 @@ export default function BookingForm() {
     setWaitlist(false);
   };
 
+  // 💰 Live price preview
   useEffect(() => {
     if (!area || !service || !nearestHQ) return;
     fetch(`${API_BASE}/api/bookings/preview`, {
@@ -112,6 +117,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, [name, service, area, distance, frequency, nearestHQ]);
 
+  // ✅ Booking submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (waitlist) return toast("📋 Added to waitlist.");
@@ -172,87 +178,98 @@ export default function BookingForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-4 bg-white rounded-xl shadow-md max-w-2xl mx-auto"
+      className="space-y-5 p-6 bg-white rounded-2xl shadow-md max-w-2xl mx-auto border border-gray-100"
     >
       <Toaster position="top-center" />
-      <h2 className="text-lg font-bold">Create a Booking</h2>
-      {warning && <div className="text-red-600 text-sm">{warning}</div>}
+      <h2 className="text-2xl font-semibold text-gray-800 text-center">
+        Create Your Booking
+      </h2>
 
-      <input
-        type="text"
-        placeholder="Full Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-      <input
-        type="tel"
-        placeholder="Phone Number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-      <input
-        type="email"
-        placeholder="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
+      {warning && (
+        <div className="text-red-600 text-sm text-center">{warning}</div>
+      )}
 
-      <select
-        value={service}
-        onChange={(e) => setService(e.target.value)}
-        className="w-full border p-2 rounded"
-      >
-        <option value="standard_cleaning">Residential Cleaning</option>
-        <option value="deep_cleaning">Deep Cleaning</option>
-        <option value="office_cleaning">Office Cleaning</option>
-        <option value="move_cleaning">Move In/Out Cleaning</option>
-      </select>
+      <div className="grid grid-cols-1 gap-3">
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="w-full border p-3 rounded-lg"
+        />
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+          className="w-full border p-3 rounded-lg"
+        />
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full border p-3 rounded-lg"
+        />
 
-      <input
-        type="number"
-        placeholder="Area in sq ft"
-        value={area}
-        onChange={(e) => setArea(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
-      <input
-        id="address-input"
-        type="text"
-        placeholder="Enter your address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        required
-        className="w-full border p-2 rounded"
-      />
+        <select
+          value={service}
+          onChange={(e) => setService(e.target.value)}
+          className="w-full border p-3 rounded-lg"
+        >
+          <option value="standard_cleaning">Residential Cleaning</option>
+          <option value="deep_cleaning">Deep Cleaning</option>
+          <option value="office_cleaning">Office Cleaning</option>
+          <option value="move_cleaning">Move In/Out Cleaning</option>
+        </select>
 
-      <select
-        value={frequency}
-        onChange={(e) => setFrequency(e.target.value)}
-        className="w-full border p-2 rounded"
-      >
-        <option value="one_time">One-time</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-      </select>
+        <input
+          type="number"
+          placeholder="Area in sq ft"
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+          required
+          className="w-full border p-3 rounded-lg"
+        />
 
-      <div>
-        <label className="block text-sm font-medium">Choose Date & Time</label>
+        <input
+          id="address-input"
+          type="text"
+          placeholder="Enter your address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          required
+          className="w-full border p-3 rounded-lg"
+        />
+
+        <select
+          value={frequency}
+          onChange={(e) => setFrequency(e.target.value)}
+          className="w-full border p-3 rounded-lg"
+        >
+          <option value="one_time">One-time</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+
+      <div className="text-center">
+        <label className="block text-sm font-medium text-gray-600 mb-1">
+          Choose Date & Time
+        </label>
         <Calendar
           locale="en-US"
           minDate={new Date()}
           maxDate={new Date(Date.now() + 30 * 86400000)}
           onChange={setDate}
           value={date}
+          className="mx-auto"
         />
         {date && (
-          <div className="mt-3 flex gap-4">
+          <div className="mt-3 flex justify-center gap-4">
             {(() => {
               const avail = getAvailabilityForDate(date);
               if (!avail)
@@ -265,7 +282,9 @@ export default function BookingForm() {
                     type="button"
                     onClick={() => avail.AM.available > 0 && setTimeSlot("AM")}
                     disabled={avail.AM.available <= 0}
-                    className={`px-4 py-2 rounded ${getSlotClass(avail.AM)}`}
+                    className={`px-4 py-2 rounded-lg font-medium ${getSlotClass(
+                      avail.AM
+                    )}`}
                   >
                     ☀️ AM ({avail.AM.available})
                   </button>
@@ -273,7 +292,9 @@ export default function BookingForm() {
                     type="button"
                     onClick={() => avail.PM.available > 0 && setTimeSlot("PM")}
                     disabled={avail.PM.available <= 0}
-                    className={`px-4 py-2 rounded ${getSlotClass(avail.PM)}`}
+                    className={`px-4 py-2 rounded-lg font-medium ${getSlotClass(
+                      avail.PM
+                    )}`}
                   >
                     🌙 PM ({avail.PM.available})
                   </button>
@@ -285,18 +306,21 @@ export default function BookingForm() {
       </div>
 
       {nearestHQ && (
-        <div className="p-3 bg-gray-50 rounded text-sm">
+        <div className="p-3 bg-gray-50 rounded text-sm text-center">
           <p>📍 Nearest HQ: <b>{nearestHQ.name}</b></p>
           <p>📏 Distance: {distance} miles</p>
         </div>
       )}
 
       {preview && (
-        <div className="p-3 bg-gray-100 rounded text-sm">
+        <div className="p-3 bg-gray-100 rounded text-sm text-center">
           <p>🧾 Estimated Price: ${preview.finalPrice}</p>
           <p>
-            Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount:
-            -${preview.discount}
+            Base: ${preview.basePrice} | Distance: ${preview.distanceFee} |
+            Discount: -${preview.discount}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">
+            ℹ️ Up to 40 miles free. Extra handled by admin.
           </p>
         </div>
       )}
@@ -304,16 +328,19 @@ export default function BookingForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+        className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400"
       >
         {submitting ? "Submitting..." : "Submit Booking"}
       </button>
 
       {preview && (
-        <p className="text-sm text-gray-700 mt-2 text-center">
+        <p className="text-center text-gray-700 text-sm">
           💰 Estimated total: <b>${preview.finalPrice}</b>
         </p>
       )}
+      <p className="text-center text-xs text-gray-500 mt-1">
+        💬 Free quote — no payment required now.
+      </p>
     </form>
   );
 }
