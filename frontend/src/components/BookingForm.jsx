@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Loader } from "@googlemaps/js-api-loader";
+import toast, { Toaster } from "react-hot-toast";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
@@ -27,135 +28,95 @@ export default function BookingForm() {
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
 
-  // 📅 Load calendar availability
   useEffect(() => {
-    const fetchCalendar = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/calendar?days=30`);
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.availability))
-          setAvailability(data.availability);
-      } catch (err) {
-        console.error("Calendar fetch error:", err);
-      }
-    };
-    fetchCalendar();
+    fetch(`${API_BASE}/api/calendar?days=30`)
+      .then((r) => r.json())
+      .then((d) => d.ok && setAvailability(d.availability || []))
+      .catch(() => {});
   }, []);
 
-  // 🏢 Coordination HQs
   useEffect(() => {
-    const fetchHQs = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/coordination_points`);
-        const data = await res.json();
-        if (data.ok) setHqs(data.hqs);
-      } catch (err) {
-        console.error("Error fetching HQs:", err);
-      }
-    };
-    fetchHQs();
+    fetch(`${API_BASE}/api/coordination_points`)
+      .then((r) => r.json())
+      .then((d) => d.ok && setHqs(d.hqs))
+      .catch(() => {});
   }, []);
 
-  // 📍 Google Autocomplete
   useEffect(() => {
     const loader = new Loader({
       apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
       libraries: ["places"],
     });
-
     loader.load().then(() => {
       const input = document.getElementById("address-input");
       if (!input) return;
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+      const ac = new window.google.maps.places.Autocomplete(input, {
         types: ["address"],
       });
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        if (place.formatted_address) {
-          setAddress(place.formatted_address);
-          fetchDistance(place.formatted_address);
+      ac.addListener("place_changed", () => {
+        const p = ac.getPlace();
+        if (p.formatted_address) {
+          setAddress(p.formatted_address);
+          fetchDistance(p.formatted_address);
         }
       });
     });
   }, [hqs]);
 
-  // 🌍 Distance to nearest HQ
   const fetchDistance = async (dest) => {
-    if (!dest || hqs.length === 0) return;
-    try {
-      let nearest = { miles: Infinity, hq: null };
-      for (const HQ of hqs) {
-        const res = await fetch(
-          `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
-            HQ.address
-          )}&destination=${encodeURIComponent(dest)}`
-        );
-        const data = await res.json();
-        if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
-          const miles = data.rows[0].elements[0].distance.value / 1609.34;
-          if (miles < nearest.miles)
-            nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
-        }
+    if (!dest || !hqs.length) return;
+    let nearest = { miles: Infinity, hq: null };
+    for (const HQ of hqs) {
+      const r = await fetch(
+        `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
+          HQ.address
+        )}&destination=${encodeURIComponent(dest)}`
+      );
+      const d = await r.json();
+      if (d?.rows?.[0]?.elements?.[0]?.status === "OK") {
+        const miles = d.rows[0].elements[0].distance.value / 1609.34;
+        if (miles < nearest.miles)
+          nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
       }
-      if (nearest.miles === Infinity) {
-        setWarning("⚠️ Could not fetch distance.");
-        return;
-      }
-      if (nearest.miles > 150) {
-        setWarning("❌ Service not available in your area yet.");
-        setWaitlist(true);
-        return;
-      }
-      setDistance(nearest.miles);
-      setNearestHQ(nearest.hq);
-      setWarning("");
-      setWaitlist(false);
-    } catch (err) {
-      console.error("Distance API error:", err);
-      setWarning("⚠️ Error with Google Maps API.");
     }
+    if (nearest.miles === Infinity) {
+      setWarning("⚠️ Could not fetch distance.");
+      return;
+    }
+    if (nearest.miles > 150) {
+      setWarning("❌ Service not available in your area yet.");
+      setWaitlist(true);
+      return;
+    }
+    setDistance(nearest.miles);
+    setNearestHQ(nearest.hq);
+    setWarning("");
+    setWaitlist(false);
   };
 
-  // 💰 Live price preview
   useEffect(() => {
-    const fetchPreview = async () => {
-      if (!area || !service || !nearestHQ) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/bookings/preview`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: name || "guest",
-            service,
-            sqMeters: Number(area),
-            distance,
-            frequency,
-          }),
-        });
-        const data = await res.json();
-        if (data.ok) setPreview({ ...data.breakdown, nearestHQ });
-      } catch (err) {
-        console.error("Preview fetch error:", err);
-      }
-    };
-    fetchPreview();
+    if (!area || !service || !nearestHQ) return;
+    fetch(`${API_BASE}/api/bookings/preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name || "guest",
+        service,
+        sqMeters: Number(area),
+        distance,
+        frequency,
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => d.ok && setPreview({ ...d.breakdown, nearestHQ }))
+      .catch(() => {});
   }, [name, service, area, distance, frequency, nearestHQ]);
 
-  // ✅ Booking submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setWarning("");
-
-    if (waitlist) {
-      alert("📋 Added to waitlist — we’ll contact you soon!");
-      return;
-    }
-
-    if (!date || !timeSlot) {
-      setWarning("⚠️ Please select both a date and time slot.");
-      return;
-    }
-
+    if (waitlist) return toast("📋 Added to waitlist.");
+    if (!date || !timeSlot)
+      return toast.error("Please select both a date and time slot.");
     setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/api/bookings`, {
@@ -174,24 +135,14 @@ export default function BookingForm() {
           nearestHQ: nearestHQ?.name || "",
         }),
       });
-
       const data = await res.json();
-
       if (data.ok) {
-        setSuccessMsg(
-          `✅ Thank you, ${name}! Your booking is confirmed.\n\n` +
-            `Nearest HQ: ${nearestHQ?.name} (${distance} miles)\n` +
-            `Date: ${date.toDateString()} (${timeSlot})\n\n` +
-            `Total: $${data.breakdown.finalPrice}\n` +
-            `Base: $${data.breakdown.basePrice} | Distance: $${data.breakdown.distanceFee} | Discount: -$${data.breakdown.discount}`
-        );
+        setSuccessMsg("✅ Booking confirmed!");
+        toast.success("Booking confirmed!");
         window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        setWarning(`❌ Booking failed: ${data.message || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Booking submit error:", err);
-      setWarning("❌ Network error submitting booking.");
+      } else toast.error(data.message || "Booking failed");
+    } catch {
+      toast.error("Network error submitting booking.");
     } finally {
       setSubmitting(false);
     }
@@ -203,16 +154,18 @@ export default function BookingForm() {
       : "bg-red-200 cursor-not-allowed";
 
   const getAvailabilityForDate = (dateObj) => {
-    const isoDate = dateObj.toISOString().split("T")[0];
-    return availability.find((d) => d.date === isoDate);
+    const iso = dateObj.toISOString().split("T")[0];
+    return availability.find((d) => d.date === iso);
   };
 
   if (successMsg)
     return (
       <div className="p-6 bg-white rounded-xl shadow-md text-center space-y-4">
-        <h2 className="text-xl font-bold text-green-700">Booking Confirmed</h2>
-        <p className="whitespace-pre-line text-gray-700">{successMsg}</p>
-        <p className="text-sm text-gray-500">🔒 We never share your contact info.</p>
+        <Toaster position="top-center" />
+        <h2 className="text-xl font-bold text-green-700">{successMsg}</h2>
+        <p className="text-sm text-gray-500">
+          🔒 We never share your contact info.
+        </p>
       </div>
     );
 
@@ -221,24 +174,69 @@ export default function BookingForm() {
       onSubmit={handleSubmit}
       className="space-y-4 p-4 bg-white rounded-xl shadow-md max-w-2xl mx-auto"
     >
+      <Toaster position="top-center" />
       <h2 className="text-lg font-bold">Create a Booking</h2>
       {warning && <div className="text-red-600 text-sm">{warning}</div>}
 
-      <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required className="w-full border p-2 rounded" />
-      <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full border p-2 rounded" />
-      <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full border p-2 rounded" />
+      <input
+        type="text"
+        placeholder="Full Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+        className="w-full border p-2 rounded"
+      />
+      <input
+        type="tel"
+        placeholder="Phone Number"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        required
+        className="w-full border p-2 rounded"
+      />
+      <input
+        type="email"
+        placeholder="Email Address"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        className="w-full border p-2 rounded"
+      />
 
-      <select value={service} onChange={(e) => setService(e.target.value)} className="w-full border p-2 rounded">
+      <select
+        value={service}
+        onChange={(e) => setService(e.target.value)}
+        className="w-full border p-2 rounded"
+      >
         <option value="standard_cleaning">Residential Cleaning</option>
         <option value="deep_cleaning">Deep Cleaning</option>
         <option value="office_cleaning">Office Cleaning</option>
         <option value="move_cleaning">Move In/Out Cleaning</option>
       </select>
 
-      <input type="number" placeholder="Area in sq ft" value={area} onChange={(e) => setArea(e.target.value)} required className="w-full border p-2 rounded" />
-      <input id="address-input" type="text" placeholder="Enter your address" value={address} onChange={(e) => setAddress(e.target.value)} required className="w-full border p-2 rounded" />
+      <input
+        type="number"
+        placeholder="Area in sq ft"
+        value={area}
+        onChange={(e) => setArea(e.target.value)}
+        required
+        className="w-full border p-2 rounded"
+      />
+      <input
+        id="address-input"
+        type="text"
+        placeholder="Enter your address"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        required
+        className="w-full border p-2 rounded"
+      />
 
-      <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full border p-2 rounded">
+      <select
+        value={frequency}
+        onChange={(e) => setFrequency(e.target.value)}
+        className="w-full border p-2 rounded"
+      >
         <option value="one_time">One-time</option>
         <option value="weekly">Weekly</option>
         <option value="monthly">Monthly</option>
@@ -246,13 +244,21 @@ export default function BookingForm() {
 
       <div>
         <label className="block text-sm font-medium">Choose Date & Time</label>
-        <Calendar locale="en-US" minDate={new Date()} onChange={setDate} value={date} />
+        <Calendar
+          locale="en-US"
+          minDate={new Date()}
+          maxDate={new Date(Date.now() + 30 * 86400000)}
+          onChange={setDate}
+          value={date}
+        />
         {date && (
           <div className="mt-3 flex gap-4">
             {(() => {
               const avail = getAvailabilityForDate(date);
-              if (!avail) return <p className="text-sm text-gray-500">No availability</p>;
-              if (avail.closed) return <p className="text-sm text-red-600">🚫 Closed</p>;
+              if (!avail)
+                return <p className="text-sm text-gray-500">No availability</p>;
+              if (avail.closed)
+                return <p className="text-sm text-red-600">🚫 Closed</p>;
               return (
                 <>
                   <button
@@ -261,7 +267,7 @@ export default function BookingForm() {
                     disabled={avail.AM.available <= 0}
                     className={`px-4 py-2 rounded ${getSlotClass(avail.AM)}`}
                   >
-                    ☀️ AM ({avail.AM.available} left)
+                    ☀️ AM ({avail.AM.available})
                   </button>
                   <button
                     type="button"
@@ -269,7 +275,7 @@ export default function BookingForm() {
                     disabled={avail.PM.available <= 0}
                     className={`px-4 py-2 rounded ${getSlotClass(avail.PM)}`}
                   >
-                    🌙 PM ({avail.PM.available} left)
+                    🌙 PM ({avail.PM.available})
                   </button>
                 </>
               );
@@ -288,8 +294,10 @@ export default function BookingForm() {
       {preview && (
         <div className="p-3 bg-gray-100 rounded text-sm">
           <p>🧾 Estimated Price: ${preview.finalPrice}</p>
-          <p>Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount: -${preview.discount}</p>
-          <p className="text-xs text-gray-600">ℹ️ Up to 40 miles free; extra handled by admin.</p>
+          <p>
+            Base: ${preview.basePrice} | Distance: ${preview.distanceFee} | Discount:
+            -${preview.discount}
+          </p>
         </div>
       )}
 
@@ -300,6 +308,12 @@ export default function BookingForm() {
       >
         {submitting ? "Submitting..." : "Submit Booking"}
       </button>
+
+      {preview && (
+        <p className="text-sm text-gray-700 mt-2 text-center">
+          💰 Estimated total: <b>${preview.finalPrice}</b>
+        </p>
+      )}
     </form>
   );
 }
