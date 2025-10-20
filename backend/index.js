@@ -1,7 +1,3 @@
-// ============================================================= 
-// 🧩 CleanPro Backend – Cloud Run Safe Version (Final Fixed)
-// =============================================================
-
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
@@ -11,73 +7,80 @@ process.env.FIREBASE_KEY ||= "{}";
 
 const app = express();
 
-// ✅ CORS — allow frontend + localhost
+// ✅ CORS (local + Cloud Run + Codespaces)
 app.use(
   cors({
     origin: [
+      "http://localhost:5173",
       "https://cleanpro-frontend-5539254765.europe-west1.run.app",
       "https://cleanpro-frontend-2a5pka5baa-ew.a.run.app",
-      "http://localhost:5173",
+      /\.github\.dev$/,
     ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 app.use(express.json());
+app.use((_, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    next();
+});
 
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
 // 🔐 Firebase init
-const SERVICE_ACCOUNT_PATH = "./backend/serviceAccountKey.json";
-const FIREBASE_CONFIG_PATH = "./backend/firebase_config.json";
-
+const SERVICE_ACCOUNT_PATH = "./serviceAccountKey.json";
 try {
   if (!existsSync(SERVICE_ACCOUNT_PATH))
     writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
-  if (!existsSync(FIREBASE_CONFIG_PATH))
-    writeFileSync(FIREBASE_CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
-  console.log("🔥 Firebase config ensured");
-} catch (e) {
-  console.error("⚠️ Firebase config error:", e.message);
-}
-
-try {
-  if (!admin.apps.length) {
-    const data = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
+  const data = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
+  if (!admin.apps.length)
     admin.initializeApp({ credential: admin.credential.cert(data) });
-    console.log("✅ Firebase Admin initialized");
-  }
-} catch {
-  console.warn("⚠️ Firebase init skipped (empty config).");
+  console.log("✅ Firebase initialized");
+} catch (err) {
+  console.warn("⚠️ Firebase skipped:", err.message);
 }
 
 // 🚏 Routes
 import calendarApi from "./routes/calendar_api.mjs";
-import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
-import configApi from "./routes/config_api.mjs";
-import mapsApi from "./routes/maps_api.mjs";
+import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
 import bookingsApi from "./routes/bookings_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
+import mapsApi from "./routes/maps_api.mjs";
+import configApi from "./routes/config_api.mjs";
 import gcalendarApi from "./routes/gcalendar_api.mjs";
 
 app.use("/api/calendar", calendarApi);
-app.use("/api/coordination_points", coordinationPointsRouter);
-app.use("/api/config", configApi);
-app.use("/api/maps", mapsApi);
+app.use("/api/coordination_points", coordinationPointsApi);
 app.use("/api/services", servicesApi);
 app.use("/api/bookings", bookingsApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
+app.use("/api/maps", mapsApi);
+app.use("/api/config", configApi);
 app.use("/api/gcalendar", gcalendarApi);
 
-// 🩺 Health check
-app.get("/", (_, res) => res.send("✅ CleanPro Backend is running on Cloud Run"));
+// 🧭 Quick test route for Maps key
+app.get("/api/check_maps_key", (_, res) => {
+  res.json({
+    ok: !!process.env.GOOGLE_MAPS_API_KEY,
+    keyPreview: process.env.GOOGLE_MAPS_API_KEY
+      ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
+      : null,
+  });
+});
 
-// 🚀 Start server
+// 🩺 Health check
+app.get("/", (_, res) =>
+  res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
+);
+
+// 🚀 Start
 app.listen(PORT, HOST, () =>
-  console.log(`✅ Server listening on http://${HOST}:${PORT}`)
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`)
 );
