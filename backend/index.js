@@ -1,5 +1,5 @@
 // ============================================================= 
-// 🧩 CleanPro Backend – Cloud Run Safe Version (Final)
+// 🧩 CleanPro Backend – Cloud Run Safe Version (Final Fixed)
 // =============================================================
 
 import express from "express";
@@ -10,6 +10,8 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 process.env.FIREBASE_KEY ||= "{}";
 
 const app = express();
+
+// ✅ CORS — allow frontend + localhost
 app.use(
   cors({
     origin: [
@@ -21,6 +23,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 
 const HOST = "0.0.0.0";
@@ -71,10 +74,10 @@ app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/gcalendar", gcalendarApi);
 
-// 🩺 Health
-app.get("/", (_, res) => res.send("✅ CleanPro Backend running on Cloud Run"));
+// 🩺 Health check
+app.get("/", (_, res) => res.send("✅ CleanPro Backend is running on Cloud Run"));
 
-// 🚀 Start
+// 🚀 Start server
 app.listen(PORT, HOST, () =>
-  console.log(`✅ Server listening on ${HOST}:${PORT}`)
+  console.log(`✅ Server listening on http://${HOST}:${PORT}`)
 );
