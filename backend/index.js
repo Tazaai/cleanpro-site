@@ -1,3 +1,7 @@
+// =============================================================
+// 🧩 CleanPro Backend – Cloud Run Safe Version (Final Fixed)
+// =============================================================
+
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
@@ -21,21 +25,30 @@ app.use(
   })
 );
 app.use(express.json());
+
+// ✅ Global headers (fallback)
 app.use((_, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-    next();
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  next();
 });
 
+// 🌍 Host + Port
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
 // 🔐 Firebase init
 const SERVICE_ACCOUNT_PATH = "./serviceAccountKey.json";
 try {
-  if (!existsSync(SERVICE_ACCOUNT_PATH))
-    writeFileSync(SERVICE_ACCOUNT_PATH, process.env.FIREBASE_KEY);
+  if (!existsSync(SERVICE_ACCOUNT_PATH)) {
+    // Decode if base64-encoded (from Cloud Run env var)
+    const decoded =
+      process.env.FIREBASE_KEY.trim().startsWith("{")
+        ? process.env.FIREBASE_KEY
+        : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
+    writeFileSync(SERVICE_ACCOUNT_PATH, decoded);
+  }
   const data = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
   if (!admin.apps.length)
     admin.initializeApp({ credential: admin.credential.cert(data) });
@@ -65,7 +78,7 @@ app.use("/api/maps", mapsApi);
 app.use("/api/config", configApi);
 app.use("/api/gcalendar", gcalendarApi);
 
-// 🧭 Quick test route for Maps key
+// 🧭 Test route for Maps key
 app.get("/api/check_maps_key", (_, res) => {
   res.json({
     ok: !!process.env.GOOGLE_MAPS_API_KEY,
@@ -80,7 +93,7 @@ app.get("/", (_, res) =>
   res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
 );
 
-// 🚀 Start
-app.listen(PORT, HOST, () =>
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`)
-);
+// 🚀 Start server
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+});
