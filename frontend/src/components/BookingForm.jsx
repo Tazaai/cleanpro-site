@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { Loader } from "@googlemaps/js-api-loader";
 import toast, { Toaster } from "react-hot-toast";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  "https://cleanpro-backend-5539254765-ew.a.run.app";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 export default function BookingForm() {
   const [name, setName] = useState("");
@@ -44,25 +41,20 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
-  // 📍 Google Autocomplete
+  // 📍 Initialize Google Autocomplete (script already loaded in main.jsx)
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-      libraries: ["places"],
+    if (!window.google?.maps?.places) return;
+    const input = document.getElementById("address-input");
+    if (!input) return;
+    const ac = new window.google.maps.places.Autocomplete(input, {
+      types: ["address"],
     });
-    loader.load().then(() => {
-      const input = document.getElementById("address-input");
-      if (!input) return;
-      const ac = new window.google.maps.places.Autocomplete(input, {
-        types: ["address"],
-      });
-      ac.addListener("place_changed", () => {
-        const p = ac.getPlace();
-        if (p.formatted_address) {
-          setAddress(p.formatted_address);
-          fetchDistance(p.formatted_address);
-        }
-      });
+    ac.addListener("place_changed", () => {
+      const p = ac.getPlace();
+      if (p.formatted_address) {
+        setAddress(p.formatted_address);
+        fetchDistance(p.formatted_address);
+      }
     });
   }, [hqs]);
 
@@ -308,7 +300,7 @@ export default function BookingForm() {
       {nearestHQ && (
         <div className="p-3 bg-gray-50 rounded text-sm text-center">
           <p>📍 Nearest HQ: <b>{nearestHQ.name}</b></p>
-          <p>📏 Distance: {distance} miles</p>
+          <p>�� Distance: {distance} miles</p>
         </div>
       )}
 
