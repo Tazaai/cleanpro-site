@@ -56,7 +56,7 @@ import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
 import mapsApi from "./routes/maps_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
-import bookingsApi from "./routes/bookings_api.mjs"; // ✅ fixed
+import bookingsApi from "./routes/bookings_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
 import gcalendarApi from "./routes/gcalendar_api.mjs";
@@ -66,7 +66,7 @@ app.use("/api/coordination_points", coordinationPointsRouter);
 app.use("/api/config", configApi);
 app.use("/api/maps", mapsApi);
 app.use("/api/services", servicesApi);
-app.use("/api/bookings", bookingsApi); // ✅ correct route
+app.use("/api/bookings", bookingsApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/gcalendar", gcalendarApi);
