@@ -4,6 +4,7 @@
     "puppeteer": "^24.24.0"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.6",
     "firebase-admin": "^13.5.0"
   },
   "scripts": {
