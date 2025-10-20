@@ -7,12 +7,8 @@ import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
-// 🩹 Prevent Firebase crash if secret missing
 process.env.FIREBASE_KEY ||= "{}";
 
-// -------------------------------------------------------------
-// ⚙️ Server setup
-// -------------------------------------------------------------
 const app = express();
 app.use(
   cors({
@@ -30,9 +26,7 @@ app.use(express.json());
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
-// -------------------------------------------------------------
-// 🔐 Firebase config & initialization
-// -------------------------------------------------------------
+// 🔐 Firebase init
 const SERVICE_ACCOUNT_PATH = "./backend/serviceAccountKey.json";
 const FIREBASE_CONFIG_PATH = "./backend/firebase_config.json";
 
@@ -56,15 +50,13 @@ try {
   console.warn("⚠️ Firebase init skipped (empty config).");
 }
 
-// -------------------------------------------------------------
 // 🚏 Routes
-// -------------------------------------------------------------
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsRouter from "./routes/coordination_points_api.mjs";
 import configApi from "./routes/config_api.mjs";
 import mapsApi from "./routes/maps_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
-import bookingApi from "./routes/booking_api.mjs";
+import bookingsApi from "./routes/bookings_api.mjs"; // ✅ fixed
 import quotesApi from "./routes/quotes_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
 import gcalendarApi from "./routes/gcalendar_api.mjs";
@@ -74,19 +66,15 @@ app.use("/api/coordination_points", coordinationPointsRouter);
 app.use("/api/config", configApi);
 app.use("/api/maps", mapsApi);
 app.use("/api/services", servicesApi);
-app.use("/api/bookings", bookingApi);
+app.use("/api/bookings", bookingsApi); // ✅ correct route
 app.use("/api/quotes", quotesApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/gcalendar", gcalendarApi);
 
-// -------------------------------------------------------------
-// 🩺 Health check
-// -------------------------------------------------------------
+// 🩺 Health
 app.get("/", (_, res) => res.send("✅ CleanPro Backend running on Cloud Run"));
 
-// -------------------------------------------------------------
-// 🚀 Start server
-// -------------------------------------------------------------
+// 🚀 Start
 app.listen(PORT, HOST, () =>
   console.log(`✅ Server listening on ${HOST}:${PORT}`)
 );
