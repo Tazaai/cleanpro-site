@@ -1,4 +1,3 @@
-// ~/cleanpro-site/backend/routes/maps.js
 import express from "express";
 import fetch from "node-fetch";
 
@@ -7,11 +6,10 @@ const router = express.Router();
 // GET /api/maps/distance?origin=...&destination=...
 router.get("/distance", async (req, res) => {
   const { origin, destination } = req.query;
-  const key = "/app/firebase_config.json"
+  const key = process.env.GOOGLE_MAPS_API_KEY;
 
-  if (!origin || !destination) {
+  if (!origin || !destination)
     return res.status(400).json({ error: "Missing origin or destination" });
-  }
 
   try {
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
@@ -20,7 +18,6 @@ router.get("/distance", async (req, res) => {
 
     const response = await fetch(url);
     const data = await response.json();
-
     res.json(data);
   } catch (err) {
     console.error("Distance API error:", err);
