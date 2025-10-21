@@ -2,7 +2,7 @@ import { writeFileSync, existsSync, readFileSync } from "fs";
 import admin from "firebase-admin";
 
 // ✅ Ensure config file exists (for Cloud Run)
-const CONFIG_PATH = "./backend/firebase_config.json";
+const CONFIG_PATH = "./firebase_config.json";
 if (!existsSync(CONFIG_PATH))
   writeFileSync(CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
 
