@@ -8,7 +8,6 @@ import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
 process.env.FIREBASE_KEY ||= "{}";
-
 const app = express();
 
 // ✅ CORS (local + Cloud Run + Codespaces)
@@ -42,11 +41,9 @@ const PORT = process.env.PORT || 8080;
 const SERVICE_ACCOUNT_PATH = "./serviceAccountKey.json";
 try {
   if (!existsSync(SERVICE_ACCOUNT_PATH)) {
-    // Decode if base64-encoded (from Cloud Run env var)
-    const decoded =
-      process.env.FIREBASE_KEY.trim().startsWith("{")
-        ? process.env.FIREBASE_KEY
-        : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
+    const decoded = process.env.FIREBASE_KEY.trim().startsWith("{")
+      ? process.env.FIREBASE_KEY
+      : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
     writeFileSync(SERVICE_ACCOUNT_PATH, decoded);
   }
   const data = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
@@ -79,14 +76,14 @@ app.use("/api/config", configApi);
 app.use("/api/gcalendar", gcalendarApi);
 
 // 🧭 Test route for Maps key
-app.get("/api/check_maps_key", (_, res) => {
+app.get("/api/check_maps_key", (_, res) =>
   res.json({
     ok: !!process.env.GOOGLE_MAPS_API_KEY,
     keyPreview: process.env.GOOGLE_MAPS_API_KEY
       ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
       : null,
-  });
-});
+  })
+);
 
 // 🩺 Health check
 app.get("/", (_, res) =>
@@ -94,6 +91,6 @@ app.get("/", (_, res) =>
 );
 
 // 🚀 Start server
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
-});
+app.listen(PORT, HOST, () =>
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`)
+);
