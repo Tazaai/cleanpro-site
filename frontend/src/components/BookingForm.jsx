@@ -3,7 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import toast, { Toaster } from "react-hot-toast";
 
-// ✅ Use Cloud Run base URL only
+// ✅ Correct base URL
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function BookingForm() {
@@ -26,7 +26,7 @@ export default function BookingForm() {
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
 
-  // 🗓 Load calendar availability
+  // 🗓 Load availability
   useEffect(() => {
     fetch(`${API_BASE}/api/calendar?days=30`)
       .then((r) => r.json())
@@ -59,7 +59,7 @@ export default function BookingForm() {
     });
   }, [hqs]);
 
-  // 🌍 Distance check
+  // 🌍 Distance
   const fetchDistance = async (dest) => {
     if (!dest || !hqs.length) return;
     let nearest = { miles: Infinity, hq: null };
@@ -76,7 +76,8 @@ export default function BookingForm() {
           nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
       }
     }
-    if (nearest.miles === Infinity) return setWarning("⚠️ Could not fetch distance.");
+    if (nearest.miles === Infinity)
+      return setWarning("⚠️ Could not fetch distance.");
     if (nearest.miles > 150) {
       setWarning("❌ Service not available in your area yet.");
       setWaitlist(true);
@@ -107,7 +108,7 @@ export default function BookingForm() {
       .catch(() => {});
   }, [name, service, area, distance, frequency, nearestHQ]);
 
-  // ✅ Submit booking
+  // ✅ Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (waitlist) return toast("📋 Added to waitlist.");
@@ -325,7 +326,7 @@ export default function BookingForm() {
 
       {preview && (
         <p className="text-center text-gray-700 text-sm">
-          �� Estimated total: <b>${preview.finalPrice}</b>
+          💰 Estimated total: <b>${preview.finalPrice}</b>
         </p>
       )}
       <p className="text-center text-xs text-gray-500 mt-1">
