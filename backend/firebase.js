@@ -1,35 +1,22 @@
-import { writeFileSync, existsSync } from "fs";
-if (!existsSync("./backend/firebase_config.json")) writeFileSync("./backend/firebase_config.json", process.env.FIREBASE_KEY || "{}");
+import { writeFileSync, existsSync, readFileSync } from "fs";
+import admin from "firebase-admin";
+
+// ✅ Ensure config file exists (for Cloud Run)
+const CONFIG_PATH = "./backend/firebase_config.json";
+if (!existsSync(CONFIG_PATH))
+  writeFileSync(CONFIG_PATH, process.env.FIREBASE_KEY || "{}");
 
 // =============================================================
 // 🧩 CleanPro Backend – Firebase Init (Cloud Run Safe Version)
 // =============================================================
-
-import admin from "firebase-admin";
-import fs from "fs";
-
-let serviceAccount;
-
 try {
-  // ✅ Use relative backend path so Cloud Run finds the file
-  serviceAccount = JSON.parse(
-    fs.readFileSync("./backend/firebase_config.json", "utf8")
-  );
-  console.log("🔥 Firebase config loaded successfully");
-} catch (err) {
-  console.error("❌ Failed to load Firebase service account:", err);
-  process.exit(1);
-}
-
-try {
+  const serviceAccount = JSON.parse(readFileSync(CONFIG_PATH, "utf8"));
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     console.log("✅ Firebase Admin initialized");
   }
-} catch (e) {
-  console.error("⚠️ Firebase init error:", e.message);
+} catch (err) {
+  console.error("❌ Firebase init error:", err.message);
 }
 
 export const db = admin.firestore();
