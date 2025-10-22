@@ -5,19 +5,20 @@
 FROM node:20
 WORKDIR /app
 
-# Copy all backend source
-COPY . .
-
-# Install production dependencies only
+# Copy package files first for better build caching
+COPY package*.json ./
 RUN npm install --omit=dev
 
-# Environment + exposed port
+# Copy backend source
+COPY . .
+
+# ✅ Environment
 ENV PORT=8080
 EXPOSE 8080
 
-# ✅ Healthcheck to help Cloud Run know it’s healthy
+# ✅ Healthcheck (Cloud Run detects service health)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:${PORT}/ || exit 1
 
-# ✅ Start the backend (entrypoint)
+# ✅ Start backend
 CMD ["node", "index.js"]
