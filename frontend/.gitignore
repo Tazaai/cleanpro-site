@@ -7,24 +7,59 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Node & build
-node_modules
-dist
-dist-ssr
+# Node modules & builds
+node_modules/
+dist/
+dist-ssr/
+build/
 *.local
 
-# Env secrets
+# Env & secrets
 .env
 .env.*
 .env.local
+serviceAccountKey.json
 
-# Editor
+# Frontend build artifacts
+frontend/dist/
+frontend/.vite/
+frontend/node_modules/
+
+# Backend build artifacts
+backend/node_modules/
+backend/.env
+backend/.cache/
+
+# Playwright & Test outputs
+test-results/
+playwright-report/
+debug-*.png
+debug-*.jpg
+debug-*.html
+
+# Cloud & Docker
+.cloudbuild/
+Dockerfile.backup
+*.tar
+*.tgz
+
+# Firebase / GCP
+.firebase/
+.firebaserc
+firebase-debug.log
+.gcloudignore
+*.json.backup
+
+# IDEs & editors
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS
+Thumbs.db
