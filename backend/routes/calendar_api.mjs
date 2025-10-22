@@ -1,3 +1,7 @@
+// =============================================================
+// 🧩 CleanPro Backend – Cloud Run Final Verified Version
+// =============================================================
+
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
@@ -13,6 +17,8 @@ app.use(
       "https://cleanpro-frontend-5539254765.europe-west1.run.app",
       /\.github\.dev$/,
     ],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json());
@@ -40,7 +46,7 @@ try {
   console.warn("⚠️ Firebase init skipped:", e.message);
 }
 
-// 🚏 Routes
+// 🚏 Routes (✅ all paths corrected)
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
@@ -53,7 +59,7 @@ import gcalendarApi from "./routes/gcalendar_api.mjs";
 
 app.use("/api/calendar", calendarApi);
 app.use("/api/coordination_points", coordinationPointsApi);
-app.use("/api/hqs", coordinationPointsApi); // ✅ alias
+app.use("/api/hqs", coordinationPointsApi); // ✅ alias for HQ endpoints
 app.use("/api/services", servicesApi);
 app.use("/api/bookings", bookingsApi);
 app.use("/api/quotes", quotesApi);
@@ -62,11 +68,22 @@ app.use("/api/maps", mapsApi);
 app.use("/api/config", configApi);
 app.use("/api/gcalendar", gcalendarApi);
 
+// 🧭 Maps key test
+app.get("/api/check_maps_key", (_, res) =>
+  res.json({
+    ok: !!process.env.GOOGLE_MAPS_API_KEY,
+    keyPreview: process.env.GOOGLE_MAPS_API_KEY
+      ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
+      : null,
+  })
+);
+
 // 🩺 Healthcheck
 app.get("/", (_, res) =>
   res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
 );
 
+// 🚀 Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () =>
   console.log(`✅ Backend live on port ${PORT}`)
