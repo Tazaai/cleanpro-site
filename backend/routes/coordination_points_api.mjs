@@ -1,7 +1,15 @@
 import express from "express";
-import { getFirestore } from "firebase-admin/firestore";
+import admin from "firebase-admin";
 import fetch from "node-fetch";
 
+// ✅ Initialize Firebase if not already
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
+}
+
+import { getFirestore } from "firebase-admin/firestore";
 const router = express.Router();
 const db = getFirestore();
 
@@ -19,11 +27,16 @@ router.get("/", async (req, res) => {
       )}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
       const r = await fetch(url);
       const data = await r.json();
-      return res.json({ ok: true, hqs, distance: data.rows?.[0]?.elements?.[0]?.distance || null });
+      return res.json({
+        ok: true,
+        hqs,
+        distance: data.rows?.[0]?.elements?.[0]?.distance || null,
+      });
     }
 
     res.json({ ok: true, hqs });
   } catch (err) {
+    console.error("coordination_points error:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
