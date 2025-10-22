@@ -1,15 +1,7 @@
 import express from "express";
-import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import fetch from "node-fetch";
 
-// ✅ Initialize Firebase if not already
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
-}
-
-import { getFirestore } from "firebase-admin/firestore";
 const router = express.Router();
 const db = getFirestore();
 
