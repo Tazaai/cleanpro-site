@@ -1,15 +1,16 @@
-// ~/cleanpro-site/backend/routes/gcalendar_api.mjs
+// =============================================================
+// 🗓️ CleanPro Backend – gcalendar_api.mjs (Final Fixed Route)
+// =============================================================
+
 import { Router } from "express";
 import { google } from "googleapis";
 
 const router = Router();
 
-// ✅ Use GoogleAuth with keyFile path (Cloud Run mounts secret here)
+// ✅ Auth (auto-discovery for Cloud Run service account)
 const auth = new google.auth.GoogleAuth({
-  // keyFile removed for Cloud Run auto-discovery,
   scopes: ["https://www.googleapis.com/auth/calendar"],
 });
-
 const calendar = google.calendar({ version: "v3", auth });
 
 /**
@@ -31,7 +32,7 @@ router.get("/", async (req, res) => {
 
     res.json({ ok: true, events: result.data.items || [] });
   } catch (err) {
-    console.error("❌ GCalendar fetch error:", err);
+    console.error("❌ GCalendar fetch error:", err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -50,7 +51,7 @@ router.post("/", async (req, res) => {
 
     const event = {
       summary,
-      description,
+      description: description || "",
       start: { dateTime: start, timeZone: "UTC" },
       end: { dateTime: end, timeZone: "UTC" },
     };
@@ -62,9 +63,12 @@ router.post("/", async (req, res) => {
 
     res.json({ ok: true, event: result.data });
   } catch (err) {
-    console.error("❌ GCalendar insert error:", err);
+    console.error("❌ GCalendar insert error:", err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
+// 🧭 Simple ping for health checks
+router.get("/ping", (_, res) => res.send("✅ gCalendar API live"));
 
 export default router;
