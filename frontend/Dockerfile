@@ -1,10 +1,9 @@
-# 🧩 CleanPro Frontend – Final Cloud Run Dockerfile (Vite + Nginx)
-
 FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+ENV VITE_API_BASE=https://cleanpro-backend-5539254765.europe-west1.run.app
 RUN npm run build
 
 FROM nginx:1.25-alpine
