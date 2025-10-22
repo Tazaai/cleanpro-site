@@ -7,7 +7,6 @@ import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
-process.env.FIREBASE_KEY ||= "{}";
 const app = express();
 
 // ✅ CORS (local + Cloud Run + Codespaces)
@@ -16,7 +15,6 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://cleanpro-frontend-5539254765.europe-west1.run.app",
-      "https://cleanpro-frontend-2a5pka5baa-ew.a.run.app",
       /\.github\.dev$/,
     ],
     methods: ["GET", "POST", "OPTIONS"],
@@ -25,7 +23,7 @@ app.use(
 );
 app.use(express.json());
 
-// ✅ Global headers (fallback)
+// ✅ Global fallback headers
 app.use((_, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -37,21 +35,20 @@ app.use((_, res, next) => {
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
-// 🔐 Firebase init
-const SERVICE_ACCOUNT_PATH = "./serviceAccountKey.json";
+// 🔐 Firebase initialization (safe for base64 key)
 try {
-  if (!existsSync(SERVICE_ACCOUNT_PATH)) {
-    const decoded = process.env.FIREBASE_KEY.trim().startsWith("{")
-      ? process.env.FIREBASE_KEY
-      : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
-    writeFileSync(SERVICE_ACCOUNT_PATH, decoded);
+  const rawKey = process.env.FIREBASE_KEY || "{}";
+  const decoded =
+    rawKey.trim().startsWith("{")
+      ? rawKey
+      : Buffer.from(rawKey, "base64").toString("utf8");
+  const creds = JSON.parse(decoded);
+  if (!admin.apps.length) {
+    admin.initializeApp({ credential: admin.credential.cert(creds) });
+    console.log("✅ Firebase initialized successfully");
   }
-  const data = JSON.parse(readFileSync(SERVICE_ACCOUNT_PATH, "utf8"));
-  if (!admin.apps.length)
-    admin.initializeApp({ credential: admin.credential.cert(data) });
-  console.log("✅ Firebase initialized");
 } catch (err) {
-  console.warn("⚠️ Firebase skipped:", err.message);
+  console.error("❌ Firebase init failed:", err.message);
 }
 
 // 🚏 Routes
@@ -75,7 +72,7 @@ app.use("/api/maps", mapsApi);
 app.use("/api/config", configApi);
 app.use("/api/gcalendar", gcalendarApi);
 
-// 🧭 Test route for Maps key
+// 🧭 Check Maps Key
 app.get("/api/check_maps_key", (_, res) =>
   res.json({
     ok: !!process.env.GOOGLE_MAPS_API_KEY,
