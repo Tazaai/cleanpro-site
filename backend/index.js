@@ -38,10 +38,9 @@ const PORT = process.env.PORT || 8080;
 // 🔐 Firebase initialization (safe for base64 key)
 try {
   const rawKey = process.env.FIREBASE_KEY || "{}";
-  const decoded =
-    rawKey.trim().startsWith("{")
-      ? rawKey
-      : Buffer.from(rawKey, "base64").toString("utf8");
+  const decoded = rawKey.trim().startsWith("{")
+    ? rawKey
+    : Buffer.from(rawKey, "base64").toString("utf8");
   const creds = JSON.parse(decoded);
   if (!admin.apps.length) {
     admin.initializeApp({ credential: admin.credential.cert(creds) });
@@ -51,7 +50,7 @@ try {
   console.error("❌ Firebase init failed:", err.message);
 }
 
-// 🚏 Routes
+// 🚏 Routes (✅ corrected paths)
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
