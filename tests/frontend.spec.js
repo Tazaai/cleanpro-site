@@ -34,5 +34,5 @@ test("pricing preview select works", async ({ page }) => {
 test("contact section visible", async ({ page }) => {
   await page.goto(BASE_URL, { waitUntil: "networkidle" });
   await page.screenshot({ path: "debug-contact.png", fullPage: true });
-  await expect(page.locator("h2", { hasText: "Contact Us" }).first()).toBeVisible();
+  await expect(page.locator("h2", { hasText: "Get in Touch" }).first()).toBeVisible();
 });
