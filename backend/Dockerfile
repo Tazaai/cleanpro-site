@@ -5,6 +5,9 @@
 FROM node:20
 WORKDIR /app
 
+# Install curl for Cloud Run health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy package files first for better build caching
 COPY package*.json ./
 RUN npm install --omit=dev
