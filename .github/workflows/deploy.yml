@@ -1,10 +1,12 @@
-name: Deploy to Production
+name: Deploy Backend & Frontend to Google Cloud
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -23,59 +25,62 @@ jobs:
         cd frontend && npm install
         cd ../backend && npm install
     
-    - name: Run tests
-      run: |
-        npm test
+    - name: Run Playwright tests
+      run: npx playwright test
 
-  deploy-backend:
+  deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-    - name: Install Railway CLI
-      run: npm install -g @railway/cli
-    
-    - name: Deploy Backend
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-      run: |
-        cd backend
-        railway login --token $RAILWAY_TOKEN
-        railway up --service backend
+    env:
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+      FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+      GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-  deploy-frontend:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: cd frontend && npm install
-    
-    - name: Build frontend
-      run: cd frontend && npm run build
-    
-    - name: Deploy to Netlify
-      uses: nwtgck/actions-netlify@v3.0
-      with:
-        publish-dir: './frontend/dist'
-        production-branch: main
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Deploy from GitHub Actions"
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build & Deploy Backend to Cloud Run
+        run: |
+          cd backend
+          gcloud builds submit --tag "gcr.io/${GCP_PROJECT}/cleanpro-backend" .
+          gcloud run deploy cleanpro-backend \
+            --image "gcr.io/${GCP_PROJECT}/cleanpro-backend" \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT}"
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          # Get backend URL for frontend build
+          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
+          export VITE_API_BASE=$BACKEND_URL
+          export VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          npm run build
+
+      - name: Build & Deploy Frontend to Cloud Run
+        run: |
+          cd frontend
+          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
+          gcloud builds submit --tag "gcr.io/${GCP_PROJECT}/cleanpro-frontend" .
+          gcloud run deploy cleanpro-frontend \
+            --image "gcr.io/${GCP_PROJECT}/cleanpro-frontend" \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}"

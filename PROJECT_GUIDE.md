@@ -183,4 +183,4 @@ Only manual updates allowed by authorized developer.
 After any manual change, run:  
 `bash review_report.sh`
 
-**(End of PROJECT_GUIDE.md – Auto-editing permanently disabled)**  
+**(End of PROJECT_GUIDE.md – Auto-editing permanently disabled)**
