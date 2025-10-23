@@ -1,9 +1,17 @@
 // ~/cleanpro-site/backend/routes/bookings_api.mjs
-import { Router } from "express";
+import express from "express";
+import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
-const router = Router();
-const db = getFirestore();
+const router = express.Router();
+
+// Lazy DB getter — throws if Firebase not initialized
+const getDb = () => {
+  if (!admin.apps.length) {
+    throw new Error("Firebase not initialized");
+  }
+  return getFirestore();
+};
 
 /**
  * GET /api/bookings
@@ -11,6 +19,7 @@ const db = getFirestore();
  */
 router.get("/", async (req, res) => {
   try {
+    const db = getDb();
     const snapshot = await db
       .collection("bookings")
       .orderBy("createdAt", "desc")

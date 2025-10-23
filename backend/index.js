@@ -65,8 +65,6 @@ if (process.env.FIREBASE_KEY) {
   try {
     const [
       { default: calendarApi },
-      { default: coordinationPointsApi },
-      { default: servicesApi },
       { default: bookingsApi },
       { default: quotesApi },
       { default: pricingApi },
@@ -75,8 +73,6 @@ if (process.env.FIREBASE_KEY) {
       { default: gcalendarApi },
     ] = await Promise.all([
       import("./routes/calendar_api.mjs"),
-      import("./routes/coordination_points_api.mjs"),
-      import("./routes/services_api.mjs"),
       import("./routes/bookings_api.mjs"),
       import("./routes/quotes_api.mjs"),
       import("./routes/pricing_api.mjs"),
@@ -86,8 +82,6 @@ if (process.env.FIREBASE_KEY) {
     ]);
 
     app.use("/api/calendar", calendarApi);
-    app.use("/api/coordination_points", coordinationPointsApi);
-    app.use("/api/services", servicesApi);
     app.use("/api/bookings", bookingsApi);
     app.use("/api/quotes", quotesApi);
     app.use("/api/pricing", pricingApi);
