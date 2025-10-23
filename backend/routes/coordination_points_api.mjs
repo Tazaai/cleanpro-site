@@ -1,8 +1,14 @@
+import admin from "firebase-admin";
 import express from "express";
 import { getFirestore } from "firebase-admin/firestore";
-import fetch from "node-fetch";
 
 const router = express.Router();
+
+// ✅ Ensure Firebase initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 const db = getFirestore();
 
 router.get("/", async (req, res) => {
