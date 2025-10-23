@@ -60,43 +60,62 @@ if (process.env.FIREBASE_KEY) {
   admin.initializeApp();
 }
 
-// 🚏 Routes (moved below Firebase init)
-import calendarApi from "./routes/calendar_api.mjs";
-import coordinationPointsApi from "./routes/coordination_points_api.mjs";
-import servicesApi from "./routes/services_api.mjs";
-import bookingsApi from "./routes/bookings_api.mjs";
-import quotesApi from "./routes/quotes_api.mjs";
-import pricingApi from "./routes/pricing_api.mjs";
-import mapsApi from "./routes/maps_api.mjs";
-import configApi from "./routes/config_api.mjs";
-import gcalendarApi from "./routes/gcalendar_api.mjs";
+// 🚏 Dynamically import and mount routes after Firebase init
+(async () => {
+  try {
+    const [
+      { default: calendarApi },
+      { default: coordinationPointsApi },
+      { default: servicesApi },
+      { default: bookingsApi },
+      { default: quotesApi },
+      { default: pricingApi },
+      { default: mapsApi },
+      { default: configApi },
+      { default: gcalendarApi },
+    ] = await Promise.all([
+      import("./routes/calendar_api.mjs"),
+      import("./routes/coordination_points_api.mjs"),
+      import("./routes/services_api.mjs"),
+      import("./routes/bookings_api.mjs"),
+      import("./routes/quotes_api.mjs"),
+      import("./routes/pricing_api.mjs"),
+      import("./routes/maps_api.mjs"),
+      import("./routes/config_api.mjs"),
+      import("./routes/gcalendar_api.mjs"),
+    ]);
 
-app.use("/api/calendar", calendarApi);
-app.use("/api/coordination_points", coordinationPointsApi);
-app.use("/api/services", servicesApi);
-app.use("/api/bookings", bookingsApi);
-app.use("/api/quotes", quotesApi);
-app.use("/api/pricing", pricingApi);
-app.use("/api/maps", mapsApi);
-app.use("/api/config", configApi);
-app.use("/api/gcalendar", gcalendarApi);
+    app.use("/api/calendar", calendarApi);
+    app.use("/api/coordination_points", coordinationPointsApi);
+    app.use("/api/services", servicesApi);
+    app.use("/api/bookings", bookingsApi);
+    app.use("/api/quotes", quotesApi);
+    app.use("/api/pricing", pricingApi);
+    app.use("/api/maps", mapsApi);
+    app.use("/api/config", configApi);
+    app.use("/api/gcalendar", gcalendarApi);
 
-// 🧭 Check Maps Key
-app.get("/api/check_maps_key", (_, res) =>
-  res.json({
-    ok: !!process.env.GOOGLE_MAPS_API_KEY,
-    keyPreview: process.env.GOOGLE_MAPS_API_KEY
-      ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
-      : null,
-  })
-);
+    // 🧭 Check Maps Key
+    app.get("/api/check_maps_key", (_, res) =>
+      res.json({
+        ok: !!process.env.GOOGLE_MAPS_API_KEY,
+        keyPreview: process.env.GOOGLE_MAPS_API_KEY
+          ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
+          : null,
+      })
+    );
 
-// 🩺 Health check
-app.get("/", (_, res) =>
-  res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
-);
+    // 🩺 Health check
+    app.get("/", (_, res) =>
+      res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
+    );
 
-// 🚀 Start server
-app.listen(PORT, HOST, () =>
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`)
-);
+    // 🚀 Start server
+    app.listen(PORT, HOST, () =>
+      console.log(`✅ Server listening at http://${HOST}:${PORT}`)
+    );
+  } catch (err) {
+    console.error("❌ Failed to load routes or start server:", err);
+    process.exit(1);
+  }
+})();
