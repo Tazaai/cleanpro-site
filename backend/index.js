@@ -7,6 +7,15 @@ import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
+// ensure app exists and listens on Cloud Run PORT
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const PORT = Number(process.env.PORT || 8080);
+const HOST = process.env.HOST || "0.0.0.0";
+
 // ensure FIREBASE_KEY is materialized to a file so Google libs don't treat JSON as a path
 const SA_PATH = process.env.FIREBASE_SA_PATH || "/tmp/firebase_service_account.json";
 if (process.env.FIREBASE_KEY) {
