@@ -2,8 +2,17 @@
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
 
-const serviceAccount = JSON.parse(
-);
+let serviceAccount;
+try {
+  const raw = process.env.FIREBASE_KEY || "{}";
+  const decoded = raw.trim().startsWith("{")
+    ? raw
+    : Buffer.from(raw, "base64").toString("utf8");
+  serviceAccount = JSON.parse(decoded);
+} catch (err) {
+  console.error("❌ Failed to parse FIREBASE_KEY:", err.message);
+  process.exit(1);
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -21,4 +30,7 @@ async function checkPricing() {
   }
 }
 
-checkPricing().then(() => process.exit(0));
+checkPricing().then(() => process.exit(0)).catch((e) => {
+  console.error("❌ checkPricing failed:", e);
+  process.exit(1);
+});
