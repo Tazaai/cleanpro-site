@@ -1,17 +1,8 @@
 // ~/cleanpro-site/backend/syncPricing.js
-import admin from "firebase-admin";
+import { initFirebase, getDb } from "./firebase.js";
 
-const raw = process.env.FIREBASE_KEY || "{}";
-const decoded = raw.trim().startsWith("{")
-  ? raw
-  : Buffer.from(raw, "base64").toString("utf8");
-const sa = JSON.parse(decoded);
-
-if (!admin.apps.length) {
-  admin.initializeApp({ credential: admin.credential.cert(sa) });
-}
-
-const db = admin.firestore();
+await initFirebase(); // top-level await supported in ESM; otherwise wrap in async IIFE
+const db = getDb();
 
 const SPREADSHEET_ID = "19N8xTamJPvXVWVmataLi6Xr54ZmljK3pDR562vMYmxg"; // your sheet
 const RANGE = "PricingConfig!A2:F";

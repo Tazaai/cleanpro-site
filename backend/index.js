@@ -7,58 +7,31 @@ import cors from "cors";
 import admin from "firebase-admin";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 
-const app = express();
-
-// ✅ CORS (local + Cloud Run + Codespaces)
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://cleanpro-frontend-5539254765.europe-west1.run.app",
-      /\.github\.dev$/,
-    ],
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-app.use(express.json());
-
-// ✅ Global fallback headers
-app.use((_, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  next();
-});
-
-// 🌍 Host + Port
-const HOST = "0.0.0.0";
-const PORT = process.env.PORT || 8080;
-
-// 🔐 Firebase initialization (safe for base64 key)
-try {
-  const rawKey = process.env.FIREBASE_KEY || "{}";
-  const decoded = rawKey.trim().startsWith("{")
-    ? rawKey
-    : Buffer.from(rawKey, "base64").toString("utf8");
-  const creds = JSON.parse(decoded);
-  if (!admin.apps.length) {
-    admin.initializeApp({ credential: admin.credential.cert(creds) });
-    console.log("✅ Firebase initialized successfully");
-  }
-} catch (err) {
-  console.error("❌ Firebase init failed:", err.message);
-}
-
-// If you deploy with FIREBASE_KEY containing the base64-encoded JSON:
+// ensure FIREBASE_KEY is materialized to a file so Google libs don't treat JSON as a path
+const SA_PATH = process.env.FIREBASE_SA_PATH || "/tmp/firebase_service_account.json";
 if (process.env.FIREBASE_KEY) {
-  const raw = Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
-  const sa = JSON.parse(raw);
-  admin.initializeApp({ credential: admin.credential.cert(sa) });
-} else if (!admin.apps.length) {
-  // fallback to default credentials (GOOGLE_APPLICATION_CREDENTIALS path or GCE metadata)
-  admin.initializeApp();
+  const raw = process.env.FIREBASE_KEY.trim().startsWith("{")
+    ? process.env.FIREBASE_KEY
+    : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
+  // write file if missing or contents differ
+  try {
+    if (!existsSync(SA_PATH) || readFileSync(SA_PATH, "utf8") !== raw) {
+      writeFileSync(SA_PATH, raw, { mode: 0o600 });
+    }
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = SA_PATH;
+  } catch (e) {
+    console.error("❌ Failed to write service account file:", e.message);
+  }
 }
+
+// Replace inline FIREBASE_KEY materialization + duplicate initializeApp calls
+import { initFirebase } from "./firebase.js";
+
+// initialize before importing routes (writes SA file & sets GOOGLE_APPLICATION_CREDENTIALS)
+await initFirebase().catch((err) => {
+  console.error("❌ Firebase init failed:", err.message || err);
+  // continue — routes use lazy DB getters that will error if init truly failed
+});
 
 // Dynamically import routes AFTER Firebase init and start server
 (async () => {
