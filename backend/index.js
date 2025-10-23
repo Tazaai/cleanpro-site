@@ -60,11 +60,13 @@ if (process.env.FIREBASE_KEY) {
   admin.initializeApp();
 }
 
-// 🚏 Dynamically import and mount routes after Firebase init
+// Dynamically import routes AFTER Firebase init and start server
 (async () => {
   try {
     const [
       { default: calendarApi },
+      { default: coordinationPointsApi },
+      { default: servicesApi },
       { default: bookingsApi },
       { default: quotesApi },
       { default: pricingApi },
@@ -73,6 +75,8 @@ if (process.env.FIREBASE_KEY) {
       { default: gcalendarApi },
     ] = await Promise.all([
       import("./routes/calendar_api.mjs"),
+      import("./routes/coordination_points_api.mjs"),
+      import("./routes/services_api.mjs"),
       import("./routes/bookings_api.mjs"),
       import("./routes/quotes_api.mjs"),
       import("./routes/pricing_api.mjs"),
@@ -82,6 +86,8 @@ if (process.env.FIREBASE_KEY) {
     ]);
 
     app.use("/api/calendar", calendarApi);
+    app.use("/api/coordination_points", coordinationPointsApi);
+    app.use("/api/services", servicesApi);
     app.use("/api/bookings", bookingsApi);
     app.use("/api/quotes", quotesApi);
     app.use("/api/pricing", pricingApi);
@@ -89,22 +95,6 @@ if (process.env.FIREBASE_KEY) {
     app.use("/api/config", configApi);
     app.use("/api/gcalendar", gcalendarApi);
 
-    // 🧭 Check Maps Key
-    app.get("/api/check_maps_key", (_, res) =>
-      res.json({
-        ok: !!process.env.GOOGLE_MAPS_API_KEY,
-        keyPreview: process.env.GOOGLE_MAPS_API_KEY
-          ? process.env.GOOGLE_MAPS_API_KEY.slice(0, 10) + "..."
-          : null,
-      })
-    );
-
-    // 🩺 Health check
-    app.get("/", (_, res) =>
-      res.send("✅ CleanPro Backend is running on Cloud Run + Local OK")
-    );
-
-    // 🚀 Start server
     app.listen(PORT, HOST, () =>
       console.log(`✅ Server listening at http://${HOST}:${PORT}`)
     );

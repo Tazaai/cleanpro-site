@@ -5,71 +5,18 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const router = express.Router();
 
-// Lazy DB getter — throws if Firebase not initialized
 const getDb = () => {
-  if (!admin.apps.length) {
-    throw new Error("Firebase not initialized");
-  }
+  if (!admin.apps.length) throw new Error("Firebase not initialized");
   return getFirestore();
 };
 
-/**
- * GET /api/bookings
- * Returns the 50 most recent bookings
- */
 router.get("/", async (req, res) => {
   try {
     const db = getDb();
-    const snapshot = await db
-      .collection("bookings")
-      .orderBy("createdAt", "desc")
-      .limit(50)
-      .get();
-
-    const bookings = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    res.json({ ok: true, bookings });
+    const snap = await db.collection("bookings").get();
+    res.json({ ok: true, bookings: snap.docs.map(d => ({ id: d.id, ...d.data() })) });
   } catch (err) {
-    console.error("Booking GET error:", err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-/**
- * POST /api/bookings
- * Creates a new booking
- */
-router.post("/", async (req, res) => {
-  try {
-    const { name, phone, email, service, size, address, frequency, date, time } = req.body;
-
-    if (!name || !phone || !email || !service || !address || !date || !time) {
-      return res.status(400).json({ ok: false, error: "Missing required fields" });
-    }
-
-    // nearest HQ should be kept by maps/hqs logic, not here
-    const newBooking = {
-      name,
-      phone,
-      email,
-      service,
-      size: size || null,
-      address,
-      frequency: frequency || "once",
-      date,
-      time,
-      createdAt: new Date(),
-      status: "pending",
-    };
-
-    const docRef = await db.collection("bookings").add(newBooking);
-
-    res.json({ ok: true, id: docRef.id, booking: newBooking });
-  } catch (err) {
-    console.error("Booking POST error:", err);
+    console.error("bookings error:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
