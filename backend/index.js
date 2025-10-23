@@ -60,7 +60,7 @@ if (process.env.FIREBASE_KEY) {
   admin.initializeApp();
 }
 
-// 🚏 Routes (✅ corrected paths)
+// 🚏 Routes (moved below Firebase init)
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
