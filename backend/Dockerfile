@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files first for better build caching
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN PUPPETEER_SKIP_DOWNLOAD=true npm install --omit=dev
 
 # Copy backend source
 COPY . .
