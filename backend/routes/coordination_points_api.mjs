@@ -4,15 +4,18 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const router = express.Router();
 
-// Ensure Firebase initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = getFirestore();
+// DO NOT initialize Firebase here — index.js must initialize it.
+// Lazily get Firestore and fail fast if not initialized.
+const getDb = () => {
+  if (!admin.apps.length) {
+    throw new Error("Firebase not initialized");
+  }
+  return getFirestore();
+};
 
 router.get("/", async (req, res) => {
   try {
+    const db = getDb();
     const snapshot = await db.collection("coordination_points").get();
     const hqs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
