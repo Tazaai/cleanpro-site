@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         # Install root devDependencies (Playwright, etc.) so tests can run
-        npm ci
+        npm install --no-audit --no-fund
         # Install frontend and backend dependencies
         cd frontend && npm ci
         cd ../backend && npm ci
