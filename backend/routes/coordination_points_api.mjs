@@ -4,7 +4,7 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const router = express.Router();
 
-// ✅ Ensure Firebase initialized
+// Ensure Firebase initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
