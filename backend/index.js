@@ -50,16 +50,6 @@ try {
   console.error("❌ Firebase init failed:", err.message);
 }
 
-// If you deploy with FIREBASE_KEY containing the base64-encoded JSON:
-if (process.env.FIREBASE_KEY) {
-  const raw = Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
-  const sa = JSON.parse(raw);
-  admin.initializeApp({ credential: admin.credential.cert(sa) });
-} else if (!admin.apps.length) {
-  // fallback to default credentials (GOOGLE_APPLICATION_CREDENTIALS path or GCE metadata)
-  admin.initializeApp();
-}
-
 // 🚏 Routes (✅ corrected paths)
 import calendarApi from "./routes/calendar_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
