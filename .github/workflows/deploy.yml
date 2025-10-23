@@ -17,13 +17,16 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Install dependencies
       run: |
-        cd frontend && npm install
-        cd ../backend && npm install
+        # Install root devDependencies (Playwright, etc.) so tests can run
+        npm ci
+        # Install frontend and backend dependencies
+        cd frontend && npm ci
+        cd ../backend && npm ci
     
     - name: Run Playwright tests
       run: npx playwright test
