@@ -25,7 +25,7 @@ gcloud run deploy $SERVICE_NAME \
   --image $IMAGE \
   --region $REGION \
   --allow-unauthenticated \
-  --set-env-vars GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY,NODE_ENV=production
+  --set-env-vars GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY,NODE_ENV=production \
   --platform=managed
 
 echo "✅ Backend deployed successfully!"

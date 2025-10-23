@@ -36,28 +36,34 @@ const HOST = "0.0.0.0";
 const PORT = process.env.PORT || 8080;
 
 // 🔐 Firebase initialization (safe for base64 key)
-try {
-  const rawKey = process.env.FIREBASE_KEY || "{}";
-  const decoded = rawKey.trim().startsWith("{")
-    ? rawKey
-    : Buffer.from(rawKey, "base64").toString("utf8");
-  const creds = JSON.parse(decoded);
-  if (!admin.apps.length) {
-    admin.initializeApp({ credential: admin.credential.cert(creds) });
-    console.log("✅ Firebase initialized successfully");
+if (!admin.apps.length) {
+  try {
+    if (process.env.FIREBASE_KEY) {
+      // If FIREBASE_KEY is provided, try to parse it (supports both JSON and base64)
+      const rawKey = process.env.FIREBASE_KEY;
+      const decoded = rawKey.trim().startsWith("{")
+        ? rawKey
+        : Buffer.from(rawKey, "base64").toString("utf8");
+      const creds = JSON.parse(decoded);
+      admin.initializeApp({ credential: admin.credential.cert(creds) });
+      console.log("✅ Firebase initialized with FIREBASE_KEY");
+    } else {
+      // Fallback to default credentials (GOOGLE_APPLICATION_CREDENTIALS or GCE metadata)
+      admin.initializeApp();
+      console.log("✅ Firebase initialized with default credentials");
+    }
+  } catch (err) {
+    console.error("❌ Firebase init failed:", err.message);
+    // Try to initialize with default credentials as last resort
+    if (!admin.apps.length) {
+      try {
+        admin.initializeApp();
+        console.log("✅ Firebase initialized with default credentials (fallback)");
+      } catch (fallbackErr) {
+        console.error("❌ Firebase fallback init also failed:", fallbackErr.message);
+      }
+    }
   }
-} catch (err) {
-  console.error("❌ Firebase init failed:", err.message);
-}
-
-// If you deploy with FIREBASE_KEY containing the base64-encoded JSON:
-if (process.env.FIREBASE_KEY) {
-  const raw = Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
-  const sa = JSON.parse(raw);
-  admin.initializeApp({ credential: admin.credential.cert(sa) });
-} else if (!admin.apps.length) {
-  // fallback to default credentials (GOOGLE_APPLICATION_CREDENTIALS path or GCE metadata)
-  admin.initializeApp();
 }
 
 // 🚏 Routes (✅ corrected paths)
