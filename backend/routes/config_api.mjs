@@ -1,6 +1,9 @@
 // ~/backend/routes/config_api.mjs
 import express from "express";
-import { db } from "../firebase.js";
+import { getDb } from "../firebase.js";
+
+// resolve Firestore after the centralized initFirebase() ran in index.js
+const db = getDb();
 
 const router = express.Router();
 
