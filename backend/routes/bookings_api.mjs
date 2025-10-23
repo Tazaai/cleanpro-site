@@ -21,4 +21,39 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Added: create booking
+router.post("/", async (req, res) => {
+  try {
+    const {
+      name, phone, email, service, sqMeters, area, frequency,
+      date, timeSlot, address, nearestHQ
+    } = req.body;
+
+    if (!name || !phone || !email || !service || (!sqMeters && !area) || !date || !timeSlot || !address) {
+      return res.status(400).json({ ok: false, message: "Missing required booking fields" });
+    }
+
+    const db = getDb();
+    const docRef = await db.collection("bookings").add({
+      name,
+      phone,
+      email,
+      service,
+      sqMeters: sqMeters || Number(area),
+      frequency: frequency || "one_time",
+      date,
+      timeSlot,
+      address,
+      nearestHQ: nearestHQ || "",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      status: "pending",
+    });
+
+    res.json({ ok: true, id: docRef.id });
+  } catch (err) {
+    console.error("create booking error:", err);
+    res.status(500).json({ ok: false, message: err.message || "Failed to create booking" });
+  }
+});
+
 export default router;
