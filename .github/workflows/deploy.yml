@@ -22,11 +22,12 @@ jobs:
     
     - name: Install dependencies
       run: |
+        set -e
         # Install root devDependencies (Playwright, etc.) so tests can run
         npm install --no-audit --no-fund
-        # Install frontend and backend dependencies
-        cd frontend && npm ci
-        cd ../backend && npm ci
+        # Install frontend and backend dependencies (use npm install to avoid lockfile mismatch in CI)
+        (cd frontend && npm install --no-audit --no-fund)
+        (cd backend && npm install --no-audit --no-fund)
     
     - name: Run Playwright tests
       run: npx playwright test
