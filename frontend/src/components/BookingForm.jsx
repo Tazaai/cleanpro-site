@@ -298,7 +298,9 @@ export default function BookingForm() {
 
       {nearestHQ && (
         <div className="p-3 bg-gray-50 rounded text-sm text-center">
-          <p>📍 Nearest HQ: <b>{nearestHQ.name}</b></p>
+          <p>
+            📍 Nearest HQ: <b>{nearestHQ.name}</b>
+          </p>
           <p>🚗 Distance: {distance} miles</p>
         </div>
       )}
@@ -334,4 +336,21 @@ export default function BookingForm() {
       </p>
     </form>
   );
+}
+
+// load script (in your HTML) or dynamically load with your frontend toolchain
+// <script src="https://maps.googleapis.com/maps/api/js?key=VITE_GOOGLE_MAPS_API_KEY&libraries=places&callback=initAutocomplete" async defer></script>
+
+function initAutocomplete() {
+  const input = document.getElementById("address");
+  if (!input || !window.google) return;
+  const ac = new google.maps.places.Autocomplete(input, { types: ["geocode"] });
+  ac.setFields(["address_components", "formatted_address", "geometry"]);
+  ac.addListener("place_changed", () => {
+    const place = ac.getPlace();
+    if (!place || !place.address_components) return;
+    input.value = place.formatted_address || input.value;
+    // optional: parse components and set separate fields (city, postal, etc.)
+    // e.g. document.getElementById('city').value = getComponent(place, 'locality');
+  });
 }
