@@ -55,7 +55,10 @@ await initFirebase().catch((err) => {
       mapsApiModule,
       configApiModule,
       gcalendarApiModule,
-      paymentApiModule
+      paymentApiModule,
+      authApiModule,
+      adminApiModule,
+      legalApiModule
     ] = await Promise.all([
       import("./routes/calendar_api.mjs"),
       import("./routes/coordination_points_api.mjs"),
@@ -66,7 +69,10 @@ await initFirebase().catch((err) => {
       import("./routes/maps_api.mjs"),
       import("./routes/config_api.mjs"),
       import("./routes/gcalendar_api.mjs"),
-      import("./routes/payment_api.mjs")
+      import("./routes/payment_api.mjs"),
+      import("./routes/auth_api.mjs"),
+      import("./routes/admin_api.mjs"),
+      import("./routes/legal_api.mjs")
     ]);
 
     // Health check endpoint
@@ -88,6 +94,9 @@ await initFirebase().catch((err) => {
     });
 
     // API routes
+    app.use("/api/auth", authApiModule.default);
+    app.use("/api/admin", adminApiModule.default);
+    app.use("/api/legal", legalApiModule.default);
     app.use("/api/calendar", calendarApiModule.default);
     app.use("/api/coordination_points", coordinationPointsApiModule.default);
     app.use("/api/services", servicesApiModule.default);
