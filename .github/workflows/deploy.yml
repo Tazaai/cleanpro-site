@@ -73,8 +73,8 @@ jobs:
 
       - name: Prepare Firebase Service Account
         run: |
-          # Create base64 encoded Firebase key from JSON secret
-          echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > backend/serviceAccountKey.json
+          # Create serviceAccountKey.json from base64 encoded secret
+          echo "${{ secrets.FIREBASE_KEY }}" > backend/serviceAccountKey.json
 
       - name: Build & Deploy Backend to Cloud Run
         run: |
