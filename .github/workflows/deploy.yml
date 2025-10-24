@@ -69,45 +69,40 @@ jobs:
           gcloud artifacts repositories create cleanpro-repo \
             --repository-format=docker \
             --location=europe-west1 \
-            --project=${GCP_PROJECT} || echo "Repository already exists"
-
-      - name: Prepare Firebase Service Account
-        run: |
-          # Create serviceAccountKey.json from base64 encoded secret
-          echo "${{ secrets.FIREBASE_KEY }}" > backend/serviceAccountKey.json
+            --project=$GCP_PROJECT || echo "Repository already exists"
 
       - name: Build & Deploy Backend to Cloud Run
         run: |
-          # Create base64 encoded Firebase key for deployment
-          export FIREBASE_KEY_BASE64=$(cat backend/serviceAccountKey.json | base64 -w 0)
-          
           cd backend
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-backend" .
+          # Use Firebase key directly as environment variable
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-backend" .
           gcloud run deploy cleanpro-backend \
-            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-backend" \
+            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY_BASE64},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT},STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET},JWT_SECRET=${JWT_SECRET},NODE_ENV=production"
+            --project $GCP_PROJECT \
+            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY,GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY,OPENAI_API_KEY=$OPENAI_API_KEY,GCP_PROJECT=$GCP_PROJECT,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,JWT_SECRET=$JWT_SECRET,NODE_ENV=production"
 
       - name: Build Frontend
         run: |
           cd frontend
           npm ci
           # Get backend URL for frontend build
-          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
+          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
           export VITE_API_BASE=$BACKEND_URL
-          export VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          export VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY
           npm run build
 
       - name: Build & Deploy Frontend to Cloud Run
         run: |
           cd frontend
-          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-frontend" .
+          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-frontend" .
           gcloud run deploy cleanpro-frontend \
-            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-frontend" \
+            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-frontend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}"
+            --project $GCP_PROJECT \
+            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY"
