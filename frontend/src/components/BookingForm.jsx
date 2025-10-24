@@ -28,6 +28,8 @@ export default function BookingForm() {
   const [waitlist, setWaitlist] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [bookingId, setBookingId] = useState(null);
+  const [lastCleaning, setLastCleaning] = useState("");
+  const [isFirstTime, setIsFirstTime] = useState(true);
 
   // 🗓 Load availability
   useEffect(() => {
@@ -45,51 +47,112 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
-  // 📍 Google Autocomplete
+  // 📍 Google Autocomplete - Improved implementation
   useEffect(() => {
-    if (!window.google?.maps?.places) return;
-    const input = document.getElementById("address-input");
-    if (!input) return;
-    const ac = new window.google.maps.places.Autocomplete(input, {
-      types: ["address"],
-    });
-    ac.addListener("place_changed", () => {
-      const p = ac.getPlace();
-      if (p.formatted_address) {
-        setAddress(p.formatted_address);
-        fetchDistance(p.formatted_address);
+    const initAutocomplete = () => {
+      if (!window.google?.maps?.places) {
+        // Retry after a short delay if Google Maps isn't loaded yet
+        setTimeout(initAutocomplete, 500);
+        return;
       }
-    });
-  }, [hqs]);
+      
+      const input = document.getElementById("address-input");
+      if (!input) return;
+      
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        types: ["address"],
+        componentRestrictions: { country: ["us", "ca"] }, // Restrict to US and Canada
+        fields: ["formatted_address", "geometry", "place_id", "address_components"]
+      });
+      
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        
+        if (!place.geometry) {
+          toast.error("Please select a valid address from the dropdown");
+          return;
+        }
+        
+        const fullAddress = place.formatted_address;
+        setAddress(fullAddress);
+        
+        // Auto-fetch distance when address is selected
+        if (fullAddress && hqs.length > 0) {
+          fetchDistance(fullAddress);
+        }
+        
+        console.log("Selected address:", fullAddress);
+      });
+    };
+    
+    // Initialize when HQs are loaded
+    if (hqs.length > 0) {
+      initAutocomplete();
+    }
+  }, [hqs]); // Re-run when HQs change
 
-  // 🌍 Distance
+  // 🌍 Distance - Improved with better error handling
   const fetchDistance = async (dest) => {
     if (!dest || !hqs.length) return;
-    let nearest = { miles: Infinity, hq: null };
-    for (const HQ of hqs) {
-      const r = await fetch(
-        `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
-          HQ.address
-        )}&destination=${encodeURIComponent(dest)}`
-      );
-      const d = await r.json();
-      if (d?.rows?.[0]?.elements?.[0]?.status === "OK") {
-        const miles = d.rows[0].elements[0].distance.value / 1609.34;
-        if (miles < nearest.miles)
-          nearest = { miles: Number(miles.toFixed(1)), hq: HQ };
-      }
-    }
-    if (nearest.miles === Infinity)
-      return setWarning("⚠️ Could not fetch distance.");
-    if (nearest.miles > 150) {
-      setWarning("❌ Service not available in your area yet.");
-      setWaitlist(true);
-      return;
-    }
-    setDistance(nearest.miles);
-    setNearestHQ(nearest.hq);
-    setWarning("");
+    
+    setWarning(""); // Clear previous warnings
     setWaitlist(false);
+    
+    try {
+      let nearest = { miles: Infinity, hq: null };
+      
+      for (const HQ of hqs.filter(hq => hq.active)) { // Only check active HQs
+        try {
+          const response = await fetch(
+            `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
+              HQ.address
+            )}&destination=${encodeURIComponent(dest)}`
+          );
+          
+          if (!response.ok) continue;
+          
+          const data = await response.json();
+          
+          if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
+            const distanceData = data.rows[0].elements[0].distance;
+            const miles = distanceData.value / 1609.34; // Convert meters to miles
+            
+            if (miles < nearest.miles) {
+              nearest = { 
+                miles: Number(miles.toFixed(1)), 
+                hq: HQ,
+                readableDistance: distanceData.text
+              };
+            }
+          }
+        } catch (error) {
+          console.warn(`Distance calculation failed for HQ ${HQ.name}:`, error);
+        }
+      }
+      
+      if (nearest.miles === Infinity) {
+        setWarning("⚠️ Could not calculate distance. Please check your address.");
+        return;
+      }
+      
+      if (nearest.miles > 150) {
+        setWarning("❌ Service not available in your area yet. Join our waitlist!");
+        setWaitlist(true);
+        return;
+      }
+      
+      setDistance(nearest.miles);
+      setNearestHQ(nearest.hq);
+      setWarning("");
+      setWaitlist(false);
+      
+      // Show success feedback
+      toast.success(`✅ Found nearest location: ${nearest.hq.name} (${nearest.miles} miles away)`);
+      
+    } catch (error) {
+      console.error("Distance calculation error:", error);
+      setWarning("⚠️ Unable to calculate distance. Please try again.");
+    }
   };
 
   // 💰 Price preview
@@ -104,12 +167,14 @@ export default function BookingForm() {
         sqMeters: Number(area),
         distance,
         frequency,
+        isFirstTime,
+        lastCleaning,
       }),
     })
       .then((r) => r.json())
       .then((d) => d.ok && setPreview({ ...d.breakdown, nearestHQ }))
       .catch(() => {});
-  }, [name, service, area, distance, frequency, nearestHQ]);
+  }, [name, service, area, distance, frequency, nearestHQ, isFirstTime, lastCleaning]);
 
   // ✅ Submit
   const handleSubmit = async (e) => {
@@ -133,6 +198,8 @@ export default function BookingForm() {
           timeSlot,
           address,
           nearestHQ: nearestHQ?.name || "",
+          lastCleaning,
+          isFirstTime,
         }),
       });
       const data = await res.json();
@@ -255,15 +322,42 @@ export default function BookingForm() {
           className="w-full border p-3 rounded-lg"
         />
 
-        <input
-          id="address-input"
-          type="text"
-          placeholder="Enter your address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          required
-          className="w-full border p-3 rounded-lg"
-        />
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            📍 Service Address
+          </label>
+          <div className="relative">
+            <input
+              id="address-input"
+              type="text"
+              placeholder="Start typing your address... (e.g., 123 Main St, City, State)"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+              className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoComplete="off"
+            />
+            {address && !nearestHQ && (
+              <div className="absolute right-3 top-3">
+                <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+              </div>
+            )}
+          </div>
+          
+          {address && address.length > 5 && !nearestHQ && (
+            <button
+              type="button"
+              onClick={() => fetchDistance(address)}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              📍 Calculate distance manually
+            </button>
+          )}
+          
+          <p className="text-xs text-gray-500">
+            💡 Select an address from the dropdown for automatic distance calculation
+          </p>
+        </div>
 
         <select
           value={frequency}
@@ -274,6 +368,26 @@ export default function BookingForm() {
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
         </select>
+
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">
+            When was your last professional cleaning?
+          </label>
+          <select
+            value={lastCleaning}
+            onChange={(e) => {
+              setLastCleaning(e.target.value);
+              setIsFirstTime(e.target.value === "never");
+            }}
+            className="w-full border p-3 rounded-lg"
+          >
+            <option value="never">Never (First Time)</option>
+            <option value="1-3_months">1-3 months ago</option>
+            <option value="3-6_months">3-6 months ago</option>
+            <option value="6-12_months">6-12 months ago</option>
+            <option value="over_year">Over a year ago</option>
+          </select>
+        </div>
       </div>
 
       <div className="text-center">
@@ -335,15 +449,69 @@ export default function BookingForm() {
       )}
 
       {preview && (
-        <div className="p-3 bg-gray-100 rounded text-sm text-center">
-          <p>🧾 Estimated Price: ${preview.finalPrice}</p>
-          <p>
-            Base: ${preview.basePrice} | Distance: ${preview.distanceFee} |
-            Discount: -${preview.discount}
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            ℹ️ Up to 40 miles free. Extra handled by admin.
-          </p>
+        <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+          <h3 className="font-semibold text-blue-800 mb-3">💰 Price Breakdown</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-700">Base rate ({area} sq ft × ${preview.baseRatePerSqFt || '0.00'}/sq ft):</span>
+              <span className="font-medium">${preview.basePrice || '0.00'}</span>
+            </div>
+            
+            {distance > 40 && (
+              <div className="flex justify-between">
+                <span className="text-gray-700">Distance fee ({(distance - 40).toFixed(1)} miles × ${preview.pricePerMile || '0.00'}/mile):</span>
+                <span className="font-medium">${preview.distanceFee || '0.00'}</span>
+              </div>
+            )}
+            
+            {distance <= 40 && (
+              <div className="flex justify-between">
+                <span className="text-green-600">🚗 Distance (FREE up to 40 miles):</span>
+                <span className="font-medium text-green-600">$0.00</span>
+              </div>
+            )}
+            
+            <div className="border-t pt-2">
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal:</span>
+                <span>${((preview.basePrice || 0) + (preview.distanceFee || 0)).toFixed(2)}</span>
+              </div>
+            </div>
+            
+            {!isFirstTime && frequency !== "one_time" && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-green-700">
+                  <span>🎁 {frequency === 'weekly' ? 'Weekly' : 'Monthly'} discount ({preview.discountPercent || 0}%):</span>
+                  <span>-${preview.discount || '0.00'}</span>
+                </div>
+                {isFirstTime && (
+                  <p className="text-xs text-gray-500 italic">Note: Discounts start from 2nd booking</p>
+                )}
+              </div>
+            )}
+            
+            {isFirstTime && frequency !== "one_time" && (
+              <div className="text-amber-600 text-xs bg-amber-50 p-2 rounded">
+                💡 This is your first cleaning, so no discount applies. Future bookings will include {frequency === 'weekly' ? '10-20%' : '5-10%'} discount!
+              </div>
+            )}
+            
+            <div className="border-t pt-2">
+              <div className="flex justify-between text-lg font-bold text-blue-800">
+                <span>Total Price:</span>
+                <span>${preview.finalPrice || '0.00'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+            <p>📋 <strong>Service Details:</strong></p>
+            <p>• Service: {service.replace(/_/g, ' ').toUpperCase()}</p>
+            <p>• Area: {area} sq ft</p>
+            <p>• Distance: {distance} miles from {nearestHQ?.name}</p>
+            <p>• Frequency: {frequency.replace(/_/g, ' ')}</p>
+            <p>• Last cleaning: {lastCleaning === 'never' ? 'First time' : lastCleaning.replace(/_/g, ' ')}</p>
+          </div>
         </div>
       )}
 
