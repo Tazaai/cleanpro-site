@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import toast, { Toaster } from "react-hot-toast";
+import PaymentModal from "./PaymentModal";
 
 // ✅ Correct base URL
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -25,6 +26,8 @@ export default function BookingForm() {
   const [successMsg, setSuccessMsg] = useState("");
   const [hqs, setHqs] = useState([]);
   const [waitlist, setWaitlist] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [bookingId, setBookingId] = useState(null);
 
   // 🗓 Load availability
   useEffect(() => {
@@ -134,15 +137,28 @@ export default function BookingForm() {
       });
       const data = await res.json();
       if (data.ok) {
-        setSuccessMsg("✅ Booking confirmed!");
-        toast.success("Booking confirmed!");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setBookingId(data.bookingId || data.id);
+        // Show payment modal instead of immediate success
+        if (preview?.finalPrice > 0) {
+          setShowPayment(true);
+        } else {
+          setSuccessMsg("✅ Booking confirmed!");
+          toast.success("Booking confirmed!");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       } else toast.error(data.message || "Booking failed");
     } catch {
       toast.error("Network error submitting booking.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPayment(false);
+    setSuccessMsg("✅ Booking confirmed and payment completed!");
+    toast.success("Booking confirmed and payment completed!");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const getSlotClass = (slot) =>
@@ -172,6 +188,19 @@ export default function BookingForm() {
       className="space-y-5 p-6 bg-white rounded-2xl shadow-md max-w-2xl mx-auto border border-gray-100"
     >
       <Toaster position="top-center" />
+      <PaymentModal
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        amount={preview?.finalPrice || 0}
+        bookingData={{
+          id: bookingId,
+          name,
+          email,
+          service,
+          address
+        }}
+        onSuccess={handlePaymentSuccess}
+      />
       <h2 className="text-2xl font-semibold text-gray-800 text-center">
         Create Your Booking
       </h2>
@@ -323,7 +352,7 @@ export default function BookingForm() {
         disabled={submitting}
         className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400"
       >
-        {submitting ? "Submitting..." : "Submit Booking"}
+        {submitting ? "Submitting..." : preview?.finalPrice > 0 ? "Book & Pay Now" : "Submit Booking"}
       </button>
 
       {preview && (
@@ -332,7 +361,7 @@ export default function BookingForm() {
         </p>
       )}
       <p className="text-center text-xs text-gray-500 mt-1">
-        💬 Free quote — no payment required now.
+        {preview?.finalPrice > 0 ? "💳 Secure payment powered by Stripe" : "💬 Free quote — no payment required now."}
       </p>
     </form>
   );

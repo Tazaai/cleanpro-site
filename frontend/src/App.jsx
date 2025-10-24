@@ -1,10 +1,18 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import BookingForm from "./components/BookingForm";
-import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt } from "react-icons/fa";
+import LoginForm from "./components/LoginForm";
+import RegisterForm from "./components/RegisterForm";
+import AdminDashboard from "./components/AdminDashboard";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
 
-export default function App() {
+function AppContent() {
   const bookingRef = useRef(null);
   const mapRef = useRef(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
 
   // ✅ Initialize map safely
   useEffect(() => {
@@ -41,6 +49,11 @@ export default function App() {
     }
   };
 
+  const handleAuthSwitch = () => {
+    setShowLogin(!showLogin);
+    setShowRegister(!showRegister);
+  };
+
   const services = [
     { key: "standard_cleaning", icon: "🏠", title: "Residential Cleaning", desc: "Keep your home spotless and fresh." },
     { key: "deep_cleaning", icon: "🧼", title: "Deep Cleaning", desc: "Thorough cleaning for every corner." },
@@ -50,8 +63,66 @@ export default function App() {
 
   return (
     <div className="flex flex-col min-h-screen font-sans bg-gray-50">
+      {/* Auth Modals */}
+      {showLogin && (
+        <LoginForm 
+          onClose={() => setShowLogin(false)} 
+          switchToRegister={() => handleAuthSwitch()}
+        />
+      )}
+      {showRegister && (
+        <RegisterForm 
+          onClose={() => setShowRegister(false)} 
+          switchToLogin={() => handleAuthSwitch()}
+        />
+      )}
+      {showAdmin && isAdmin && (
+        <AdminDashboard onClose={() => setShowAdmin(false)} />
+      )}
+
       {/* Hero */}
       <header className="relative mb-8 text-center text-white">
+        {/* User Menu */}
+        <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-2 bg-black bg-opacity-50 rounded-lg px-3 py-2">
+              <FaUser className="text-white" />
+              <span className="text-white text-sm">{user?.name}</span>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowAdmin(true)}
+                  className="text-yellow-300 hover:text-yellow-100"
+                  title="Admin Dashboard"
+                >
+                  <FaCog />
+                </button>
+              )}
+              <button
+                onClick={logout}
+                className="text-red-300 hover:text-red-100"
+                title="Logout"
+              >
+                <FaSignOutAlt />
+              </button>
+            </div>
+          ) : (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowLogin(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => setShowRegister(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
+
         <img src="/cleandeparture.jpg" alt="Cleaning Services" className="w-full h-72 object-cover" />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/60 to-black/30 px-4">
           <h1 className="text-3xl md:text-5xl font-bold">🚀 Clean Departure</h1>
@@ -153,5 +224,13 @@ export default function App() {
         </p>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
