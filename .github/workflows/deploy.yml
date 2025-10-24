@@ -63,21 +63,13 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-      - name: Create Artifact Registry repository
-        run: |
-          # Create single repository for both services
-          gcloud artifacts repositories create cleanpro-repo \
-            --repository-format=docker \
-            --location=europe-west1 \
-            --project=$GCP_PROJECT || echo "Repository already exists"
-
       - name: Build & Deploy Backend to Cloud Run
         run: |
           cd backend
           # Use Firebase key directly as environment variable
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-backend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           gcloud run deploy cleanpro-backend \
-            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-backend" \
+            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
@@ -98,9 +90,9 @@ jobs:
         run: |
           cd frontend
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-frontend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
           gcloud run deploy cleanpro-frontend \
-            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cleanpro-repo/cleanpro-frontend" \
+            --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
