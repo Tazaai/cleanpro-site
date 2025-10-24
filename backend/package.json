@@ -17,7 +17,8 @@
     "firebase-admin": "^13.5.0",
     "googleapis": "^144.0.0",
     "node-fetch": "^3.3.2",
-    "puppeteer": "^24.4.0"
+    "puppeteer": "^24.4.0",
+    "stripe": "^14.7.0"
   },
   "engines": {
     "node": ">=20.x"

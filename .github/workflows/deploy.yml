@@ -44,6 +44,8 @@ jobs:
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
       GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     steps:
       - name: Checkout
@@ -57,19 +59,24 @@ jobs:
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - name: Create Artifact Registry repositories if needed
+        run: |
+          gcloud artifacts repositories create cleanpro-backend --repository-format=docker --location=europe-west1 --project=${GCP_PROJECT} || true
+          gcloud artifacts repositories create cleanpro-frontend --repository-format=docker --location=europe-west1 --project=${GCP_PROJECT} || true
 
       - name: Build & Deploy Backend to Cloud Run
         run: |
           cd backend
-          gcloud builds submit --tag "gcr.io/${GCP_PROJECT}/cleanpro-backend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-backend/backend" .
           gcloud run deploy cleanpro-backend \
-            --image "gcr.io/${GCP_PROJECT}/cleanpro-backend" \
+            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-backend/backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT}"
+            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT},STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}"
 
       - name: Build Frontend
         run: |
@@ -85,9 +92,9 @@ jobs:
         run: |
           cd frontend
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
-          gcloud builds submit --tag "gcr.io/${GCP_PROJECT}/cleanpro-frontend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-frontend/frontend" .
           gcloud run deploy cleanpro-frontend \
-            --image "gcr.io/${GCP_PROJECT}/cleanpro-frontend" \
+            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-frontend/frontend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \

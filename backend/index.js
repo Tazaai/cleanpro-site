@@ -46,15 +46,16 @@ await initFirebase().catch((err) => {
 (async () => {
   try {
     const [
-      { default: calendarApi },
-      { default: coordinationPointsApi },
-      { default: servicesApi },
-      { default: bookingsApi },
-      { default: quotesApi },
-      { default: pricingApi },
-      { default: mapsApi },
-      { default: configApi },
-      { default: gcalendarApi },
+      calendarApiModule,
+      coordinationPointsApiModule,
+      servicesApiModule,
+      bookingsApiModule,
+      quotesApiModule,
+      pricingApiModule,
+      mapsApiModule,
+      configApiModule,
+      gcalendarApiModule,
+      paymentApiModule
     ] = await Promise.all([
       import("./routes/calendar_api.mjs"),
       import("./routes/coordination_points_api.mjs"),
@@ -65,17 +66,47 @@ await initFirebase().catch((err) => {
       import("./routes/maps_api.mjs"),
       import("./routes/config_api.mjs"),
       import("./routes/gcalendar_api.mjs"),
+      import("./routes/payment_api.mjs")
     ]);
 
-    app.use("/api/calendar", calendarApi);
-    app.use("/api/coordination_points", coordinationPointsApi);
-    app.use("/api/services", servicesApi);
-    app.use("/api/bookings", bookingsApi);
-    app.use("/api/quotes", quotesApi);
-    app.use("/api/pricing", pricingApi);
-    app.use("/api/maps", mapsApi);
-    app.use("/api/config", configApi);
-    app.use("/api/gcalendar", gcalendarApi);
+    // Health check endpoint
+    app.get("/", (req, res) => {
+      res.json({ 
+        ok: true, 
+        message: "✅ CleanPro Backend is running", 
+        timestamp: new Date().toISOString(),
+        version: "1.0.0"
+      });
+    });
+
+    app.get("/health", (req, res) => {
+      res.json({ 
+        ok: true, 
+        status: "healthy", 
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // API routes
+    app.use("/api/calendar", calendarApiModule.default);
+    app.use("/api/coordination_points", coordinationPointsApiModule.default);
+    app.use("/api/services", servicesApiModule.default);
+    app.use("/api/bookings", bookingsApiModule.default);
+    app.use("/api/quotes", quotesApiModule.default);
+    app.use("/api/pricing", pricingApiModule.default);
+    app.use("/api/maps", mapsApiModule.default);
+    app.use("/api/config", configApiModule.default);
+    app.use("/api/gcalendar", gcalendarApiModule.default);
+    app.use("/api/payment", paymentApiModule.default);
+
+    // 404 handler
+    app.use("*", (req, res) => {
+      res.status(404).json({ 
+        ok: false, 
+        error: "Endpoint not found", 
+        path: req.originalUrl 
+      });
+    });
 
     app.listen(PORT, HOST, () =>
       console.log(`✅ Server listening at http://${HOST}:${PORT}`)
