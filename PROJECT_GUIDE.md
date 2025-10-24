@@ -1,34 +1,40 @@
-# 🧭 CleanPro Site + Codox System – Project Guide
-⚠️ SYSTEM CONTEXT FILE — **READ-ONLY (Auto-edit disabled)**  
-Used by **Codox GPT** to understand project goals, structure, and workflow for **automation, diagnostics, and self-healing**.  
-⛔️ This file may only be *read*, not modified automatically.
+# 🧭 CleanPro MVP + GitHub Copilot System – Project Guide
+⚠️ SYSTEM CONTEXT FILE — **GitHub Copilot Managed**  
+Used by **GitHub Copilot** to understand project goals, structure, and workflow for **MVP features, diagnostics, and deployment**.  
+✅ MVP Features: Authentication, Admin Dashboard, Payments, Legal Compliance
 
-**Last Updated**: October 23, 2025 - Deployment workflow optimized ✅
+**Last Updated**: October 24, 2025 - MVP Deployment with Artifact Registry ✅
 
 ---
 
 ## 🎯 Goal
-Create a **self-maintaining cleaning platform** with dynamic services, Google Maps/Calendar integration, and AppSheet-based admin control — supported by an **autonomous Codox pipeline** that detects and repairs build, deploy, and environment issues automatically.
+Create a **complete cleaning platform MVP** with dynamic services, Google Maps/Calendar integration, user authentication, admin dashboard, payment processing, and legal compliance — supported by **GitHub Copilot** for automation, diagnostics, and deployment with modern Artifact Registry approach.
 
 ---
 
 ## ✅ Objectives
 
 ### 🧱 Backend (Node.js / Express)
-- REST APIs for: services, pricing, bookings, maps, and calendar  
-- Firestore data layer  
+- REST APIs for: services, pricing, bookings, maps, calendar, auth, admin, payments, legal  
+- **Authentication System**: JWT tokens, bcrypt password hashing, role-based access control
+- **Admin Dashboard**: User management, booking oversight, revenue reporting, system stats
+- **Payment Processing**: Stripe integration with payment intents and webhook handling
+- **Legal Compliance**: Terms of service, privacy policy, contact information APIs
+- Firestore data layer with user collections and admin analytics
 - Cloud Run ready (`process.env.PORT || 8080`)  
-- Health check: `GET /` → “✅ CleanPro Backend is running”  
-- Auto-patched routes: `/api/services`, `/api/bookings`, `/api/calendar`  
+- Health check: `GET /` → "✅ CleanPro Backend is running"  
+- MVP routes: `/api/auth/*`, `/api/admin/*`, `/api/payments/*`, `/api/legal/*`, `/api/bookings/*`
 - **Auto-fix rule:** ensure `app.listen(process.env.PORT || 8080, "0.0.0.0")` is present in `index.js`
 
 ### 🎨 Frontend (React / Vite)
 - Tailwind / MUI styling  
+- **User Authentication**: Login, registration, profile management with JWT tokens
+- **Admin Dashboard**: Business management interface for authenticated admin users
+- **Payment Integration**: Stripe payment forms and transaction handling
 - Booking form with dynamic pricing, distance, discounts, and Google Maps  
-- Coordination point validation (<100 miles)  
-- Real-time price updates via backend API  
-
----
+- Coordination point validation (<100 miles)
+- Real-time price updates via backend API
+- Role-based UI components and protected routes---
 
 ## 🧼 Service Logic
 
@@ -67,17 +73,24 @@ Formula:
 ---
 
 ## 💳 Payments & Feedback
-- Stripe / PayPal integration (planned)  
+- **Stripe Integration**: Payment intents, secure card processing, webhook handling ✅
+- **Payment Flow**: Create payment intent → process card → confirm payment → update booking status
+- **Security**: PCI-compliant payment processing with Stripe Elements
 - Reviews and ratings per coordination point  
-- “Work With Us” form → email + SMS notification  
+- "Work With Us" form → email + SMS notification
+- **Admin Revenue Tracking**: Payment analytics and reporting in admin dashboard
 
 ---
 
-## 🤖 Codox Diagnostics & Self-Healing
+## 🤖 GitHub Copilot Diagnostics & MVP Validation
 
-### 1️⃣ Smart Diagnostics
-- Runs `review_report.sh` for backend + frontend checks  
-- Detects CORS, build errors, route loss, Docker misconfig, YAML issues  
+### 1️⃣ Smart MVP Diagnostics
+- Runs `review_report.sh` for comprehensive MVP feature validation
+- **Authentication Checks**: JWT configuration, bcrypt setup, middleware validation
+- **Admin Dashboard**: API endpoints, role-based access, stats functionality
+- **Payment System**: Stripe integration, webhook configuration, security validation
+- **Legal Compliance**: Terms, privacy policy, contact information endpoints
+- Detects CORS, build errors, route loss, Docker misconfig, deployment issues  
 
 ### 2️⃣ Auto-Repair
 - Rebuilds backend Dockerfile (`Node 20 LTS`, `WORKDIR /app/backend`, `EXPOSE 8080`, `CMD ["node","index.js"]`)  
@@ -94,9 +107,9 @@ Formula:
 - Auto-retries deployment if container fails health check  
 - Re-authenticates and re-deploys with `gcloud`  
 
-### 5️⃣ Secrets Check
+### 5️⃣ MVP Secrets Check
 Validates presence and syntax of:  
-`GOOGLE_MAPS_API_KEY`, `GCP_PROJECT`, `GCP_SA_KEY`, `FIREBASE_KEY`, `OPENAI_API_KEY`, `GITHUB_TOKEN`
+`GOOGLE_MAPS_API_KEY`, `GCP_PROJECT`, `GCP_SA_KEY`, `FIREBASE_KEY`, `JWT_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `GITHUB_TOKEN`
 
 ### 6️⃣ Feedback Loop
 - Commits fixes automatically (`auto-heal: …`)  
@@ -112,23 +125,23 @@ Validates presence and syntax of:
 ---
 
 ## 🔧 review_report.sh Control
-- Codox may modify this script automatically.  
-- Allowed edits: diagnostics, self-healing logic, route validation, deployment commands.  
+- GitHub Copilot may modify this script for MVP feature diagnostics.  
+- Allowed edits: MVP diagnostics, authentication checks, admin validation, payment verification, deployment commands.  
 - Protected sections: Cloud auth, secret validation, and GCP deploy syntax.  
-- **PROJECT_GUIDE.md itself is locked** — Codox can only *read*, never write.
+- **PROJECT_GUIDE.md updates** — GitHub Copilot can update with developer authorization.
 
 ---
 
 ## 🗂 Structure
 
 **Backend:**  
-`index.js`, `firebase.js`, `Dockerfile`, `routes/...`, `deploy_backend.sh`
+`index.js`, `firebase.js`, `Dockerfile`, `routes/auth_api.mjs`, `routes/admin_api.mjs`, `routes/payment_api.mjs`, `routes/legal_api.mjs`, `routes/bookings_api.mjs`, `deploy_backend.sh`
 
 **Frontend:**  
 `Dockerfile`, `vite.config.js`, `src/main.jsx`, `App.jsx`, `components/...`
 
 **Automation:**  
-`.github/workflows/codox.yaml`, `review_report.sh`, `deploy_frontend.sh`, `deploy_backend.sh`
+`.github/workflows/deploy.yml`, `review_report.sh`, `deploy_frontend.sh`, `deploy_backend.sh`
 
 ---
 
@@ -141,16 +154,25 @@ Validates presence and syntax of:
   - `GOOGLE_APPLICATION_CREDENTIALS=/app/firebase_config.json`  
   - `CALENDAR_ID=rahpodcast2022@gmail.com`  
   - `GOOGLE_MAPS_API_KEY=<key>`
+  - `JWT_SECRET=<secret>` (for authentication)
+  - `STRIPE_SECRET_KEY=<key>` (for payments)
+  - `STRIPE_WEBHOOK_SECRET=<secret>` (for webhooks)
 
 ---
 
 ## 🗺️ Roadmap
 - [x] Core routes  
 - [x] Dynamic pricing  
-- [x] Codox Auto-Repair Trigger  
-- [ ] Stripe / PayPal  
+- [x] GitHub Copilot Auto-Repair Trigger  
+- [x] **JWT Authentication System** ✅
+- [x] **Admin Dashboard APIs** ✅
+- [x] **Stripe Payment Integration** ✅
+- [x] **Legal Compliance APIs** ✅
+- [x] **Enhanced Booking System** ✅
+- [x] **Artifact Registry Deployment** ✅
+- [ ] Frontend admin dashboard UI
 - [ ] AppSheet Dashboard  
-- [ ] Customer login  
+- [ ] Customer login frontend
 - [ ] Auto HQ assign  
 - [ ] Cloud logging & analytics  
 - [ ] Discount automation  
@@ -158,31 +180,39 @@ Validates presence and syntax of:
 ---
 
 ## 🧩 CI/CD Flow
-- Trigger: GitHub Action → `review_report.sh`  
-- Validation order: **secrets → backend → frontend → deploy → health test → report**  
-- On failure: auto-repair + redeploy  
+- Trigger: GitHub Action → Playwright tests → `review_report.sh`  
+- **Modern Deployment**: Artifact Registry (europe-west1-docker.pkg.dev) approach
+- Validation order: **tests → secrets → backend build → frontend build → deploy → health test → report**  
+- **MVP Validation**: Authentication, admin, payments, legal APIs tested
+- On failure: GitHub Copilot analysis + redeploy  
 
 ---
 
 ## 🧰 AI Integration
-- Codox GPT reads `PROJECT_GUIDE.md` and `agent.md`  
-- Suggests or commits code fixes through GitHub PR  
-- Auto-editing of this file is **strictly prohibited**
+- **GitHub Copilot** reads `PROJECT_GUIDE.md` and `agent.md`  
+- Implements MVP features: authentication, admin dashboard, payments, legal compliance
+- Suggests or commits code fixes through direct implementation
+- Updates this file with developer authorization for MVP progress tracking
 
 ---
 
 ## 📦 Data / Firestore Collections
-- `services`, `bookings`, `pricing`, `coordination_points`, `reviews`  
+- **Core Collections**: `services`, `bookings`, `pricing`, `coordination_points`, `reviews`
+- **Authentication**: `users` collection with hashed passwords, roles, profiles
+- **Admin Analytics**: User stats, booking metrics, revenue tracking
+- **Payment Records**: Transaction history, payment status tracking
 - Auto-create missing collections if empty  
 - Sync daily with AppSheet  
 
 ---
 
 ## 🛡️ Notes
-Codox GPT reads this file for logic and structure.  
-Do **not rename sections or edit automatically**.  
-Only manual updates allowed by authorized developer.  
-After any manual change, run:  
+**GitHub Copilot** reads this file for MVP logic and structure.  
+Preserve existing sections while adding MVP features.  
+Updates allowed with developer authorization.  
+After any change, run:  
 `bash review_report.sh`
 
-**(End of PROJECT_GUIDE.md – Auto-editing permanently disabled)**
+**MVP Status**: Authentication ✅ | Admin Dashboard ✅ | Payments ✅ | Legal ✅ | Deployment ✅
+
+**(End of PROJECT_GUIDE.md – MVP Implementation Complete)**

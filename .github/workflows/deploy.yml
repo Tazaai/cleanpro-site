@@ -63,30 +63,32 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-      - name: Create Artifact Registry repositories
+      - name: Create Artifact Registry repository
         run: |
-          # Create backend repository
-          gcloud artifacts repositories create cleanpro-backend \
+          # Create single repository for both services
+          gcloud artifacts repositories create cleanpro-repo \
             --repository-format=docker \
             --location=europe-west1 \
-            --project=${GCP_PROJECT} || echo "Backend repo already exists"
-          
-          # Create frontend repository  
-          gcloud artifacts repositories create cleanpro-frontend \
-            --repository-format=docker \
-            --location=europe-west1 \
-            --project=${GCP_PROJECT} || echo "Frontend repo already exists"
+            --project=${GCP_PROJECT} || echo "Repository already exists"
+
+      - name: Prepare Firebase Service Account
+        run: |
+          # Create base64 encoded Firebase key from JSON secret
+          echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > backend/serviceAccountKey.json
 
       - name: Build & Deploy Backend to Cloud Run
         run: |
+          # Create base64 encoded Firebase key for deployment
+          export FIREBASE_KEY_BASE64=$(cat backend/serviceAccountKey.json | base64 -w 0)
+          
           cd backend
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-backend/backend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-backend" .
           gcloud run deploy cleanpro-backend \
-            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-backend/backend" \
+            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT},STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET},JWT_SECRET=${JWT_SECRET}"
+            --set-env-vars "FIREBASE_KEY=${FIREBASE_KEY_BASE64},GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY},OPENAI_API_KEY=${OPENAI_API_KEY},GCP_PROJECT=${GCP_PROJECT},STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY},STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET},JWT_SECRET=${JWT_SECRET},NODE_ENV=production"
 
       - name: Build Frontend
         run: |
@@ -102,9 +104,9 @@ jobs:
         run: |
           cd frontend
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --format='value(status.url)')
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-frontend/frontend" .
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-frontend" .
           gcloud run deploy cleanpro-frontend \
-            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-frontend/frontend" \
+            --image "europe-west1-docker.pkg.dev/${GCP_PROJECT}/cleanpro-repo/cleanpro-frontend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
