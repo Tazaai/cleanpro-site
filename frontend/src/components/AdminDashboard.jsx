@@ -115,11 +115,58 @@ export default function AdminDashboard({ onClose }) {
               <p className="text-2xl font-bold text-purple-600">{stats.activeUsers || 0}</p>
             </div>
             <div className="bg-orange-100 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-orange-800">Pending Bookings</h3>
-              <p className="text-2xl font-bold text-orange-600">{stats.pendingBookings || 0}</p>
+              <h3 className="text-lg font-semibold text-orange-800">Pending Approvals</h3>
+              <p className="text-2xl font-bold text-orange-600">
+                {bookings.filter(b => b.status === 'pending_approval').length}
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Priority Alerts for Pending Approvals */}
+        {bookings.filter(b => b.status === 'pending_approval').length > 0 && (
+          <div className="p-4 bg-orange-50 border-l-4 border-orange-400">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <div className="text-orange-400 text-2xl">⚠️</div>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-orange-800">
+                  {bookings.filter(b => b.status === 'pending_approval').length} Booking{bookings.filter(b => b.status === 'pending_approval').length > 1 ? 's' : ''} Awaiting Approval
+                </h3>
+                <p className="text-sm text-orange-700">
+                  These customers are waiting for booking confirmation. Please review and approve/reject promptly.
+                </p>
+                <div className="mt-2 grid grid-cols-1 gap-2">
+                  {bookings.filter(b => b.status === 'pending_approval').slice(0, 3).map(booking => (
+                    <div key={booking.id} className="bg-white p-2 rounded border">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium">{booking.userName}</span>
+                          <span className="text-sm text-gray-500 ml-2">{booking.service} - ${booking.totalPrice}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => updateBookingStatus(booking.id, 'confirmed')}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b">
@@ -169,33 +216,59 @@ export default function AdminDashboard({ onClose }) {
                           {bookings.map((booking) => (
                             <tr key={booking.id} className="hover:bg-gray-50">
                               <td className="border border-gray-300 px-4 py-2">
-                                {booking.name}<br />
-                                <small className="text-gray-500">{booking.email}</small>
+                                <div>
+                                  <div className="font-medium">{booking.userName || booking.name}</div>
+                                  <div className="text-sm text-gray-500">{booking.userEmail || booking.email}</div>
+                                  {(booking.userPhone || booking.phone) && (
+                                    <div className="text-sm text-blue-600">📞 {booking.userPhone || booking.phone}</div>
+                                  )}
+                                  {booking.address && (
+                                    <div className="text-xs text-gray-400 mt-1">📍 {booking.address}</div>
+                                  )}
+                                </div>
                               </td>
                               <td className="border border-gray-300 px-4 py-2">{booking.service}</td>
                               <td className="border border-gray-300 px-4 py-2">{booking.date}</td>
                               <td className="border border-gray-300 px-4 py-2">
                                 <span className={`px-2 py-1 rounded text-xs ${
                                   booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                  booking.status === 'pending_approval' ? 'bg-orange-100 text-orange-800' :
                                   booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                   booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                                   'bg-red-100 text-red-800'
                                 }`}>
-                                  {booking.status || 'pending'}
+                                  {booking.status === 'pending_approval' ? 'Awaiting Approval' : (booking.status || 'pending')}
                                 </span>
                               </td>
                               <td className="border border-gray-300 px-4 py-2">${booking.estimatedPrice || 0}</td>
                               <td className="border border-gray-300 px-4 py-2">
-                                <select
-                                  value={booking.status || 'pending'}
-                                  onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
-                                  className="text-xs border rounded px-2 py-1"
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="confirmed">Confirmed</option>
-                                  <option value="completed">Completed</option>
-                                  <option value="cancelled">Cancelled</option>
-                                </select>
+                                {booking.status === 'pending_approval' ? (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => updateBookingStatus(booking.id, 'confirmed')}
+                                      className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition-colors"
+                                    >
+                                      ✅ Approve
+                                    </button>
+                                    <button
+                                      onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                                      className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition-colors"
+                                    >
+                                      ❌ Reject
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <select
+                                    value={booking.status || 'pending'}
+                                    onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
+                                    className="text-xs border rounded px-2 py-1"
+                                  >
+                                    <option value="pending_approval">Pending Approval</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                  </select>
+                                )}
                               </td>
                             </tr>
                           ))}

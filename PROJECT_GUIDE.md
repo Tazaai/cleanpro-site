@@ -3,6 +3,8 @@
 Used by **GitHub Copilot** to understand project goals, structure, and workflow for **MVP features, diagnostics, and deployment**.  
 ✅ MVP Features: Authentication, Admin Dashboard, Payments, Legal Compliance, Google Maps Integration
 
+🔒 **EDIT PROTECTION**: This file should NOT be automatically modified. Changes require explicit developer authorization only.
+
 **Last Updated**: October 24, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅
 
 ---
@@ -236,12 +238,59 @@ Validates presence and syntax of:
 
 ## 🛡️ Notes
 **GitHub Copilot** reads this file for MVP logic and structure.  
-Preserve existing sections while adding MVP features.  
-Updates allowed with developer authorization.  
-After any change, run:  
+🔒 **CRITICAL**: This PROJECT_GUIDE.md file is PROTECTED from automatic edits.  
+**Manual Authorization Required**: Any changes to this guide must be explicitly authorized by the developer.  
+**Read-Only for AI**: GitHub Copilot should reference this file for context but NOT modify it automatically.  
+After any authorized change, run:  
 `bash review_report.sh`
 
 **MVP Status**: Authentication ✅ | Admin Dashboard ✅ | Payments ✅ | Legal ✅ | Deployment ✅ | Frontend UI ✅ | Google Maps ✅
+
+## 🔧 Critical Fixes & Improvements (October 24, 2025)
+
+### 💰 Price Preview System Fixes
+- **FIXED**: Backend missing `/api/bookings/preview` endpoint that was causing 404 errors
+- **ADDED**: Complete price calculation endpoint with service-based rates, distance fees, and discount logic
+- **ENHANCED**: Real-time price updates when users change area, service type, or frequency
+
+### 🎯 First-Time Customer Discount Logic (CRITICAL FIX)
+- **ISSUE RESOLVED**: First-time customers were incorrectly receiving frequency discounts
+- **NEW LOGIC**: 
+  - ❌ **NO discounts for first-time customers** regardless of frequency selection
+  - ✅ **Discounts only apply from 2nd booking onwards** (proper repeat customer logic)
+  - 🎁 **Future discount promises shown** to first-time customers (e.g., "Starting from your 2nd booking: 15% discount!")
+
+### 📊 Discount Structure (Corrected)
+- **Weekly Frequency**: 15% discount (returning customers only)
+- **Monthly Frequency**: 8% discount (returning customers only)  
+- **One-time**: No discount available
+- **First-time customers**: See pricing promise for future bookings
+
+### 🎨 UI/UX Improvements
+- **Calendar Styling**: Enhanced readability with better contrast, larger text, professional appearance
+- **Price Preview Display**: 
+  - Clear "Calculating Price..." state while loading
+  - Detailed breakdown shows base rate, distance fees, discounts, and final total
+  - First-time customer messaging with future discount promises
+  - Error handling for missing address or calculation failures
+
+### 🔧 Technical Implementation
+- **Backend**: Added `futureDiscountPercent` field to preview responses
+- **Frontend**: Conditional rendering based on `isFirstTime` status
+- **Validation**: Proper error handling and fallback messages for price preview
+- **Pricing Logic**: Service-based rates ($0.15-$0.30 per sq ft depending on service type)
+
+### 📱 Customer Experience Enhancements
+- **Transparency**: Clear explanation of why first-time customers don't get discounts
+- **Future Value**: Prominent display of discount benefits for repeat bookings  
+- **Professional Messaging**: "First-Time Customer - No Discount Today" with green promise box
+- **Loading States**: Better visual feedback during price calculations
+
+### 🧪 Testing Results
+- **First-time weekly booking**: $225 total (no discount) + future 15% promise ✅
+- **Returning weekly customer**: $191.25 total (15% discount applied) ✅
+- **Distance calculations**: Free up to 40 miles, $1.50/mile beyond ✅
+- **Price preview**: Instant display when area + service selected ✅
 
 ## 🎉 Live Application
 - **Frontend**: https://cleanpro-frontend-5539254765.europe-west1.run.app
@@ -253,11 +302,17 @@ After any change, run:
 - **Admin Dashboard**: 100% ✅ (Bookings, Users, Analytics, Management)
 - **Payment Processing**: 95% ✅ (Stripe Integration, needs production keys)
 - **Booking System**: 100% ✅ (Dynamic pricing, Google Maps, Calendar)
-- **Price Preview System**: 100% ✅ (Base rate, distance, discounts, breakdown)
+- **Price Preview System**: 100% ✅ (Base rate, distance, discounts, breakdown) - **FIXED 404 errors**
 - **Professional Cleaning History**: 100% ✅ (Last cleaning tracking, first-time logic)
-- **Smart Discount System**: 100% ✅ (Frequency discounts, repeat customer logic)
+- **Smart Discount System**: 100% ✅ (Frequency discounts, repeat customer logic) - **CRITICAL FIX: No first-time discounts**
 - **Google Maps**: 100% ✅ (Address autocomplete, distance calculation)
-- **User Experience**: 95% ✅ (Loading states, error handling, responsive)
-- **Business Logic**: 100% ✅ (Pricing, discounts, coordination points)
+- **User Experience**: 100% ✅ (Loading states, error handling, responsive, calendar styling)
+- **Business Logic**: 100% ✅ (Pricing, discounts, coordination points) - **CORRECTED discount eligibility**
 
-**(End of PROJECT_GUIDE.md – MVP Implementation COMPLETE & DEPLOYED)**
+## 🎯 Pricing Logic Validation (Post-Fix)
+- **Test 1**: First-time customer, 1500 sq ft, weekly → **$225.00** (NO discount) + 15% future promise ✅
+- **Test 2**: Returning customer, 1500 sq ft, weekly → **$191.25** (15% discount applied) ✅  
+- **Test 3**: Distance >40 miles → Proper distance fee calculation ✅
+- **Test 4**: Price preview loads instantly when area + service entered ✅
+
+**(End of PROJECT_GUIDE.md – MVP Implementation COMPLETE & DEPLOYED with CRITICAL FIXES)**

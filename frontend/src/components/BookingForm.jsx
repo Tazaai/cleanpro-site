@@ -3,9 +3,91 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import toast, { Toaster } from "react-hot-toast";
 import PaymentModal from "./PaymentModal";
+import { useAuth } from "../contexts/AuthContext";
 
 // ✅ Correct base URL
 const API_BASE = import.meta.env.VITE_API_BASE;
+
+// Custom calendar styles
+const calendarStyles = `
+  .react-calendar {
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    font-family: inherit !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+  .react-calendar__navigation {
+    height: 44px !important;
+    margin-bottom: 1em !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  .react-calendar__navigation button {
+    color: #374151 !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+  }
+  .react-calendar__navigation button:hover {
+    background-color: #e5e7eb !important;
+  }
+  .react-calendar__month-view__weekdays {
+    text-align: center !important;
+    text-transform: uppercase !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    color: #6b7280 !important;
+    padding: 8px 0 !important;
+  }
+  .react-calendar__tile {
+    max-width: 100% !important;
+    padding: 12px 6px !important;
+    background: none !important;
+    text-align: center !important;
+    line-height: 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    margin: 2px !important;
+  }
+  .react-calendar__tile:hover {
+    background-color: #f3f4f6 !important;
+    color: #1f2937 !important;
+  }
+  .react-calendar__tile--active {
+    background: #3b82f6 !important;
+    color: white !important;
+    font-weight: bold !important;
+  }
+  .react-calendar__tile--active:hover {
+    background: #2563eb !important;
+  }
+  .react-calendar__tile--now {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    font-weight: bold !important;
+  }
+  .react-calendar__tile--now:hover {
+    background: #fde68a !important;
+  }
+  .react-calendar__month-view__days__day--weekend {
+    color: #dc2626 !important;
+  }
+  .react-calendar__month-view__days__day--neighboringMonth {
+    color: #9ca3af !important;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = calendarStyles;
+  document.head.appendChild(styleElement);
+}
 
 export default function BookingForm() {
   const [name, setName] = useState("");
@@ -155,26 +237,47 @@ export default function BookingForm() {
     }
   };
 
-  // 💰 Price preview
+  // 💰 Price preview - Enhanced with better validation
   useEffect(() => {
-    if (!area || !service || !nearestHQ) return;
-    fetch(`${API_BASE}/api/bookings/preview`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: name || "guest",
-        service,
-        sqMeters: Number(area),
-        distance,
-        frequency,
-        isFirstTime,
-        lastCleaning,
-      }),
-    })
-      .then((r) => r.json())
-      .then((d) => d.ok && setPreview({ ...d.breakdown, nearestHQ }))
-      .catch(() => {});
-  }, [name, service, area, distance, frequency, nearestHQ, isFirstTime, lastCleaning]);
+    // Clear preview if essential data is missing
+    if (!area || !service) {
+      setPreview(null);
+      return;
+    }
+    
+    // Only fetch if we have minimum required data
+    if (Number(area) > 0 && service && distance >= 0) {
+      console.log('Fetching price preview with:', { area, service, distance, frequency, isFirstTime, lastCleaning });
+      
+      fetch(`${API_BASE}/api/bookings/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name || "guest",
+          service,
+          sqMeters: Number(area),
+          distance: Number(distance) || 0,
+          frequency,
+          isFirstTime,
+          lastCleaning,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          console.log('Price preview response:', d);
+          if (d.ok && d.breakdown) {
+            setPreview({ ...d.breakdown, nearestHQ });
+          } else {
+            console.error('Price preview failed:', d);
+            setPreview(null);
+          }
+        })
+        .catch((error) => {
+          console.error('Price preview error:', error);
+          setPreview(null);
+        });
+    }
+  }, [area, service, distance, frequency, nearestHQ, isFirstTime, lastCleaning]);
 
   // ✅ Submit
   const handleSubmit = async (e) => {
@@ -184,9 +287,18 @@ export default function BookingForm() {
       return toast.error("Please select both a date and time slot.");
     setSubmitting(true);
     try {
+      const headers = {
+        "Content-Type": "application/json"
+      };
+      
+      // Add auth token if available
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           name,
           phone,
@@ -200,20 +312,19 @@ export default function BookingForm() {
           nearestHQ: nearestHQ?.name || "",
           lastCleaning,
           isFirstTime,
+          totalPrice: preview?.finalPrice || 0
         }),
       });
       const data = await res.json();
       if (data.ok) {
         setBookingId(data.bookingId || data.id);
-        // Show payment modal instead of immediate success
-        if (preview?.finalPrice > 0) {
-          setShowPayment(true);
-        } else {
-          setSuccessMsg("✅ Booking confirmed!");
-          toast.success("Booking confirmed!");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      } else toast.error(data.message || "Booking failed");
+        // Show approval workflow success message
+        setSuccessMsg("📧 Booking request submitted! We'll contact you soon by phone, SMS, or email for final approval.");
+        toast.success("Booking request submitted! Check your email.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        toast.error(data.message || "Booking failed");
+      }
     } catch {
       toast.error("Network error submitting booking.");
     } finally {
@@ -390,51 +501,78 @@ export default function BookingForm() {
         </div>
       </div>
 
-      <div className="text-center">
-        <label className="block text-sm font-medium text-gray-600 mb-1">
-          Choose Date & Time
+            <div className="text-center bg-gray-50 p-4 rounded-lg">
+        <label className="block text-lg font-semibold text-gray-700 mb-3">
+          📅 Choose Date & Time
         </label>
-        <Calendar
-          locale="en-US"
-          minDate={new Date()}
-          maxDate={new Date(Date.now() + 30 * 86400000)}
-          onChange={setDate}
-          value={date}
-          className="mx-auto"
-        />
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Calendar
+            locale="en-US"
+            minDate={new Date()}
+            maxDate={new Date(Date.now() + 30 * 86400000)}
+            onChange={setDate}
+            value={date}
+            className="mx-auto border-0"
+            tileClassName={({ date: tileDate, view }) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              tileDate.setHours(0, 0, 0, 0);
+              
+              if (tileDate.getTime() === today.getTime()) {
+                return 'react-calendar__tile--today';
+              }
+              return '';
+            }}
+          />
+        </div>
         {date && (
-          <div className="mt-3 flex justify-center gap-4">
-            {(() => {
-              const avail = getAvailabilityForDate(date);
-              if (!avail)
-                return <p className="text-sm text-gray-500">No availability</p>;
-              if (avail.closed)
-                return <p className="text-sm text-red-600">🚫 Closed</p>;
-              return (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => avail.AM.available > 0 && setTimeSlot("AM")}
-                    disabled={avail.AM.available <= 0}
-                    className={`px-4 py-2 rounded-lg font-medium ${getSlotClass(
-                      avail.AM
-                    )}`}
-                  >
-                    ☀️ AM ({avail.AM.available})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => avail.PM.available > 0 && setTimeSlot("PM")}
-                    disabled={avail.PM.available <= 0}
-                    className={`px-4 py-2 rounded-lg font-medium ${getSlotClass(
-                      avail.PM
-                    )}`}
-                  >
-                    🌙 PM ({avail.PM.available})
-                  </button>
-                </>
-              );
-            })()}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-blue-800 font-medium mb-2">
+              Selected: {date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+            <div className="flex justify-center gap-4">
+              {(() => {
+                const avail = getAvailabilityForDate(date);
+                if (!avail)
+                  return <p className="text-sm text-gray-500">⚠️ No availability data</p>;
+                if (avail.closed)
+                  return <p className="text-sm text-red-600">🚫 Closed on this date</p>;
+                return (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => avail.AM.available > 0 && setTimeSlot("AM")}
+                      disabled={avail.AM.available <= 0}
+                      className={`px-6 py-3 rounded-lg font-medium text-sm transition-all ${
+                        timeSlot === 'AM' 
+                          ? 'bg-blue-600 text-white shadow-lg' 
+                          : getSlotClass(avail.AM)
+                      }`}
+                    >
+                      ☀️ Morning ({avail.AM.available} slots)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => avail.PM.available > 0 && setTimeSlot("PM")}
+                      disabled={avail.PM.available <= 0}
+                      className={`px-6 py-3 rounded-lg font-medium text-sm transition-all ${
+                        timeSlot === 'PM' 
+                          ? 'bg-blue-600 text-white shadow-lg' 
+                          : getSlotClass(avail.PM)
+                      }`}
+                    >
+                      🌙 Afternoon ({avail.PM.available} slots)
+                    </button>
+                  </>
+                );
+              })()
+              }
+            </div>
           </div>
         )}
       </div>
@@ -448,70 +586,88 @@ export default function BookingForm() {
         </div>
       )}
 
-      {preview && (
-        <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-          <h3 className="font-semibold text-blue-800 mb-3">💰 Price Breakdown</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-700">Base rate ({area} sq ft × ${preview.baseRatePerSqFt || '0.00'}/sq ft):</span>
-              <span className="font-medium">${preview.basePrice || '0.00'}</span>
-            </div>
-            
-            {distance > 40 && (
-              <div className="flex justify-between">
-                <span className="text-gray-700">Distance fee ({(distance - 40).toFixed(1)} miles × ${preview.pricePerMile || '0.00'}/mile):</span>
-                <span className="font-medium">${preview.distanceFee || '0.00'}</span>
-              </div>
-            )}
-            
-            {distance <= 40 && (
-              <div className="flex justify-between">
-                <span className="text-green-600">🚗 Distance (FREE up to 40 miles):</span>
-                <span className="font-medium text-green-600">$0.00</span>
-              </div>
-            )}
-            
-            <div className="border-t pt-2">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal:</span>
-                <span>${((preview.basePrice || 0) + (preview.distanceFee || 0)).toFixed(2)}</span>
-              </div>
-            </div>
-            
-            {!isFirstTime && frequency !== "one_time" && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-green-700">
-                  <span>🎁 {frequency === 'weekly' ? 'Weekly' : 'Monthly'} discount ({preview.discountPercent || 0}%):</span>
-                  <span>-${preview.discount || '0.00'}</span>
+      {/* Price Preview Section */}
+      {area && service && Number(area) > 0 && (
+        <div className="mt-6">
+          {preview ? (
+            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <h3 className="font-semibold text-blue-800 mb-3">💰 Price Breakdown</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Base rate ({area} sq ft × ${preview.baseRatePerSqFt || '0.15'}/sq ft):</span>
+                  <span className="font-medium">${preview.basePrice || '0.00'}</span>
                 </div>
-                {isFirstTime && (
-                  <p className="text-xs text-gray-500 italic">Note: Discounts start from 2nd booking</p>
+                
+                {distance > 40 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Distance fee ({(distance - 40).toFixed(1)} miles × ${preview.pricePerMile || '1.50'}/mile):</span>
+                    <span className="font-medium">${preview.distanceFee || '0.00'}</span>
+                  </div>
                 )}
+                
+                {distance <= 40 && distance > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-green-600">🚗 Distance (FREE up to 40 miles):</span>
+                    <span className="font-medium text-green-600">$0.00</span>
+                  </div>
+                )}
+                
+                <div className="border-t pt-2">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal:</span>
+                    <span>${((preview.basePrice || 0) + (preview.distanceFee || 0)).toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                {!isFirstTime && frequency !== "one_time" && preview.discount > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-green-700">
+                      <span>🎁 {frequency === 'weekly' ? 'Weekly' : 'Monthly'} discount ({preview.discountPercent || 0}%):</span>
+                      <span>-${preview.discount || '0.00'}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {isFirstTime && frequency !== "one_time" && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                    <div className="text-amber-800 text-sm">
+                      <h4 className="font-medium mb-1">💡 First-Time Customer - No Discount Today</h4>
+                      <p className="text-xs mb-2">This is your first cleaning with us, so no discount applies to this booking.</p>
+                      <div className="bg-green-50 border border-green-200 p-2 rounded text-green-800">
+                        <p className="font-medium text-xs">🎁 Future Savings Promise:</p>
+                        <p className="text-xs">
+                          Starting from your 2nd booking: <strong>{preview.futureDiscountPercent || (frequency === 'weekly' ? 15 : 8)}% discount</strong> on all {frequency.replace('_', ' ')} cleanings!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="border-t pt-2">
+                  <div className="flex justify-between text-lg font-bold text-blue-800">
+                    <span>Total Price:</span>
+                    <span>${preview.finalPrice || '0.00'}</span>
+                  </div>
+                </div>
               </div>
-            )}
-            
-            {isFirstTime && frequency !== "one_time" && (
-              <div className="text-amber-600 text-xs bg-amber-50 p-2 rounded">
-                💡 This is your first cleaning, so no discount applies. Future bookings will include {frequency === 'weekly' ? '10-20%' : '5-10%'} discount!
-              </div>
-            )}
-            
-            <div className="border-t pt-2">
-              <div className="flex justify-between text-lg font-bold text-blue-800">
-                <span>Total Price:</span>
-                <span>${preview.finalPrice || '0.00'}</span>
+              
+              <div className="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                <p>📋 <strong>Service Details:</strong></p>
+                <p>• Service: {service.replace(/_/g, ' ').toUpperCase()}</p>
+                <p>• Area: {area} sq ft</p>
+                {nearestHQ && <p>• Distance: {distance} miles from {nearestHQ?.name}</p>}
+                <p>• Frequency: {frequency.replace(/_/g, ' ')}</p>
+                <p>• Last cleaning: {lastCleaning === 'never' ? 'First time' : lastCleaning.replace(/_/g, ' ')}</p>
               </div>
             </div>
-          </div>
-          
-          <div className="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
-            <p>📋 <strong>Service Details:</strong></p>
-            <p>• Service: {service.replace(/_/g, ' ').toUpperCase()}</p>
-            <p>• Area: {area} sq ft</p>
-            <p>• Distance: {distance} miles from {nearestHQ?.name}</p>
-            <p>• Frequency: {frequency.replace(/_/g, ' ')}</p>
-            <p>• Last cleaning: {lastCleaning === 'never' ? 'First time' : lastCleaning.replace(/_/g, ' ')}</p>
-          </div>
+          ) : (
+            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+              <h3 className="font-semibold text-yellow-800 mb-2">⏳ Calculating Price...</h3>
+              <p className="text-yellow-700 text-sm">
+                {!nearestHQ ? 'Please enter a valid address to calculate pricing' : 'Fetching price breakdown...'}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
