@@ -182,26 +182,23 @@ jobs:
           # Build the image first
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
-          # Create environment variables file with proper formatting
-          echo "FIREBASE_KEY=$FIREBASE_KEY" > env_vars.env
-          echo "GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY" >> env_vars.env
-          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> env_vars.env
-          echo "GCP_PROJECT=$GCP_PROJECT" >> env_vars.env
-          echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> env_vars.env
-          echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> env_vars.env
-          echo "JWT_SECRET=$JWT_SECRET" >> env_vars.env
-          echo "APPSHEET_API_KEY=$APPSHEET_API_KEY" >> env_vars.env
-          echo "APPSHEET_APP_ID=$APPSHEET_APP_ID" >> env_vars.env
-          echo "NODE_ENV=production" >> env_vars.env
-          
-          # Deploy with environment file
+          # Deploy with environment variables directly
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
             --project $GCP_PROJECT \
-            --env-vars-file env_vars.env
+            --update-env-vars GOOGLE_MAPS_API_KEY="$GOOGLE_MAPS_API_KEY" \
+            --update-env-vars OPENAI_API_KEY="$OPENAI_API_KEY" \
+            --update-env-vars GCP_PROJECT="$GCP_PROJECT" \
+            --update-env-vars STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY" \
+            --update-env-vars STRIPE_WEBHOOK_SECRET="$STRIPE_WEBHOOK_SECRET" \
+            --update-env-vars JWT_SECRET="$JWT_SECRET" \
+            --update-env-vars APPSHEET_API_KEY="$APPSHEET_API_KEY" \
+            --update-env-vars APPSHEET_APP_ID="$APPSHEET_APP_ID" \
+            --update-env-vars NODE_ENV="production" \
+            --update-env-vars FIREBASE_KEY="$FIREBASE_KEY"
 
       - name: Build Frontend
         run: |
