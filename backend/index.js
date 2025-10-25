@@ -56,69 +56,41 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Load and mount API routes immediately
-(async () => {
-  try {
-    console.log("🔄 Loading API routes...");
-    
-    const [
-      calendarApiModule,
-      coordinationPointsApiModule,
-      servicesApiModule,
-      bookingsApiModule,
-      quotesApiModule,
-      pricingApiModule,
-      mapsApiModule,
-      configApiModule,
-      gcalendarApiModule,
-      paymentApiModule,
-      authApiModule,
-      adminApiModule,
-      legalApiModule,
-      notificationsApiModule,
-      appsheetApiModule
-    ] = await Promise.all([
-      import("./routes/calendar_api.mjs"),
-      import("./routes/coordination_points_api.mjs"),
-      import("./routes/services_api.mjs"),
-      import("./routes/bookings_api.mjs"),
-      import("./routes/quotes_api.mjs"),
-      import("./routes/pricing_api.mjs"),
-      import("./routes/maps_api.mjs"),
-      import("./routes/config_api.mjs"),
-      import("./routes/gcalendar_api.mjs"),
-      import("./routes/payment_api.mjs"),
-      import("./routes/auth_api.mjs"),
-      import("./routes/admin_api.mjs"),
-      import("./routes/legal_api.mjs"),
-      import("./routes/notifications_api.mjs"),
-      import("./routes/appsheet_api.mjs")
-    ]);
+// Import and mount routes directly (not in async wrapper)
+import calendarApi from "./routes/calendar_api.mjs";
+import coordinationPointsApi from "./routes/coordination_points_api.mjs";
+import servicesApi from "./routes/services_api.mjs";
+import bookingsApi from "./routes/bookings_api.mjs";
+import quotesApi from "./routes/quotes_api.mjs";
+import pricingApi from "./routes/pricing_api.mjs";
+import mapsApi from "./routes/maps_api.mjs";
+import configApi from "./routes/config_api.mjs";
+import gcalendarApi from "./routes/gcalendar_api.mjs";
+import paymentApi from "./routes/payment_api.mjs";
+import authApi from "./routes/auth_api.mjs";
+import adminApi from "./routes/admin_api.mjs";
+import legalApi from "./routes/legal_api.mjs";
+import notificationsApi from "./routes/notifications_api.mjs";
+import appsheetApi from "./routes/appsheet_api.mjs";
 
-    // Mount API routes
-    app.use("/api/auth", authApiModule.default);
-    app.use("/api/admin", adminApiModule.default);
-    app.use("/api/legal", legalApiModule.default);
-    app.use("/api/notifications", notificationsApiModule.default);
-    app.use("/api/appsheet", appsheetApiModule.default);
-    app.use("/api/calendar", calendarApiModule.default);
-    app.use("/api/coordination_points", coordinationPointsApiModule.default);
-    app.use("/api/services", servicesApiModule.default);
-    app.use("/api/bookings", bookingsApiModule.default);
-    app.use("/api/quotes", quotesApiModule.default);
-    app.use("/api/pricing", pricingApiModule.default);
-    app.use("/api/maps", mapsApiModule.default);
-    app.use("/api/config", configApiModule.default);
-    app.use("/api/gcalendar", gcalendarApiModule.default);
-    app.use("/api/payment", paymentApiModule.default);
+// Mount API routes immediately
+app.use("/api/auth", authApi);
+app.use("/api/admin", adminApi);
+app.use("/api/legal", legalApi);
+app.use("/api/notifications", notificationsApi);
+app.use("/api/appsheet", appsheetApi);
+app.use("/api/calendar", calendarApi);
+app.use("/api/coordination_points", coordinationPointsApi);
+app.use("/api/services", servicesApi);
+app.use("/api/bookings", bookingsApi);
+app.use("/api/quotes", quotesApi);
+app.use("/api/pricing", pricingApi);
+app.use("/api/maps", mapsApi);
+app.use("/api/config", configApi);
+app.use("/api/gcalendar", gcalendarApi);
+app.use("/api/payment", paymentApi);
 
-    console.log("✅ All API routes loaded successfully");
-
-  } catch (err) {
-    console.error("❌ Failed to load routes:", err.message || err);
-    console.error("🔍 Stack trace:", err.stack);
-  }
-})();
+console.log("✅ All API routes mounted successfully");
 
 // 404 handler - add after routes
 app.use("*", (req, res) => {
