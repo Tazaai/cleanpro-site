@@ -182,6 +182,9 @@ jobs:
           # Build the image first
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
+          # Base64 encode Firebase key to avoid JSON parsing issues in gcloud
+          FIREBASE_KEY_B64=$(echo "${{ secrets.FIREBASE_KEY }}" | base64 -w 0)
+          
           # Deploy with environment variables directly using GitHub secrets
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
@@ -189,7 +192,7 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --project $GCP_PROJECT \
-            --set-env-vars "FIREBASE_KEY=${{ secrets.FIREBASE_KEY }}" \
+            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY_B64" \
             --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
             --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
             --set-env-vars "GCP_PROJECT=${{ secrets.GCP_PROJECT }}" \
