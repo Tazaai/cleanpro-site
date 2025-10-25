@@ -1,8 +1,17 @@
 import express from "express";
-import { db } from "../firebase.js";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 const router = express.Router();
+
+// DO NOT initialize Firebase here — index.js must initialize it.
+// Lazily get Firestore and fail fast if not initialized.
+const getDb = () => {
+  if (!admin.apps.length) {
+    throw new Error("Firebase not initialized");
+  }
+  return getFirestore();
+};
 
 /**
  * POST /api/createBooking
@@ -48,6 +57,7 @@ router.post("/", async (req, res) => {
       hqAddress: "14410 Sylvan St, Van Nuys, CA 91401", // HQ / Focal Point
     };
 
+    const db = getDb();
     const ref = await db.collection("bookings").add(booking);
 
     // ✅ Update counters for availability

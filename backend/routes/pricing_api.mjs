@@ -1,9 +1,18 @@
 // ~/cleanpro-site/backend/routes/pricing_api.mjs
 import express from "express";
-import { db } from "../firebase.js";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 const router = express.Router();
+
+// DO NOT initialize Firebase here — index.js must initialize it.
+// Lazily get Firestore and fail fast if not initialized.
+const getDb = () => {
+  if (!admin.apps.length) {
+    throw new Error("Firebase not initialized");
+  }
+  return getFirestore();
+};
 
 // Example pricing per sq ft (updated from m² to sq ft)
 const defaultPricing = {
@@ -44,8 +53,8 @@ const defaultPricing = {
 // GET /api/pricing - Get all pricing
 router.get("/", async (req, res) => {
   try {
-    const pricingRef = collection(db, "pricing");
-    const snapshot = await getDocs(pricingRef);
+    const db = getDb();
+    const snapshot = await db.collection("pricing").get();
     
     const pricing = {};
     
@@ -97,10 +106,10 @@ router.get("/calculate/:serviceId", async (req, res) => {
     let servicePricing = defaultPricing[serviceId];
     
     try {
-      const serviceRef = doc(db, "pricing", serviceId);
-      const serviceSnap = await getDoc(serviceRef);
+      const db = getDb();
+      const serviceSnap = await db.collection("pricing").doc(serviceId).get();
       
-      if (serviceSnap.exists()) {
+      if (serviceSnap.exists) {
         servicePricing = serviceSnap.data();
       }
     } catch (dbError) {

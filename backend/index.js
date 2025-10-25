@@ -4,8 +4,6 @@
 
 import express from "express";
 import cors from "cors";
-import admin from "firebase-admin";
-import { readFileSync, writeFileSync, existsSync } from "fs";
 
 // ensure app exists and listens on Cloud Run PORT
 const app = express();
@@ -16,24 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "0.0.0.0";
 
-// ensure FIREBASE_KEY is materialized to a file so Google libs don't treat JSON as a path
-const SA_PATH = process.env.FIREBASE_SA_PATH || "/tmp/firebase_service_account.json";
-if (process.env.FIREBASE_KEY) {
-  const raw = process.env.FIREBASE_KEY.trim().startsWith("{")
-    ? process.env.FIREBASE_KEY
-    : Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
-  // write file if missing or contents differ
-  try {
-    if (!existsSync(SA_PATH) || readFileSync(SA_PATH, "utf8") !== raw) {
-      writeFileSync(SA_PATH, raw, { mode: 0o600 });
-    }
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = SA_PATH;
-  } catch (e) {
-    console.error("❌ Failed to write service account file:", e.message);
-  }
-}
-
-// Replace inline FIREBASE_KEY materialization + duplicate initializeApp calls
+// Initialize Firebase before importing routes
 import { initFirebase } from "./firebase.js";
 
 // initialize before importing routes (writes SA file & sets GOOGLE_APPLICATION_CREDENTIALS)
