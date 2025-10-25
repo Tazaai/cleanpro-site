@@ -36,17 +36,26 @@ done
 
 echo ""
 echo "## 🔑 Checking MVP secrets (authentication, payments, deployment)..."
+echo "======================================================"
 
-# Enhanced secret validation function
+# Track validation status globally
+VALIDATION_PASSED=true
+
+# Enhanced secret validation function (merged from deploy.yml)
 validate_secret_detailed() {
   local secret_name=$1
   local secret_var="${!1}"
   
   if [ -z "$secret_var" ]; then
-    echo "❌ Missing $secret_name"
+    echo "❌ $secret_name: MISSING"
+    VALIDATION_PASSED=false
+    return 1
+  elif [ "$secret_var" = "null" ] || [ "$secret_var" = "" ]; then
+    echo "❌ $secret_name: EMPTY"
+    VALIDATION_PASSED=false
     return 1
   else
-    echo "✅ $secret_name available"
+    echo "✅ $secret_name: PRESENT (${#secret_var} chars)"
     
     # Advanced validation for specific secrets (without exposing values)
     case $secret_name in
@@ -57,10 +66,12 @@ validate_secret_detailed() {
             echo "   ✓ Contains project_id"
           else
             echo "   ❌ Missing project_id field"
+            VALIDATION_PASSED=false
             return 1
           fi
         else
           echo "   ❌ Invalid JSON format"
+          VALIDATION_PASSED=false
           return 1
         fi
         ;;
@@ -111,20 +122,19 @@ validate_secret_detailed "APPSHEET_APP_ID"
 
 # Summary of secret validation
 echo "======================================================"
-missing_secrets=0
-for key in GCP_PROJECT GCP_SA_KEY GOOGLE_MAPS_API_KEY FIREBASE_KEY OPENAI_API_KEY JWT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET APPSHEET_API_KEY APPSHEET_APP_ID; do
-  if [ -z "${!key}" ]; then
-    ((missing_secrets++))
-  fi
-done
 
-if [ $missing_secrets -eq 0 ]; then
-  echo "🎉 All secrets configured! Ready for deployment."
+if [ "$VALIDATION_PASSED" = true ]; then
+  echo "🎉 All secrets validated successfully!"
+  echo "✅ Deployment can proceed"
+  SECRET_VALIDATION_RESULT="PASSED"
 else
-  echo "🚨 $missing_secrets secrets missing. Deployment will fail."
-  echo "🔧 Configure missing secrets via GitHub web UI:"
+  echo "🚨 Secret validation FAILED!"
+  echo "❌ Missing or invalid secrets detected"
+  echo "🔧 Please configure missing secrets via GitHub web UI:"
   echo "   Repository → Settings → Secrets and variables → Actions"
-  echo "⚠️ NEVER set secrets via CLI - use web interface only!"
+  echo ""
+  echo "⚠️ DEPLOYMENT BLOCKED until all secrets are valid"
+  SECRET_VALIDATION_RESULT="FAILED"
 fi
 
 echo ""
@@ -297,20 +307,18 @@ echo ""
 echo "## 🎯 Deployment Readiness Assessment..."
 echo "======================================================"
 
-# Calculate readiness score
+# Calculate readiness score based on validation results
 readiness_score=0
 total_checks=10
 
-# Secret validation
-echo "🔐 Secret Configuration:"
-for key in GCP_PROJECT GCP_SA_KEY GOOGLE_MAPS_API_KEY FIREBASE_KEY JWT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET APPSHEET_API_KEY APPSHEET_APP_ID; do
-  if [ ! -z "${!key}" ]; then
-    ((readiness_score++))
-    echo "  ✅ $key configured"
-  else
-    echo "  ❌ $key missing"
-  fi
-done
+# Secret validation results
+echo "🔐 Secret Configuration Result: $SECRET_VALIDATION_RESULT"
+if [ "$SECRET_VALIDATION_RESULT" = "PASSED" ]; then
+  readiness_score=$((readiness_score + 8))  # Heavy weight for secrets
+  echo "  ✅ All critical secrets configured and validated"
+else
+  echo "  ❌ Secret validation failed - deployment blocked"
+fi
 
 # Workflow validation
 echo "🔧 GitHub Actions Workflow:"
@@ -320,6 +328,13 @@ if [ -f .github/workflows/deploy.yml ]; then
     echo "  ✅ Secret validation job present"
   else
     echo "  ⚠️ Secret validation job missing"
+  fi
+  
+  if grep -q "needs: \[secret-validation\]" .github/workflows/deploy.yml; then
+    ((readiness_score++))
+    echo "  ✅ Deployment dependency configured correctly"
+  else
+    echo "  ⚠️ Deployment dependency issue detected"
   fi
 else
   echo "  ❌ Deploy workflow missing"
@@ -335,6 +350,7 @@ if [ $readiness_percent -ge 90 ]; then
   echo "🎉 READY FOR DEPLOYMENT!"
   echo "✅ All critical components validated"
   echo "🚀 Deployment will proceed automatically on next commit"
+  echo "💡 Use 'git push origin main' to trigger deployment"
 elif [ $readiness_percent -ge 70 ]; then
   echo "⚠️ MOSTLY READY - Minor issues detected"
   echo "🔧 Fix missing components before deployment"
