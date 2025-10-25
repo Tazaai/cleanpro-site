@@ -22,20 +22,30 @@ console.log("🌍 Environment:", process.env.NODE_ENV || "development");
 console.log("🔧 Port:", PORT);
 console.log("🏠 Host:", HOST);
 
-// initialize before importing routes (writes SA file & sets GOOGLE_APPLICATION_CREDENTIALS)
-try {
-  await initFirebase();
-  console.log("✅ Firebase initialized successfully");
-} catch (err) {
-  console.error("❌ Firebase init failed:", err.message || err);
-  console.error("🔍 Stack trace:", err.stack);
-  // Exit on Firebase failure since the app won't work without it
-  process.exit(1);
-}
+// Initialize Firebase in background - don't block server startup
+let firebaseReady = false;
+initFirebase()
+  .then(() => {
+    console.log("✅ Firebase initialized successfully");
+    firebaseReady = true;
+  })
+  .catch((err) => {
+    console.error("❌ Firebase init failed:", err.message || err);
+    console.warn("⚠️ Server will continue without Firebase - some features may not work");
+    firebaseReady = false;
+  });
 
-// Dynamically import routes AFTER Firebase init and start server
+// Start server immediately - don't wait for routes
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+  console.log("🚀 CleanPro Backend is ready!");
+});
+
+// Load routes in background after server starts
 (async () => {
   try {
+    console.log("🔄 Loading API routes...");
+    
     const [
       calendarApiModule,
       coordinationPointsApiModule,
@@ -76,7 +86,9 @@ try {
         ok: true, 
         message: "✅ CleanPro Backend is running", 
         timestamp: new Date().toISOString(),
-        version: "1.0.0"
+        version: "1.0.0",
+        firebase: firebaseReady,
+        routes: "loaded"
       });
     });
 
@@ -84,7 +96,9 @@ try {
       res.json({ 
         ok: true, 
         status: "healthy", 
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        firebase: firebaseReady,
+        routes: "loaded"
       });
     });
 
@@ -105,7 +119,9 @@ try {
     app.use("/api/gcalendar", gcalendarApiModule.default);
     app.use("/api/payment", paymentApiModule.default);
 
-    // 404 handler
+    console.log("✅ All API routes loaded successfully");
+
+    // 404 handler - add after routes are loaded
     app.use("*", (req, res) => {
       res.status(404).json({ 
         ok: false, 
@@ -114,11 +130,9 @@ try {
       });
     });
 
-    app.listen(PORT, HOST, () =>
-      console.log(`✅ Server listening at http://${HOST}:${PORT}`)
-    );
   } catch (err) {
-    console.error("❌ Failed to load routes or start server:", err);
-    process.exit(1);
+    console.error("❌ Failed to load routes:", err.message || err);
+    console.error("🔍 Stack trace:", err.stack);
+    // Don't exit - server can still serve basic endpoints
   }
 })();
