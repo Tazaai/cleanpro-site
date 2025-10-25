@@ -135,9 +135,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
+completed | failure | 🚀 Deploy CleanPro (secrets validated)
 completed | failure | cleanup: Remove temporary guide files
 completed | failure | feat: Add comprehensive secret validation system
-completed | failure | .github/workflows/deploy.yml
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
