@@ -4,13 +4,79 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deploy even with uncommitted changes'
+        required: false
+        default: false
+        type: boolean
+      commit_message:
+        description: 'Commit message for auto-commit (if needed)'
+        required: false
+        default: 'ci: Auto-commit before deployment'
+        type: string
 
 permissions:
-  contents: read
+  contents: write  # Changed from read to write for auto-commits
 
 jobs:
-  test:
+  pre-deployment-checks:
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.git-check.outputs.should_deploy }}
+      commit_hash: ${{ steps.git-check.outputs.commit_hash }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for proper git status checks
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Git Status and Commit Check
+      id: git-check
+      run: |
+        echo "🔍 Checking git status and commit requirements..."
+        
+        # Configure git for potential commits
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Check for uncommitted changes
+        if ! git diff-index --quiet HEAD --; then
+          echo "⚠️ Uncommitted changes detected!"
+          git status --porcelain
+          
+          # If this is a manual workflow dispatch, we can auto-commit
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.force_deploy }}" = "true" ]; then
+              echo "🚀 Force deploy requested - proceeding with uncommitted changes"
+              echo "should_deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "💾 Auto-committing changes before deployment..."
+              git add -A
+              git commit -m "${{ github.event.inputs.commit_message || 'ci: Auto-commit before deployment' }}"
+              git push origin main
+              echo "should_deploy=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            # For push events, fail the deployment
+            echo "❌ Push event with uncommitted changes - this should not happen"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        else
+          echo "✅ Git status clean - proceeding with deployment"
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Record commit hash for deployment tracking
+        COMMIT_HASH=$(git rev-parse HEAD)
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+        echo "📝 Deploying commit: $COMMIT_HASH"
+
+  test:
+    needs: pre-deployment-checks
+    runs-on: ubuntu-latest
+    if: needs.pre-deployment-checks.outputs.should_deploy == 'true'
     steps:
     - uses: actions/checkout@v4
     
@@ -36,9 +102,9 @@ jobs:
       run: npx playwright test
 
   deploy:
-    needs: test
+    needs: [pre-deployment-checks, test]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: needs.pre-deployment-checks.outputs.should_deploy == 'true' && github.ref == 'refs/heads/main'
     env:
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
@@ -47,10 +113,18 @@ jobs:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      APPSHEET_API_KEY: ${{ secrets.APPSHEET_API_KEY }}
+      APPSHEET_APP_ID: ${{ secrets.APPSHEET_APP_ID }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Deployment Info
+        run: |
+          echo "🚀 Starting deployment for commit: ${{ needs.pre-deployment-checks.outputs.commit_hash }}"
+          echo "📅 Deployment time: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔧 Trigger: ${{ github.event_name }}"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -66,6 +140,7 @@ jobs:
       - name: Build & Deploy Backend to Cloud Run
         run: |
           cd backend
+          echo "🔧 Building and deploying backend..."
           # Use Firebase key directly as environment variable
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           gcloud run deploy cleanpro-backend \
@@ -74,11 +149,12 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --project $GCP_PROJECT \
-            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY,GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY,OPENAI_API_KEY=$OPENAI_API_KEY,GCP_PROJECT=$GCP_PROJECT,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,JWT_SECRET=$JWT_SECRET,NODE_ENV=production"
+            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY,GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY,OPENAI_API_KEY=$OPENAI_API_KEY,GCP_PROJECT=$GCP_PROJECT,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,JWT_SECRET=$JWT_SECRET,APPSHEET_API_KEY=$APPSHEET_API_KEY,APPSHEET_APP_ID=$APPSHEET_APP_ID,NODE_ENV=production"
 
       - name: Build Frontend
         run: |
           cd frontend
+          echo "🎨 Building frontend..."
           npm ci
           # Get backend URL for frontend build
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
@@ -89,6 +165,7 @@ jobs:
       - name: Build & Deploy Frontend to Cloud Run
         run: |
           cd frontend
+          echo "🎨 Deploying frontend..."
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
           gcloud run deploy cleanpro-frontend \
@@ -98,3 +175,25 @@ jobs:
             --port 8080 \
             --project $GCP_PROJECT \
             --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY"
+
+      - name: Deployment Summary
+        run: |
+          echo "🎉 Deployment completed successfully!"
+          echo "=================================="
+          
+          # Get service URLs
+          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
+          FRONTEND_URL=$(gcloud run services describe cleanpro-frontend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
+          
+          echo "🔧 Backend URL: $BACKEND_URL"
+          echo "🎨 Frontend URL: $FRONTEND_URL"
+          echo "📝 Commit: ${{ needs.pre-deployment-checks.outputs.commit_hash }}"
+          echo "📅 Deployed at: $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          # Create deployment record
+          echo "$(date '+%Y-%m-%d %H:%M:%S') - Commit: ${{ needs.pre-deployment-checks.outputs.commit_hash }} - Backend: $BACKEND_URL - Frontend: $FRONTEND_URL" >> deployment_history.log
+          
+          echo ""
+          echo "🎯 Clean Departure is live and ready for customers!"
+          echo "✅ Campaign discounts and square feet pricing deployed"
+          echo "✅ AppSheet integration ready for configuration"
