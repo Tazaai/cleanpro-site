@@ -4,6 +4,9 @@ Used by **GitHub Copilot** to understand project goals, structure, and workflow 
 ✅ MVP Features: Authentication, Admin Dashboard, Payments, Legal Compliance, Google Maps Integration
 
 🔒 **EDIT PROTECTION**: This file should NOT be automatically modified. Changes require explicit developer authorization only.
+🔐 GitHub Copilot Policy: This file is read-only by default.  
+Any edits must follow the 2-step developer authorization process (manual confirmation in Codespaces + signed commit).
+
 
 **Last Updated**: October 24, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅
 
