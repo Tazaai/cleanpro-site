@@ -35,13 +35,27 @@ initFirebase()
     firebaseReady = false;
   });
 
-// Start server immediately - don't wait for routes
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
-  console.log("🚀 CleanPro Backend is ready!");
+// Health check endpoints - available immediately
+app.get("/", (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: "✅ CleanPro Backend is running", 
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+    firebase: firebaseReady
+  });
 });
 
-// Load routes in background after server starts
+app.get("/health", (req, res) => {
+  res.json({ 
+    ok: true, 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    firebase: firebaseReady
+  });
+});
+
+// Load and mount API routes immediately
 (async () => {
   try {
     console.log("🔄 Loading API routes...");
@@ -80,29 +94,7 @@ app.listen(PORT, HOST, () => {
       import("./routes/appsheet_api.mjs")
     ]);
 
-    // Health check endpoint
-    app.get("/", (req, res) => {
-      res.json({ 
-        ok: true, 
-        message: "✅ CleanPro Backend is running", 
-        timestamp: new Date().toISOString(),
-        version: "1.0.0",
-        firebase: firebaseReady,
-        routes: "loaded"
-      });
-    });
-
-    app.get("/health", (req, res) => {
-      res.json({ 
-        ok: true, 
-        status: "healthy", 
-        timestamp: new Date().toISOString(),
-        firebase: firebaseReady,
-        routes: "loaded"
-      });
-    });
-
-    // API routes
+    // Mount API routes
     app.use("/api/auth", authApiModule.default);
     app.use("/api/admin", adminApiModule.default);
     app.use("/api/legal", legalApiModule.default);
@@ -121,18 +113,23 @@ app.listen(PORT, HOST, () => {
 
     console.log("✅ All API routes loaded successfully");
 
-    // 404 handler - add after routes are loaded
-    app.use("*", (req, res) => {
-      res.status(404).json({ 
-        ok: false, 
-        error: "Endpoint not found", 
-        path: req.originalUrl 
-      });
-    });
-
   } catch (err) {
     console.error("❌ Failed to load routes:", err.message || err);
     console.error("🔍 Stack trace:", err.stack);
-    // Don't exit - server can still serve basic endpoints
   }
 })();
+
+// 404 handler - add after routes
+app.use("*", (req, res) => {
+  res.status(404).json({ 
+    ok: false, 
+    error: "Endpoint not found", 
+    path: req.originalUrl 
+  });
+});
+
+// Start server immediately - don't wait for routes
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+  console.log("🚀 CleanPro Backend is ready!");
+});
