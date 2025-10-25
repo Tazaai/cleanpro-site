@@ -182,26 +182,23 @@ jobs:
           # Build the image first
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
-          # Base64 encode Firebase key to avoid JSON parsing issues
-          FIREBASE_KEY_B64=$(echo "$FIREBASE_KEY" | base64 -w 0)
-          
-          # Deploy with environment variables directly
+          # Deploy with environment variables directly using GitHub secrets
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
             --project $GCP_PROJECT \
-            --update-env-vars GOOGLE_MAPS_API_KEY="$GOOGLE_MAPS_API_KEY" \
-            --update-env-vars OPENAI_API_KEY="$OPENAI_API_KEY" \
-            --update-env-vars GCP_PROJECT="$GCP_PROJECT" \
-            --update-env-vars STRIPE_SECRET_KEY="$STRIPE_SECRET_KEY" \
-            --update-env-vars STRIPE_WEBHOOK_SECRET="$STRIPE_WEBHOOK_SECRET" \
-            --update-env-vars JWT_SECRET="$JWT_SECRET" \
-            --update-env-vars APPSHEET_API_KEY="$APPSHEET_API_KEY" \
-            --update-env-vars APPSHEET_APP_ID="$APPSHEET_APP_ID" \
-            --update-env-vars NODE_ENV="production" \
-            --update-env-vars FIREBASE_KEY="$FIREBASE_KEY_B64"
+            --set-env-vars "FIREBASE_KEY=${{ secrets.FIREBASE_KEY }}" \
+            --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
+            --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
+            --set-env-vars "GCP_PROJECT=${{ secrets.GCP_PROJECT }}" \
+            --set-env-vars "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" \
+            --set-env-vars "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+            --set-env-vars "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+            --set-env-vars "APPSHEET_API_KEY=${{ secrets.APPSHEET_API_KEY }}" \
+            --set-env-vars "APPSHEET_APP_ID=${{ secrets.APPSHEET_APP_ID }}" \
+            --set-env-vars "NODE_ENV=production"
 
       - name: Build Frontend
         run: |
