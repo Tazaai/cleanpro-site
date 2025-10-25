@@ -1,22 +1,27 @@
 #!/bin/bash
 # 🧠 CleanPro MVP Diagnostic Review (Safe Mode – 100% Read-Only)
 # Purpose: Run comprehensive diagnostics for MVP deployment with authentication, admin dashboard, and payments.
+# Master Documentation: PROJECT_GUIDE.md contains the authoritative deployment architecture
+# This script validates deployment readiness according to PROJECT_GUIDE.md standards
 
 # Skip local validation when running inside GitHub Actions
 if [ "$GITHUB_ACTIONS" = "true" ]; then
   echo "✅ Running inside GitHub Actions — skipping local secret validation"
+  echo "📖 Deployment follows PROJECT_GUIDE.md: GitHub Secrets + Artifact Registry architecture"
   exit 0
 fi
 
 set +e
 exec > >(tee agent.md) 2>&1
 
-echo "## 🧭 Reading PROJECT_GUIDE.md context..."
+echo "## 🧭 Reading PROJECT_GUIDE.md context (Master Documentation)..."
 if [ -f PROJECT_GUIDE.md ]; then
   cat PROJECT_GUIDE.md | head -n 20
-  echo "✅ Project guide loaded."
+  echo "✅ Project guide loaded as master documentation reference."
+  echo "📋 Deployment Architecture: GitHub Secrets + Artifact Registry (no environment files)"
 else
-  echo "⚠️ PROJECT_GUIDE.md missing — running with limited context."
+  echo "❌ PROJECT_GUIDE.md missing — CRITICAL: Master documentation not found."
+  echo "⚠️ All deployment validation requires PROJECT_GUIDE.md as reference."
 fi
 
 echo ""

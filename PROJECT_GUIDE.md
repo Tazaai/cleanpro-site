@@ -177,11 +177,15 @@ Validates presence and syntax of:
 
 ---
 
-## 🔧 review_report.sh Control
-- GitHub Copilot may modify this script for MVP feature diagnostics.  
-- Allowed edits: MVP diagnostics, authentication checks, admin validation, payment verification, deployment commands.  
-- Protected sections: Cloud auth, secret validation, and GCP deploy syntax.  
-- **PROJECT_GUIDE.md updates** — GitHub Copilot can update with developer authorization.
+## 🔧 review_report.sh & deploy.yml Master Documentation
+- **Master Reference**: All scripts must reference `PROJECT_GUIDE.md` as the authoritative documentation
+- **review_report.sh**: Validates deployment readiness according to this guide's standards
+- **deploy.yml**: Implements deployment architecture documented in this guide
+- **Consistency Rule**: Any changes to deployment approach must be documented here first
+- GitHub Copilot may modify these scripts for MVP feature diagnostics following this guide
+- Allowed edits: MVP diagnostics, authentication checks, admin validation, payment verification, deployment commands
+- Protected sections: Cloud auth, secret validation, and GCP deploy syntax per this guide
+- **PROJECT_GUIDE.md updates** — GitHub Copilot can update with developer authorization
 
 ---
 
@@ -243,12 +247,52 @@ Validates presence and syntax of:
 
 ---
 
-## 🧩 CI/CD Flow
-- Trigger: GitHub Action → Playwright tests → `review_report.sh`  
-- **Modern Deployment**: Artifact Registry (europe-west1-docker.pkg.dev) approach
-- Validation order: **tests → secrets → backend build → frontend build → deploy → health test → report**  
+## 🧩 CI/CD Flow & Deployment Architecture
+
+### 🏗️ Modern Deployment Stack
+- **GitHub Secrets**: All sensitive data (API keys, credentials) stored securely in GitHub repository secrets
+- **Artifact Registry**: Modern container registry (europe-west1-docker.pkg.dev) for Docker images
+- **Direct Environment Variables**: Clean `--set-env-vars` approach without complex environment files
+- **No Local Environment Files**: No `.env` files or manual credential management needed
+
+### 🔄 Deployment Flow
+- Trigger: GitHub Action → Secret validation → Playwright tests → `review_report.sh`
+- **Clean Deployment**: Artifact Registry (europe-west1-docker.pkg.dev) approach
+- Validation order: **secret-validation → tests → backend build → frontend build → deploy → health test → report**
 - **MVP Validation**: Authentication, admin, payments, legal APIs tested
-- On failure: GitHub Copilot analysis + redeploy  
+- On failure: GitHub Copilot analysis + redeploy
+
+### 🔐 Secret Management (GitHub Secrets Only)
+```yaml
+# All secrets managed via GitHub UI: Repository → Settings → Secrets and variables → Actions
+GCP_PROJECT: cleanpro-site
+GCP_SA_KEY: {...}  # Full service account JSON for deployment
+FIREBASE_KEY: {...}  # Firebase service account for app runtime
+GOOGLE_MAPS_API_KEY: AIza...
+OPENAI_API_KEY: sk-...
+JWT_SECRET: secure-random-string
+STRIPE_SECRET_KEY: sk_test_...
+STRIPE_WEBHOOK_SECRET: whsec_...
+APPSHEET_API_KEY: ...
+APPSHEET_APP_ID: ...
+```
+
+### 🚀 Cloud Run Deployment
+```bash
+# Clean approach - no environment files needed
+gcloud run deploy cleanpro-backend \
+  --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
+  --region europe-west1 \
+  --set-env-vars "FIREBASE_KEY=${{ secrets.FIREBASE_KEY }}" \
+  --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
+  --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+```
+
+### ✅ Benefits of This Architecture
+- **Security**: All secrets in GitHub Secrets, never in code or files
+- **Simplicity**: No environment file complexity or credential management
+- **Reliability**: Direct secret injection to Cloud Run containers
+- **Maintainability**: Single source of truth for all configuration  
 
 ---
 
