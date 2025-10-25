@@ -1,10 +1,13 @@
-## 🧭 Reading PROJECT_GUIDE.md context...
+## 🧭 Reading PROJECT_GUIDE.md context (Master Documentation)...
 # 🧭 Clean Departure MVP + GitHub Copilot System – Project Guide
 ⚠️ SYSTEM CONTEXT FILE — **GitHub Copilot Managed**  
 Used by **GitHub Copilot** to understand project goals, structure, and workflow for **MVP features, diagnostics, and deployment**.  
 ✅ MVP Features: Authentication, Admin Dashboard, Payments, Legal Compliance, Google Maps Integration
 
 🔒 **EDIT PROTECTION**: This file should NOT be automatically modified. Changes require explicit developer authorization only.
+🔐 GitHub Copilot Policy: This file is read-only by default.  
+Any edits must follow the 2-step developer authorization process (manual confirmation in Codespaces + signed commit).
+
 
 **Last Updated**: October 24, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅
 
@@ -16,10 +19,8 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 **STATUS**: 🎉 **MVP COMPLETE & DEPLOYED** - All core features functional and live!
 
 ---
-
-## ✅ Objectives
-
-✅ Project guide loaded.
+✅ Project guide loaded as master documentation reference.
+📋 Deployment Architecture: GitHub Secrets + Artifact Registry (no environment files)
 
 ## 🔍 Validating MVP project structure...
 ✅ Found backend/
@@ -135,9 +136,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-completed | failure | 🚀 Deploy CleanPro (secrets validated)
-completed | failure | cleanup: Remove temporary guide files
-completed | failure | feat: Add comprehensive secret validation system
+in_progress |  | 🚀 Deploy full MVP with complete routes and GitHub Secrets integration
+completed | success | 🔧 Remove minimal endpoints - enable full MVP routes to load properly
+in_progress |  | 🚀 Fix startup timeout - non-blocking Firebase init and immediate serv…
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
