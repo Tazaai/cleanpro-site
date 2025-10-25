@@ -21,6 +21,7 @@ console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
 console.log("🔧 Port:", PORT);
 console.log("🏠 Host:", HOST);
+console.log("📅 Deployment:", new Date().toISOString());
 
 // Initialize Firebase in background - don't block server startup
 let firebaseReady = false;
