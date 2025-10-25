@@ -9,9 +9,132 @@ permissions:
   contents: read
 
 jobs:
+  secret-validation:
+    runs-on: ubuntu-latest
+    outputs:
+      secrets_valid: ${{ steps.validate.outputs.secrets_valid }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Secret Validation Diagnostics
+      id: validate
+      run: |
+        echo "🔍 Running secret validation diagnostics..."
+        echo "======================================================"
+        
+        # Track validation status
+        VALIDATION_PASSED=true
+        
+        # Function to validate secret presence (never print values)
+        validate_secret() {
+          local secret_name=$1
+          local secret_value=$2
+          
+          if [ -z "$secret_value" ]; then
+            echo "❌ $secret_name: MISSING"
+            VALIDATION_PASSED=false
+            return 1
+          elif [ "$secret_value" = "null" ] || [ "$secret_value" = "" ]; then
+            echo "❌ $secret_name: EMPTY"
+            VALIDATION_PASSED=false
+            return 1
+          else
+            echo "✅ $secret_name: PRESENT (${#secret_value} chars)"
+            return 0
+          fi
+        }
+        
+        # Core GCP Secrets
+        echo "🏗️ Core GCP Infrastructure:"
+        validate_secret "GCP_PROJECT" "${{ secrets.GCP_PROJECT }}"
+        validate_secret "GCP_SA_KEY" "${{ secrets.GCP_SA_KEY }}"
+        
+        # API Keys
+        echo ""
+        echo "🔑 API Keys:"
+        validate_secret "GOOGLE_MAPS_API_KEY" "${{ secrets.GOOGLE_MAPS_API_KEY }}"
+        validate_secret "FIREBASE_KEY" "${{ secrets.FIREBASE_KEY }}"
+        validate_secret "OPENAI_API_KEY" "${{ secrets.OPENAI_API_KEY }}"
+        
+        # Authentication & Security
+        echo ""
+        echo "🔐 Authentication & Security:"
+        validate_secret "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
+        
+        # Payment Processing
+        echo ""
+        echo "💳 Payment Processing:"
+        validate_secret "STRIPE_SECRET_KEY" "${{ secrets.STRIPE_SECRET_KEY }}"
+        validate_secret "STRIPE_WEBHOOK_SECRET" "${{ secrets.STRIPE_WEBHOOK_SECRET }}"
+        
+        # AppSheet Integration
+        echo ""
+        echo "📊 AppSheet Integration:"
+        validate_secret "APPSHEET_API_KEY" "${{ secrets.APPSHEET_API_KEY }}"
+        validate_secret "APPSHEET_APP_ID" "${{ secrets.APPSHEET_APP_ID }}"
+        
+        echo ""
+        echo "======================================================"
+        
+        if [ "$VALIDATION_PASSED" = true ]; then
+          echo "🎉 All secrets validated successfully!"
+          echo "✅ Deployment can proceed"
+          echo "secrets_valid=true" >> $GITHUB_OUTPUT
+        else
+          echo "🚨 Secret validation FAILED!"
+          echo "❌ Missing or invalid secrets detected"
+          echo "🔧 Please configure missing secrets via GitHub web UI:"
+          echo "   Repository → Settings → Secrets and variables → Actions"
+          echo ""
+          echo "⚠️ DEPLOYMENT BLOCKED until all secrets are valid"
+          echo "secrets_valid=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+    
+    - name: Advanced Secret Validation
+      if: steps.validate.outputs.secrets_valid == 'true'
+      run: |
+        echo "🔬 Running advanced secret validation..."
+        
+        # Validate GCP Service Account JSON structure
+        if echo "${{ secrets.GCP_SA_KEY }}" | jq . > /dev/null 2>&1; then
+          echo "✅ GCP_SA_KEY: Valid JSON format"
+          
+          # Check for required fields without exposing values
+          if echo "${{ secrets.GCP_SA_KEY }}" | jq -e '.project_id' > /dev/null 2>&1; then
+            echo "✅ GCP_SA_KEY: Contains project_id"
+          else
+            echo "❌ GCP_SA_KEY: Missing project_id field"
+            exit 1
+          fi
+          
+          if echo "${{ secrets.GCP_SA_KEY }}" | jq -e '.private_key' > /dev/null 2>&1; then
+            echo "✅ GCP_SA_KEY: Contains private_key"
+          else
+            echo "❌ GCP_SA_KEY: Missing private_key field"
+            exit 1
+          fi
+        else
+          echo "❌ GCP_SA_KEY: Invalid JSON format"
+          exit 1
+        fi
+        
+        # Validate JWT_SECRET strength
+        JWT_LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c)
+        if [ $JWT_LENGTH -ge 32 ]; then
+          echo "✅ JWT_SECRET: Adequate length ($JWT_LENGTH chars)"
+        else
+          echo "⚠️ JWT_SECRET: Short length ($JWT_LENGTH chars) - recommend 32+ chars"
+        fi
+        
+        echo "🎯 Advanced validation completed successfully!"
+
+jobs:
 
   test:
+    needs: secret-validation
     runs-on: ubuntu-latest
+    if: needs.secret-validation.outputs.secrets_valid == 'true'
     steps:
     - uses: actions/checkout@v4
     
@@ -37,9 +160,9 @@ jobs:
       run: npx playwright test
 
   deploy:
-    needs: test
+    needs: [secret-validation, test]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: needs.secret-validation.outputs.secrets_valid == 'true' && github.ref == 'refs/heads/main'
     env:
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
       FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}

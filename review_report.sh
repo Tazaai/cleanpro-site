@@ -25,13 +25,96 @@ done
 
 echo ""
 echo "## 🔑 Checking MVP secrets (authentication, payments, deployment)..."
-for key in GOOGLE_MAPS_API_KEY GCP_PROJECT GCP_SA_KEY FIREBASE_KEY JWT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET; do
-  if [ -z "${!key}" ]; then
-    echo "❌ Missing $key"
+
+# Enhanced secret validation function
+validate_secret_detailed() {
+  local secret_name=$1
+  local secret_var="${!1}"
+  
+  if [ -z "$secret_var" ]; then
+    echo "❌ Missing $secret_name"
+    return 1
   else
-    echo "✅ $key available"
+    echo "✅ $secret_name available"
+    
+    # Advanced validation for specific secrets (without exposing values)
+    case $secret_name in
+      "GCP_SA_KEY")
+        if echo "$secret_var" | jq . > /dev/null 2>&1; then
+          echo "   ✓ Valid JSON format"
+          if echo "$secret_var" | jq -e '.project_id' > /dev/null 2>&1; then
+            echo "   ✓ Contains project_id"
+          else
+            echo "   ❌ Missing project_id field"
+            return 1
+          fi
+        else
+          echo "   ❌ Invalid JSON format"
+          return 1
+        fi
+        ;;
+      "JWT_SECRET")
+        local jwt_length=${#secret_var}
+        if [ $jwt_length -ge 32 ]; then
+          echo "   ✓ Adequate length ($jwt_length chars)"
+        else
+          echo "   ⚠️ Short length ($jwt_length chars) - recommend 32+ chars"
+        fi
+        ;;
+      "GOOGLE_MAPS_API_KEY")
+        if [[ "$secret_var" =~ ^AIza[0-9A-Za-z-_]{35}$ ]]; then
+          echo "   ✓ Valid Google API key format"
+        else
+          echo "   ⚠️ Unusual Google API key format"
+        fi
+        ;;
+    esac
+    return 0
+  fi
+}
+
+# Core GCP Infrastructure
+echo "🏗️ Core GCP Infrastructure:"
+validate_secret_detailed "GCP_PROJECT"
+validate_secret_detailed "GCP_SA_KEY"
+
+# API Keys  
+echo "🔑 API Keys:"
+validate_secret_detailed "GOOGLE_MAPS_API_KEY"
+validate_secret_detailed "FIREBASE_KEY"
+validate_secret_detailed "OPENAI_API_KEY"
+
+# Authentication & Security
+echo "🔐 Authentication & Security:"
+validate_secret_detailed "JWT_SECRET"
+
+# Payment Processing
+echo "💳 Payment Processing:"
+validate_secret_detailed "STRIPE_SECRET_KEY"
+validate_secret_detailed "STRIPE_WEBHOOK_SECRET"
+
+# AppSheet Integration
+echo "📊 AppSheet Integration:"
+validate_secret_detailed "APPSHEET_API_KEY"
+validate_secret_detailed "APPSHEET_APP_ID"
+
+# Summary of secret validation
+echo "======================================================"
+missing_secrets=0
+for key in GCP_PROJECT GCP_SA_KEY GOOGLE_MAPS_API_KEY FIREBASE_KEY OPENAI_API_KEY JWT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET APPSHEET_API_KEY APPSHEET_APP_ID; do
+  if [ -z "${!key}" ]; then
+    ((missing_secrets++))
   fi
 done
+
+if [ $missing_secrets -eq 0 ]; then
+  echo "🎉 All secrets configured! Ready for deployment."
+else
+  echo "🚨 $missing_secrets secrets missing. Deployment will fail."
+  echo "🔧 Configure missing secrets via GitHub web UI:"
+  echo "   Repository → Settings → Secrets and variables → Actions"
+  echo "⚠️ NEVER set secrets via CLI - use web interface only!"
+fi
 
 echo ""
 echo "## 🧱 Backend MVP diagnostic..."
@@ -197,6 +280,60 @@ if [ -f backend/firebaseClient.js ] || [ -f backend/firebase.js ]; then
   echo "✅ Firebase file found"
 else
   echo "⚠️ No Firebase integration file found"
+fi
+
+echo ""
+echo "## 🎯 Deployment Readiness Assessment..."
+echo "======================================================"
+
+# Calculate readiness score
+readiness_score=0
+total_checks=10
+
+# Secret validation
+echo "🔐 Secret Configuration:"
+for key in GCP_PROJECT GCP_SA_KEY GOOGLE_MAPS_API_KEY FIREBASE_KEY JWT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET APPSHEET_API_KEY APPSHEET_APP_ID; do
+  if [ ! -z "${!key}" ]; then
+    ((readiness_score++))
+    echo "  ✅ $key configured"
+  else
+    echo "  ❌ $key missing"
+  fi
+done
+
+# Workflow validation
+echo "🔧 GitHub Actions Workflow:"
+if [ -f .github/workflows/deploy.yml ]; then
+  if grep -q "secret-validation" .github/workflows/deploy.yml; then
+    ((readiness_score++))
+    echo "  ✅ Secret validation job present"
+  else
+    echo "  ⚠️ Secret validation job missing"
+  fi
+else
+  echo "  ❌ Deploy workflow missing"
+fi
+
+# Calculate percentage
+readiness_percent=$((readiness_score * 100 / total_checks))
+
+echo "======================================================"
+echo "📊 DEPLOYMENT READINESS: $readiness_score/$total_checks ($readiness_percent%)"
+
+if [ $readiness_percent -ge 90 ]; then
+  echo "🎉 READY FOR DEPLOYMENT!"
+  echo "✅ All critical components validated"
+  echo "🚀 Deployment will proceed automatically on next commit"
+elif [ $readiness_percent -ge 70 ]; then
+  echo "⚠️ MOSTLY READY - Minor issues detected"
+  echo "🔧 Fix missing components before deployment"
+  echo "📋 Review items marked with ❌ above"
+else
+  echo "🚨 NOT READY FOR DEPLOYMENT"
+  echo "❌ Critical secrets or components missing"
+  echo "🔧 Configure GitHub Secrets via web interface:"
+  echo "   Repository → Settings → Secrets and variables → Actions"
+  echo "⚠️ Deployment will FAIL until all secrets are configured"
 fi
 
 echo ""

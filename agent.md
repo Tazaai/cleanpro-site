@@ -28,13 +28,27 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 ✅ Found .github/workflows/
 
 ## 🔑 Checking MVP secrets (authentication, payments, deployment)...
-✅ GOOGLE_MAPS_API_KEY available
+🏗️ Core GCP Infrastructure:
 ❌ Missing GCP_PROJECT
 ❌ Missing GCP_SA_KEY
+🔑 API Keys:
+✅ GOOGLE_MAPS_API_KEY available
+   ⚠️ Unusual Google API key format
 ❌ Missing FIREBASE_KEY
+❌ Missing OPENAI_API_KEY
+🔐 Authentication & Security:
 ❌ Missing JWT_SECRET
+💳 Payment Processing:
 ❌ Missing STRIPE_SECRET_KEY
 ❌ Missing STRIPE_WEBHOOK_SECRET
+📊 AppSheet Integration:
+❌ Missing APPSHEET_API_KEY
+❌ Missing APPSHEET_APP_ID
+======================================================
+🚨 9 secrets missing. Deployment will fail.
+🔧 Configure missing secrets via GitHub web UI:
+   Repository → Settings → Secrets and variables → Actions
+⚠️ NEVER set secrets via CLI - use web interface only!
 
 ## 🧱 Backend MVP diagnostic...
 📄 backend/index.js found
@@ -121,14 +135,36 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
+completed | failure | fix: Simplify deployment workflow to match working approach
 completed | failure | trigger: Deploy with all GitHub Secrets configured
 completed | failure | security: Add comprehensive security cleanup tools
-completed | failure | security: CRITICAL - Remove API keys from git tracking
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
 ## 📦 Firebase sanity check...
 ✅ Firebase file found
+
+## 🎯 Deployment Readiness Assessment...
+======================================================
+🔐 Secret Configuration:
+  ❌ GCP_PROJECT missing
+  ❌ GCP_SA_KEY missing
+  ✅ GOOGLE_MAPS_API_KEY configured
+  ❌ FIREBASE_KEY missing
+  ❌ JWT_SECRET missing
+  ❌ STRIPE_SECRET_KEY missing
+  ❌ STRIPE_WEBHOOK_SECRET missing
+  ❌ APPSHEET_API_KEY missing
+  ❌ APPSHEET_APP_ID missing
+🔧 GitHub Actions Workflow:
+  ✅ Secret validation job present
+======================================================
+📊 DEPLOYMENT READINESS: 2/10 (20%)
+🚨 NOT READY FOR DEPLOYMENT
+❌ Critical secrets or components missing
+🔧 Configure GitHub Secrets via web interface:
+   Repository → Settings → Secrets and variables → Actions
+⚠️ Deployment will FAIL until all secrets are configured
 
 ## 🧾 MVP Diagnostic summary...
 🔒 Authentication System: JWT-based with bcrypt password hashing
