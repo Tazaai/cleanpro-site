@@ -57,12 +57,23 @@ app.get("/health", (req, res) => {
 });
 
 
-// Import and mount API routes directly
-import calendarApi from "./routes/calendar_api.mjs";
-import coordinationPointsApi from "./routes/coordination_points_api.mjs";
+// Basic API routes - direct inline to avoid import issues
+app.get("/api/calendar", (req, res) => {
+  res.json({
+    ok: true,
+    message: "🗓️ Calendar API is working",
+    timestamp: new Date().toISOString(),
+    query: req.query
+  });
+});
 
-app.use("/api/calendar", calendarApi);
-app.use("/api/coordination_points", coordinationPointsApi);
+app.get("/api/coordination_points", (req, res) => {
+  res.json({
+    ok: true,
+    message: "📍 Coordination Points API is working", 
+    timestamp: new Date().toISOString()
+  });
+});
 
 console.log("✅ API routes mounted successfully");
 
