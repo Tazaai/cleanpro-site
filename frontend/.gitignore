@@ -1,4 +1,10 @@
-# Logs
+# ============================================================
+# 🧭 CleanPro + GitHub Copilot + Cloud Run – .gitignore (Final)
+# ============================================================
+
+# -----------------------------
+# 🧾 Logs
+# -----------------------------
 logs
 *.log
 npm-debug.log*
@@ -7,59 +13,104 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Node modules & builds
+# -----------------------------
+# 🧱 Node Modules & Builds
+# -----------------------------
 node_modules/
 dist/
 dist-ssr/
 build/
 *.local
 
-# Env & secrets
+# -----------------------------
+# 🔒 Environment & Secrets
+# -----------------------------
 .env
 .env.*
 .env.local
 serviceAccountKey.json
+firebase_config.json
+credentials.json
+secret_*.json
+*.pem
 
-# Frontend build artifacts
+# -----------------------------
+# 🎨 Frontend Artifacts
+# -----------------------------
 frontend/dist/
 frontend/.vite/
 frontend/node_modules/
 
-# Backend build artifacts
+# -----------------------------
+# ⚙️ Backend Artifacts
+# -----------------------------
 backend/node_modules/
 backend/.env
 backend/.cache/
+backend/tmp/
+backend/logs/
 
-# Playwright & Test outputs
+# -----------------------------
+# 🧪 Testing (Playwright / Jest)
+# -----------------------------
 test-results/
 playwright-report/
+coverage/
 debug-*.png
 debug-*.jpg
 debug-*.html
 
-# Cloud & Docker
+# -----------------------------
+# ☁️ Cloud, Docker & GCP
+# -----------------------------
 .cloudbuild/
-Dockerfile.backup
 *.tar
 *.tgz
-
-# Firebase / GCP
+Dockerfile.backup
+.gcloudignore
 .firebase/
 .firebaserc
 firebase-debug.log
-.gcloudignore
 *.json.backup
 
-# IDEs & editors
+# Preserve main deployment files
+!Dockerfile
+!frontend/Dockerfile
+!backend/Dockerfile
+!codox.yaml
+!review_report.sh
+!deploy_backend.sh
+!deploy_frontend.sh
+
+# -----------------------------
+# 🤖 GitHub Copilot & CI/CD
+# -----------------------------
+agent.md
+.github/workflows/*.backup
+.github/copilot-instructions.md
+.codox_lock
+
+# -----------------------------
+# 🧩 IDEs, Editors & OS
+# -----------------------------
 .vscode/*
 !.vscode/extensions.json
 .idea/
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.iml
+*.bak
 
-# OS
-Thumbs.db
+# -----------------------------
+# 🗂️ Miscellaneous
+# -----------------------------
+*.tmp
+*.cache
+*.zip
+*.tar.gz
+*.old

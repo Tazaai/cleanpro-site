@@ -84,13 +84,41 @@ Final Total = Subtotal - Discount
 ## 🧭 Coordination Points
 - Stored in AppSheet (address, contact, active flag)  
 - Used for matching and distance validation  
-- If no point < 100 miles → “No available coordination point nearby”  
+- If no point < 100 miles → "No available coordination point nearby"  
+
+---
+
+## 📊 AppSheet Integration
+- **Complete two-way data sync** between Clean Departure and AppSheet
+- **Admin-friendly interface** for managing pricing and coordination points
+- **Real-time synchronization** with Firestore database
+
+### AppSheet Tables Structure:
+1. **CoordinationPoints**: name, address, contact, phone, email, active, latitude, longitude
+2. **Pricing**: service_id, price_per_m2, weekly_discount, monthly_discount, distance_fee, free_distance
+3. **Bookings**: Booking data can be pushed to AppSheet for external management
+
+### API Endpoints:
+- `POST /api/appsheet/sync/coordination-points` - Sync coordination points from AppSheet
+- `POST /api/appsheet/sync/pricing` - Sync pricing data from AppSheet
+- `POST /api/appsheet/sync/all` - Sync all data from AppSheet
+- `POST /api/appsheet/push/booking/:id` - Push booking to AppSheet
+- `GET /api/appsheet/config` - Check AppSheet configuration
+- `POST /api/appsheet/test` - Test AppSheet connection
+
+### Admin Dashboard Features:
+- ✅ **Connection Testing**: Verify AppSheet API connectivity
+- ✅ **One-click Sync**: Sync coordination points and pricing data
+- ✅ **Configuration Status**: Visual indicators for setup completion
+- ✅ **Error Handling**: Clear feedback for sync operations
 
 ---
 
 ## 🧾 Admin / AppSheet
-- Non-technical admins manage prices, discounts, and points  
-- Auto-syncs with Firestore  
+- Non-technical admins manage prices, discounts, and points through AppSheet interface
+- **Automated synchronization** with Clean Departure application
+- **Version control** and audit trail through AppSheet
+- **Role-based access** for different admin functions
 
 ---
 
@@ -179,6 +207,8 @@ Validates presence and syntax of:
   - `JWT_SECRET=<secret>` (for authentication)
   - `STRIPE_SECRET_KEY=<key>` (for payments)
   - `STRIPE_WEBHOOK_SECRET=<secret>` (for webhooks)
+  - `APPSHEET_API_KEY=<key>` (for AppSheet integration)
+  - `APPSHEET_APP_ID=<id>` (for AppSheet integration)
 
 ---
 
@@ -200,8 +230,9 @@ Validates presence and syntax of:
 - [x] **Payment Processing Frontend** ✅
 - [x] **Google Maps Integration** ✅
 - [x] **User Session Management** ✅
-- [ ] AppSheet Dashboard Integration  
-- [ ] Email Notifications (booking confirmations)
+- [x] **Booking Approval Workflow** ✅
+- [x] **Email Notification System** ✅
+- [x] **AppSheet Integration** ✅
 - [ ] Advanced Booking Management (rescheduling)
 - [ ] Cloud logging & analytics  
 - [ ] SEO Optimization

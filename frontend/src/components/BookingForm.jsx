@@ -627,6 +627,21 @@ export default function BookingForm() {
                     </div>
                   </div>
                 )}
+
+                {/* Campaign Discount Display */}
+                {preview.campaignDiscount > 0 && preview.campaignDiscountActive && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-red-700 bg-red-50 px-2 py-1 rounded">
+                      <span>🎯 Campaign Discount ({preview.campaignDiscount}%):</span>
+                      <span>-${preview.campaignDiscountAmount || '0.00'}</span>
+                    </div>
+                    {preview.campaignDescription && (
+                      <div className="text-xs text-red-600 px-2">
+                        {preview.campaignDescription}
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {isFirstTime && frequency !== "one_time" && (
                   <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">

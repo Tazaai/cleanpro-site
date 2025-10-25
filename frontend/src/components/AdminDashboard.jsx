@@ -11,6 +11,8 @@ export default function AdminDashboard({ onClose }) {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [appsheetConfig, setAppsheetConfig] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -40,10 +42,65 @@ export default function AdminDashboard({ onClose }) {
       const statsData = await statsRes.json();
       if (statsData.ok) setStats(statsData.stats || {});
 
+      // Fetch AppSheet config
+      const appsheetRes = await fetch(`${API_BASE}/api/appsheet/config`, { headers });
+      const appsheetData = await appsheetRes.json();
+      if (appsheetData.ok) setAppsheetConfig(appsheetData.config || {});
+
     } catch (error) {
       toast.error('Failed to load dashboard data');
     }
     setLoading(false);
+  };
+
+  const syncAppSheetData = async (type) => {
+    setSyncing(true);
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const endpoint = type === 'all' ? '/api/appsheet/sync/all' : `/api/appsheet/sync/${type}`;
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers
+      });
+      
+      const data = await res.json();
+      if (data.ok) {
+        toast.success(`${type === 'all' ? 'All data' : type} synced successfully!`);
+        fetchDashboardData(); // Refresh data
+      } else {
+        toast.error(data.error || 'Sync failed');
+      }
+    } catch (error) {
+      toast.error('Sync failed');
+    }
+    setSyncing(false);
+  };
+
+  const testAppSheetConnection = async () => {
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const res = await fetch(`${API_BASE}/api/appsheet/test`, {
+        method: 'POST',
+        headers
+      });
+      
+      const data = await res.json();
+      if (data.ok) {
+        toast.success(`Connection successful! Found ${data.recordCount} records.`);
+      } else {
+        toast.error(data.error || 'Connection failed');
+      }
+    } catch (error) {
+      toast.error('Connection test failed');
+    }
   };
 
   const updateBookingStatus = async (bookingId, status) => {
@@ -186,6 +243,14 @@ export default function AdminDashboard({ onClose }) {
           >
             Users
           </button>
+          <button
+            onClick={() => setActiveTab('appsheet')}
+            className={`px-6 py-3 font-medium ${activeTab === 'appsheet' 
+              ? 'border-b-2 border-blue-500 text-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            📊 AppSheet
+          </button>
         </div>
 
         {/* Content */}
@@ -316,6 +381,119 @@ export default function AdminDashboard({ onClose }) {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'appsheet' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">📊 AppSheet Integration</h3>
+                    {appsheetConfig && (
+                      <div className={`px-3 py-1 rounded text-sm ${
+                        appsheetConfig.configured 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {appsheetConfig.configured ? '✅ Configured' : '❌ Not Configured'}
+                      </div>
+                    )}
+                  </div>
+
+                  {appsheetConfig && !appsheetConfig.configured ? (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                      <div className="flex">
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-yellow-800">
+                            AppSheet Not Configured
+                          </h3>
+                          <div className="mt-2 text-sm text-yellow-700">
+                            <p>To enable AppSheet integration, configure these environment variables:</p>
+                            <ul className="mt-2 list-disc list-inside">
+                              <li><code>APPSHEET_API_KEY</code> - Your AppSheet API key</li>
+                              <li><code>APPSHEET_APP_ID</code> - Your AppSheet App ID</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Connection Test */}
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">🔗 Connection Test</h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Test the connection to your AppSheet application.
+                        </p>
+                        <button
+                          onClick={testAppSheetConnection}
+                          disabled={syncing}
+                          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+                        >
+                          {syncing ? 'Testing...' : 'Test Connection'}
+                        </button>
+                      </div>
+
+                      {/* Sync Coordination Points */}
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">📍 Coordination Points</h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Sync coordination points from AppSheet to your application.
+                        </p>
+                        <button
+                          onClick={() => syncAppSheetData('coordination-points')}
+                          disabled={syncing}
+                          className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-400 transition-colors"
+                        >
+                          {syncing ? 'Syncing...' : 'Sync Coordination Points'}
+                        </button>
+                      </div>
+
+                      {/* Sync Pricing */}
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">💰 Pricing & Campaign Data</h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Sync pricing information and campaign discounts from AppSheet. Includes base rates (per sq ft), frequency discounts, and campaign promotions (10-50% discounts).
+                        </p>
+                        <button
+                          onClick={() => syncAppSheetData('pricing')}
+                          disabled={syncing}
+                          className="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-400 transition-colors"
+                        >
+                          {syncing ? 'Syncing...' : 'Sync Pricing & Campaigns'}
+                        </button>
+                      </div>
+
+                      {/* Sync All */}
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 className="text-md font-semibold text-gray-800 mb-4">🔄 Full Sync</h4>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Sync all data (coordination points and pricing) from AppSheet.
+                        </p>
+                        <button
+                          onClick={() => syncAppSheetData('all')}
+                          disabled={syncing}
+                          className="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 disabled:bg-gray-400 transition-colors"
+                        >
+                          {syncing ? 'Syncing...' : 'Sync All Data'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {appsheetConfig && appsheetConfig.configured && (
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                      <div className="flex">
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800">
+                            AppSheet Integration Ready
+                          </h3>
+                          <div className="mt-2 text-sm text-blue-700">
+                            <p>Your AppSheet integration is configured and ready to use. You can sync data from your AppSheet app to keep your pricing and coordination points up to date.</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
