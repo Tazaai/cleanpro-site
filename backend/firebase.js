@@ -31,7 +31,14 @@ export async function initFirebase() {
     // Validate JSON structure before writing file
     let creds;
     try {
-      creds = JSON.parse(raw);
+      // Clean the raw string first
+      const cleanRaw = raw.trim().replace(/[\r\n\t]/g, '');
+      console.log("🔍 Attempting to parse Firebase JSON...");
+      console.log("📊 JSON length:", cleanRaw.length);
+      console.log("🔎 JSON starts with:", cleanRaw.substring(0, 50));
+      console.log("🔚 JSON ends with:", cleanRaw.substring(cleanRaw.length - 50));
+      
+      creds = JSON.parse(cleanRaw);
       console.log("✅ Firebase credentials JSON validated");
       
       // Check for required fields
@@ -40,8 +47,27 @@ export async function initFirebase() {
       }
     } catch (e) {
       console.error("❌ FIREBASE_KEY JSON parse failed:", e.message || e);
-      console.error("🔍 Raw key preview:", raw.substring(0, 100) + "...");
-      throw e;
+      console.error("🔍 Raw key sample (first 200 chars):", raw.substring(0, 200));
+      console.error("🔍 Raw key sample (last 200 chars):", raw.substring(Math.max(0, raw.length - 200)));
+      
+      // Try to fix common JSON issues
+      console.log("🔧 Attempting to fix common JSON issues...");
+      try {
+        let fixedRaw = raw.trim()
+          .replace(/[\r\n\t]/g, '')
+          .replace(/\s+/g, ' ')
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']');
+        
+        creds = JSON.parse(fixedRaw);
+        console.log("✅ Fixed JSON parse successful!");
+        raw = fixedRaw; // Use the fixed version
+      } catch (fixError) {
+        console.error("❌ JSON fix attempt failed:", fixError.message);
+        // Continue without Firebase rather than crash
+        console.warn("⚠️ Skipping Firebase initialization due to invalid JSON");
+        return;
+      }
     }
 
     // Write service account file
