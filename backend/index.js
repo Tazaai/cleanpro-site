@@ -36,39 +36,35 @@ try {
 // Dynamically import routes AFTER Firebase init and start server
 (async () => {
   try {
-    const [
-      calendarApiModule,
-      coordinationPointsApiModule,
-      servicesApiModule,
-      bookingsApiModule,
-      quotesApiModule,
-      pricingApiModule,
-      mapsApiModule,
-      configApiModule,
-      gcalendarApiModule,
-      paymentApiModule,
-      authApiModule,
-      adminApiModule,
-      legalApiModule,
-      notificationsApiModule,
-      appsheetApiModule
-    ] = await Promise.all([
-      import("./routes/calendar_api.mjs"),
-      import("./routes/coordination_points_api.mjs"),
-      import("./routes/services_api.mjs"),
-      import("./routes/bookings_api.mjs"),
-      import("./routes/quotes_api.mjs"),
-      import("./routes/pricing_api.mjs"),
-      import("./routes/maps_api.mjs"),
-      import("./routes/config_api.mjs"),
-      import("./routes/gcalendar_api.mjs"),
-      import("./routes/payment_api.mjs"),
+    console.log("🔗 Starting route imports...");
+    
+    // Import routes in smaller batches to reduce memory pressure
+    const batch1 = await Promise.all([
       import("./routes/auth_api.mjs"),
       import("./routes/admin_api.mjs"),
       import("./routes/legal_api.mjs"),
+      import("./routes/payment_api.mjs"),
+      import("./routes/bookings_api.mjs")
+    ]);
+    console.log("✅ Batch 1 routes loaded (auth, admin, legal, payment, bookings)");
+
+    const batch2 = await Promise.all([
+      import("./routes/pricing_api.mjs"),
+      import("./routes/maps_api.mjs"),
+      import("./routes/config_api.mjs"),
+      import("./routes/services_api.mjs"),
+      import("./routes/quotes_api.mjs")
+    ]);
+    console.log("✅ Batch 2 routes loaded (pricing, maps, config, services, quotes)");
+
+    const batch3 = await Promise.all([
+      import("./routes/calendar_api.mjs"),
+      import("./routes/coordination_points_api.mjs"),
+      import("./routes/gcalendar_api.mjs"),
       import("./routes/notifications_api.mjs"),
       import("./routes/appsheet_api.mjs")
     ]);
+    console.log("✅ Batch 3 routes loaded (calendar, coordination, gcalendar, notifications, appsheet)");
 
     // Health check endpoint
     app.get("/", (req, res) => {
@@ -88,22 +84,30 @@ try {
       });
     });
 
-    // API routes
-    app.use("/api/auth", authApiModule.default);
-    app.use("/api/admin", adminApiModule.default);
-    app.use("/api/legal", legalApiModule.default);
-    app.use("/api/notifications", notificationsApiModule.default);
-    app.use("/api/appsheet", appsheetApiModule.default);
-    app.use("/api/calendar", calendarApiModule.default);
-    app.use("/api/coordination_points", coordinationPointsApiModule.default);
-    app.use("/api/services", servicesApiModule.default);
-    app.use("/api/bookings", bookingsApiModule.default);
-    app.use("/api/quotes", quotesApiModule.default);
-    app.use("/api/pricing", pricingApiModule.default);
-    app.use("/api/maps", mapsApiModule.default);
-    app.use("/api/config", configApiModule.default);
-    app.use("/api/gcalendar", gcalendarApiModule.default);
-    app.use("/api/payment", paymentApiModule.default);
+    console.log("🔗 Mounting routes...");
+    
+    // API routes (use batch1 array)
+    app.use("/api/auth", batch1[0].default);
+    app.use("/api/admin", batch1[1].default);
+    app.use("/api/legal", batch1[2].default);
+    app.use("/api/payment", batch1[3].default);
+    app.use("/api/bookings", batch1[4].default);
+    
+    // Batch 2 routes
+    app.use("/api/pricing", batch2[0].default);
+    app.use("/api/maps", batch2[1].default);
+    app.use("/api/config", batch2[2].default);
+    app.use("/api/services", batch2[3].default);
+    app.use("/api/quotes", batch2[4].default);
+    
+    // Batch 3 routes
+    app.use("/api/calendar", batch3[0].default);
+    app.use("/api/coordination_points", batch3[1].default);
+    app.use("/api/gcalendar", batch3[2].default);
+    app.use("/api/notifications", batch3[3].default);
+    app.use("/api/appsheet", batch3[4].default);
+
+    console.log("✅ All routes mounted successfully");
 
     // 404 handler
     app.use("*", (req, res) => {
@@ -114,11 +118,15 @@ try {
       });
     });
 
-    app.listen(PORT, HOST, () =>
-      console.log(`✅ Server listening at http://${HOST}:${PORT}`)
-    );
+    console.log("🚀 Starting HTTP server...");
+    app.listen(PORT, HOST, () => {
+      console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+      console.log("🎯 All systems ready - CleanPro MVP is live!");
+    });
   } catch (err) {
     console.error("❌ Failed to load routes or start server:", err);
+    console.error("🔍 Error details:", err.message);
+    console.error("📋 Stack trace:", err.stack);
     process.exit(1);
   }
 })();
