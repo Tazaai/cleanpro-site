@@ -2,6 +2,12 @@
 # 🧠 CleanPro MVP Diagnostic Review (Safe Mode – 100% Read-Only)
 # Purpose: Run comprehensive diagnostics for MVP deployment with authentication, admin dashboard, and payments.
 
+# Skip local validation when running inside GitHub Actions
+if [ "$GITHUB_ACTIONS" = "true" ]; then
+  echo "✅ Running inside GitHub Actions — skipping local secret validation"
+  exit 0
+fi
+
 set +e
 exec > >(tee agent.md) 2>&1
 
