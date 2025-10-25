@@ -1,0 +1,27 @@
+# Backend Security .gitignore
+# Additional protection for sensitive backend files
+
+# Firebase & Google Cloud
+firebase_config.json
+serviceAccountKey.json
+credentials.json
+key.json
+gcp-*.json
+
+# Environment Variables
+.env
+.env.*
+
+# Logs & Temporary Files
+logs/
+*.log
+tmp/
+.cache/
+
+# Node.js
+node_modules/
+dist/
+
+# Development
+*.bak
+*.tmp

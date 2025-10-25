@@ -1,9 +1,87 @@
+# ============================================================
+# 🔒 Clean Departure - SECURITY FOCUSED .gitignore 
+# ============================================================
+
+# -----------------------------
+# 🔥 CRITICAL SECURITY FILES
+# -----------------------------
+# Firebase & Google Cloud
+firebase_config.json
+serviceAccountKey.json
+backend/firebase_config.json
+backend/serviceAccountKey.json
+functions/serviceAccountKey.json
+key.json
+credentials.json
+google-credentials.json
+gcp-*.json
+
+# Environment & Secrets
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+.env.staging
+backend/.env
+frontend/.env
+functions/.env
+
+# API Keys & Secrets
+**/secret_*.json
+**/secrets.json
+**/api-keys.json
+**/*secret*
+**/*credential*
+*.pem
+*.p12
+
+# -----------------------------
+# 🧱 Build & Dependencies
+# -----------------------------
 node_modules/
 dist/
+build/
 *.bak
-backend/firebase_config.json
-node_modules/
-serviceAccountKey.json
-key.json
-backend/firebase_config.json
-frontend/.env
+*.tmp
+*.cache
+
+# Backend specific
+backend/node_modules/
+backend/dist/
+backend/logs/
+backend/tmp/
+
+# Frontend specific  
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Functions specific
+functions/node_modules/
+functions/lib/
+
+# -----------------------------
+# 🧪 Testing & Development
+# -----------------------------
+test-results/
+playwright-report/
+coverage/
+*.log
+logs/
+
+# -----------------------------
+# 🤖 CI/CD & Tools
+# -----------------------------
+.github/copilot-instructions.md
+.codox_lock
+agent.md
+
+# -----------------------------
+# 🧩 IDE & OS
+# -----------------------------
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.suo
