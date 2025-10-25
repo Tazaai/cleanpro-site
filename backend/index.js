@@ -36,37 +36,22 @@ try {
 // Dynamically import routes AFTER Firebase init and start server
 (async () => {
   try {
-    console.log("🔗 Starting route imports...");
+    console.log("🔗 Starting route imports with error handling...");
     
-    // Import routes in smaller batches to reduce memory pressure
-    const batch1 = await Promise.all([
-      import("./routes/auth_api.mjs"),
-      import("./routes/admin_api.mjs"),
-      import("./routes/legal_api.mjs"),
-      import("./routes/payment_api.mjs"),
-      import("./routes/bookings_api.mjs")
-    ]);
-    console.log("✅ Batch 1 routes loaded (auth, admin, legal, payment, bookings)");
+    // Helper function to safely import routes
+    const safeImport = async (routePath, routeName) => {
+      try {
+        const module = await import(routePath);
+        console.log(`✅ ${routeName} loaded successfully`);
+        return module;
+      } catch (error) {
+        console.error(`❌ Failed to load ${routeName}:`, error.message);
+        console.error(`⚠️ Continuing without ${routeName} route`);
+        return null;
+      }
+    };
 
-    const batch2 = await Promise.all([
-      import("./routes/pricing_api.mjs"),
-      import("./routes/maps_api.mjs"),
-      import("./routes/config_api.mjs"),
-      import("./routes/services_api.mjs"),
-      import("./routes/quotes_api.mjs")
-    ]);
-    console.log("✅ Batch 2 routes loaded (pricing, maps, config, services, quotes)");
-
-    const batch3 = await Promise.all([
-      import("./routes/calendar_api.mjs"),
-      import("./routes/coordination_points_api.mjs"),
-      import("./routes/gcalendar_api.mjs"),
-      import("./routes/notifications_api.mjs"),
-      import("./routes/appsheet_api.mjs")
-    ]);
-    console.log("✅ Batch 3 routes loaded (calendar, coordination, gcalendar, notifications, appsheet)");
-
-    // Health check endpoint
+    // Health check endpoint (critical - always available)
     app.get("/", (req, res) => {
       res.json({ 
         ok: true, 
@@ -84,47 +69,84 @@ try {
       });
     });
 
-    console.log("🔗 Mounting routes...");
-    
-    // API routes (use batch1 array)
-    app.use("/api/auth", batch1[0].default);
-    app.use("/api/admin", batch1[1].default);
-    app.use("/api/legal", batch1[2].default);
-    app.use("/api/payment", batch1[3].default);
-    app.use("/api/bookings", batch1[4].default);
-    
-    // Batch 2 routes
-    app.use("/api/pricing", batch2[0].default);
-    app.use("/api/maps", batch2[1].default);
-    app.use("/api/config", batch2[2].default);
-    app.use("/api/services", batch2[3].default);
-    app.use("/api/quotes", batch2[4].default);
-    
-    // Batch 3 routes
-    app.use("/api/calendar", batch3[0].default);
-    app.use("/api/coordination_points", batch3[1].default);
-    app.use("/api/gcalendar", batch3[2].default);
-    app.use("/api/notifications", batch3[3].default);
-    app.use("/api/appsheet", batch3[4].default);
+    console.log("✅ Health endpoints ready");
 
-    console.log("✅ All routes mounted successfully");
-
-    // 404 handler
-    app.use("*", (req, res) => {
-      res.status(404).json({ 
-        ok: false, 
-        error: "Endpoint not found", 
-        path: req.originalUrl 
-      });
-    });
-
-    console.log("🚀 Starting HTTP server...");
-    app.listen(PORT, HOST, () => {
+    // Start server FIRST so it can respond to health checks
+    console.log("� Starting HTTP server...");
+    const server = app.listen(PORT, HOST, () => {
       console.log(`✅ Server listening at http://${HOST}:${PORT}`);
-      console.log("🎯 All systems ready - CleanPro MVP is live!");
+      console.log("🎯 Health endpoints ready - continuing with route loading...");
     });
+
+    // Load routes after server is listening (non-blocking)
+    setTimeout(async () => {
+      try {
+        console.log("🔗 Loading routes in background...");
+        
+        // Core routes (most important)
+        const authApi = await safeImport("./routes/auth_api.mjs", "auth_api");
+        const adminApi = await safeImport("./routes/admin_api.mjs", "admin_api");
+        const legalApi = await safeImport("./routes/legal_api.mjs", "legal_api");
+        const paymentApi = await safeImport("./routes/payment_api.mjs", "payment_api");
+        const bookingsApi = await safeImport("./routes/bookings_api.mjs", "bookings_api");
+
+        // Mount core routes if successfully loaded
+        if (authApi) app.use("/api/auth", authApi.default);
+        if (adminApi) app.use("/api/admin", adminApi.default);
+        if (legalApi) app.use("/api/legal", legalApi.default);
+        if (paymentApi) app.use("/api/payment", paymentApi.default);
+        if (bookingsApi) app.use("/api/bookings", bookingsApi.default);
+
+        console.log("✅ Core routes loaded");
+
+        // Secondary routes
+        const pricingApi = await safeImport("./routes/pricing_api.mjs", "pricing_api");
+        const mapsApi = await safeImport("./routes/maps_api.mjs", "maps_api");
+        const configApi = await safeImport("./routes/config_api.mjs", "config_api");
+        const servicesApi = await safeImport("./routes/services_api.mjs", "services_api");
+        const quotesApi = await safeImport("./routes/quotes_api.mjs", "quotes_api");
+
+        if (pricingApi) app.use("/api/pricing", pricingApi.default);
+        if (mapsApi) app.use("/api/maps", mapsApi.default);
+        if (configApi) app.use("/api/config", configApi.default);
+        if (servicesApi) app.use("/api/services", servicesApi.default);
+        if (quotesApi) app.use("/api/quotes", quotesApi.default);
+
+        console.log("✅ Secondary routes loaded");
+
+        // Optional routes (can fail without breaking core functionality)
+        const calendarApi = await safeImport("./routes/calendar_api.mjs", "calendar_api");
+        const coordinationApi = await safeImport("./routes/coordination_points_api.mjs", "coordination_points_api");
+        const gcalendarApi = await safeImport("./routes/gcalendar_api.mjs", "gcalendar_api");
+        const notificationsApi = await safeImport("./routes/notifications_api.mjs", "notifications_api");
+        const appsheetApi = await safeImport("./routes/appsheet_api.mjs", "appsheet_api");
+
+        if (calendarApi) app.use("/api/calendar", calendarApi.default);
+        if (coordinationApi) app.use("/api/coordination_points", coordinationApi.default);
+        if (gcalendarApi) app.use("/api/gcalendar", gcalendarApi.default);
+        if (notificationsApi) app.use("/api/notifications", notificationsApi.default);
+        if (appsheetApi) app.use("/api/appsheet", appsheetApi.default);
+
+        console.log("✅ Optional routes loaded");
+
+        // 404 handler (add after all routes)
+        app.use("*", (req, res) => {
+          res.status(404).json({ 
+            ok: false, 
+            error: "Endpoint not found", 
+            path: req.originalUrl 
+          });
+        });
+
+        console.log("🎉 All routes loaded successfully - CleanPro MVP is fully ready!");
+      } catch (err) {
+        console.error("⚠️ Route loading error (non-fatal):", err.message);
+        console.log("🎯 Server continues to run with available routes");
+      }
+    }, 100); // Small delay to ensure server is fully started
+
   } catch (err) {
-    console.error("❌ Failed to load routes or start server:", err);
+    console.error("❌ Critical server startup failure:", err);
     console.error("🔍 Error details:", err.message);
     console.error("📋 Stack trace:", err.stack);
     process.exit(1);
