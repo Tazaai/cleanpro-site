@@ -191,6 +191,7 @@ jobs:
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
+            --timeout 900 \
             --project $GCP_PROJECT \
             --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY_B64" \
             --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
