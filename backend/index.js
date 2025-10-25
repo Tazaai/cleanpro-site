@@ -80,17 +80,17 @@ app.get("/api/coordination_points", (req, res) => {
 
 console.log("✅ Critical routes mounted inline");
 
-// 404 handler - add after routes
+// Start server immediately - don't wait for routes
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
+  console.log("🚀 CleanPro Backend is ready!");
+});
+
+// 404 handler - MUST be last
 app.use("*", (req, res) => {
   res.status(404).json({ 
     ok: false, 
     error: "Endpoint not found", 
     path: req.originalUrl 
   });
-});
-
-// Start server immediately - don't wait for routes
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server listening at http://${HOST}:${PORT}`);
-  console.log("🚀 CleanPro Backend is ready!");
 });
