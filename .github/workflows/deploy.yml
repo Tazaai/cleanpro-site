@@ -129,8 +129,6 @@ jobs:
         
         echo "🎯 Advanced validation completed successfully!"
 
-jobs:
-
   test:
     needs: secret-validation
     runs-on: ubuntu-latest
