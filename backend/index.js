@@ -56,29 +56,15 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Test route first
-import testApi from "./routes/test_api.mjs";
-app.use("/api/test", testApi);
 
-// Add simple calendar route inline for testing
-app.get("/api/calendar", (req, res) => {
-  res.json({
-    ok: true,
-    message: "�️ Calendar API working (inline)",
-    timestamp: new Date().toISOString(),
-    query: req.query
-  });
-});
+// Import and mount API routes directly
+import calendarApi from "./routes/calendar_api.mjs";
+import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 
-app.get("/api/coordination_points", (req, res) => {
-  res.json({
-    ok: true,
-    message: "📍 Coordination Points API working (inline)",
-    timestamp: new Date().toISOString()
-  });
-});
+app.use("/api/calendar", calendarApi);
+app.use("/api/coordination_points", coordinationPointsApi);
 
-console.log("✅ Critical routes mounted inline");
+console.log("✅ API routes mounted successfully");
 
 // Start server immediately - don't wait for routes
 app.listen(PORT, HOST, () => {
