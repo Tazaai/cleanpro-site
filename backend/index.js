@@ -17,11 +17,21 @@ const HOST = process.env.HOST || "0.0.0.0";
 // Initialize Firebase before importing routes
 import { initFirebase } from "./firebase.js";
 
+console.log("🚀 Starting CleanPro Backend...");
+console.log("🌍 Environment:", process.env.NODE_ENV || "development");
+console.log("🔧 Port:", PORT);
+console.log("🏠 Host:", HOST);
+
 // initialize before importing routes (writes SA file & sets GOOGLE_APPLICATION_CREDENTIALS)
-await initFirebase().catch((err) => {
+try {
+  await initFirebase();
+  console.log("✅ Firebase initialized successfully");
+} catch (err) {
   console.error("❌ Firebase init failed:", err.message || err);
-  // continue — routes use lazy DB getters that will error if init truly failed
-});
+  console.error("🔍 Stack trace:", err.stack);
+  // Exit on Firebase failure since the app won't work without it
+  process.exit(1);
+}
 
 // Dynamically import routes AFTER Firebase init and start server
 (async () => {
