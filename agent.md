@@ -29,27 +29,30 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 ✅ Found .github/workflows/
 
 ## 🔑 Checking MVP secrets (authentication, payments, deployment)...
-🏗️ Core GCP Infrastructure:
-❌ Missing GCP_PROJECT
-❌ Missing GCP_SA_KEY
-🔑 API Keys:
-✅ GOOGLE_MAPS_API_KEY available
-   ⚠️ Unusual Google API key format
-❌ Missing FIREBASE_KEY
-❌ Missing OPENAI_API_KEY
-🔐 Authentication & Security:
-❌ Missing JWT_SECRET
-💳 Payment Processing:
-❌ Missing STRIPE_SECRET_KEY
-❌ Missing STRIPE_WEBHOOK_SECRET
-📊 AppSheet Integration:
-❌ Missing APPSHEET_API_KEY
-❌ Missing APPSHEET_APP_ID
 ======================================================
-🚨 9 secrets missing. Deployment will fail.
-🔧 Configure missing secrets via GitHub web UI:
+🏗️ Core GCP Infrastructure:
+❌ GCP_PROJECT: MISSING
+❌ GCP_SA_KEY: MISSING
+🔑 API Keys:
+✅ GOOGLE_MAPS_API_KEY: PRESENT (39 chars)
+   ⚠️ Unusual Google API key format
+❌ FIREBASE_KEY: MISSING
+❌ OPENAI_API_KEY: MISSING
+🔐 Authentication & Security:
+❌ JWT_SECRET: MISSING
+💳 Payment Processing:
+❌ STRIPE_SECRET_KEY: MISSING
+❌ STRIPE_WEBHOOK_SECRET: MISSING
+📊 AppSheet Integration:
+❌ APPSHEET_API_KEY: MISSING
+❌ APPSHEET_APP_ID: MISSING
+======================================================
+🚨 Secret validation FAILED!
+❌ Missing or invalid secrets detected
+🔧 Please configure missing secrets via GitHub web UI:
    Repository → Settings → Secrets and variables → Actions
-⚠️ NEVER set secrets via CLI - use web interface only!
+
+⚠️ DEPLOYMENT BLOCKED until all secrets are valid
 
 ## 🧱 Backend MVP diagnostic...
 📄 backend/index.js found
@@ -136,9 +139,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-in_progress |  | 🚀 Deploy full MVP with complete routes and GitHub Secrets integration
-completed | success | 🔧 Remove minimal endpoints - enable full MVP routes to load properly
-in_progress |  | 🚀 Fix startup timeout - non-blocking Firebase init and immediate serv…
+in_progress |  | 🔧 Enhance review_report.sh with deploy.yml functions, simplify workflow
+completed | failure | 🔧 Fix backend route order - move 404 handler after routes
+completed | failure | 🔧 Fix deployment - use reliable inline routes to resolve frontend errors
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
@@ -147,18 +150,11 @@ in_progress |  | 🚀 Fix startup timeout - non-blocking Firebase init and immed
 
 ## 🎯 Deployment Readiness Assessment...
 ======================================================
-🔐 Secret Configuration:
-  ❌ GCP_PROJECT missing
-  ❌ GCP_SA_KEY missing
-  ✅ GOOGLE_MAPS_API_KEY configured
-  ❌ FIREBASE_KEY missing
-  ❌ JWT_SECRET missing
-  ❌ STRIPE_SECRET_KEY missing
-  ❌ STRIPE_WEBHOOK_SECRET missing
-  ❌ APPSHEET_API_KEY missing
-  ❌ APPSHEET_APP_ID missing
+🔐 Secret Configuration Result: FAILED
+  ❌ Secret validation failed - deployment blocked
 🔧 GitHub Actions Workflow:
   ✅ Secret validation job present
+  ✅ Deployment dependency configured correctly
 ======================================================
 📊 DEPLOYMENT READINESS: 2/10 (20%)
 🚨 NOT READY FOR DEPLOYMENT

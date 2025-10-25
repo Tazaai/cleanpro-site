@@ -24,23 +24,35 @@ jobs:
         
         # Simple validation - just check if critical secrets exist
         VALIDATION_PASSED=true
-        REQUIRED_SECRETS="GCP_PROJECT GCP_SA_KEY GOOGLE_MAPS_API_KEY JWT_SECRET"
         
-        for secret in $REQUIRED_SECRETS; do
-          case $secret in
-            "GCP_PROJECT") value="${{ secrets.GCP_PROJECT }}" ;;
-            "GCP_SA_KEY") value="${{ secrets.GCP_SA_KEY }}" ;;
-            "GOOGLE_MAPS_API_KEY") value="${{ secrets.GOOGLE_MAPS_API_KEY }}" ;;
-            "JWT_SECRET") value="${{ secrets.JWT_SECRET }}" ;;
-          esac
-          
-          if [ -z "$value" ] || [ "$value" = "null" ]; then
-            echo "❌ $secret: MISSING"
-            VALIDATION_PASSED=false
-          else
-            echo "✅ $secret: PRESENT"
-          fi
-        done
+        # Check each secret individually (safer approach)
+        if [ -z "${{ secrets.GCP_PROJECT }}" ] || [ "${{ secrets.GCP_PROJECT }}" = "null" ]; then
+          echo "❌ GCP_PROJECT: MISSING"
+          VALIDATION_PASSED=false
+        else
+          echo "✅ GCP_PROJECT: PRESENT"
+        fi
+        
+        if [ -z "${{ secrets.GCP_SA_KEY }}" ] || [ "${{ secrets.GCP_SA_KEY }}" = "null" ]; then
+          echo "❌ GCP_SA_KEY: MISSING"
+          VALIDATION_PASSED=false
+        else
+          echo "✅ GCP_SA_KEY: PRESENT"
+        fi
+        
+        if [ -z "${{ secrets.GOOGLE_MAPS_API_KEY }}" ] || [ "${{ secrets.GOOGLE_MAPS_API_KEY }}" = "null" ]; then
+          echo "❌ GOOGLE_MAPS_API_KEY: MISSING"
+          VALIDATION_PASSED=false
+        else
+          echo "✅ GOOGLE_MAPS_API_KEY: PRESENT"
+        fi
+        
+        if [ -z "${{ secrets.JWT_SECRET }}" ] || [ "${{ secrets.JWT_SECRET }}" = "null" ]; then
+          echo "❌ JWT_SECRET: MISSING"
+          VALIDATION_PASSED=false
+        else
+          echo "✅ JWT_SECRET: PRESENT"
+        fi
         
         echo "======================================================"
         
