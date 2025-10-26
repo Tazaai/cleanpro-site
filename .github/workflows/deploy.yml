@@ -191,7 +191,7 @@ jobs:
           # Get backend URL for frontend build
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
           export VITE_API_BASE=$BACKEND_URL
-          export VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY
+          export VITE_GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}"
           npm run build
 
       - name: Build & Deploy Frontend to Cloud Run
@@ -206,7 +206,7 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --project $GCP_PROJECT \
-            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY"
+            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}"
 
       - name: Deployment Summary
         run: |

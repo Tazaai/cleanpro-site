@@ -14,23 +14,47 @@ function AppContent() {
   const [showAdmin, setShowAdmin] = useState(false);
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
 
-  // ✅ Initialize map safely
+  // ✅ Initialize map safely with better error handling
   useEffect(() => {
     const initMap = () => {
-      if (window.google && window.google.maps) {
-        new window.google.maps.Map(mapRef.current, {
-          center: { lat: 55.6761, lng: 12.5683 }, // Copenhagen
-          zoom: 10,
-        });
-      } else {
-        console.error("Google Maps script not loaded properly");
+      try {
+        if (window.google && window.google.maps && mapRef.current) {
+          console.log("🗺️ Initializing Google Maps...");
+          new window.google.maps.Map(mapRef.current, {
+            center: { lat: 55.6761, lng: 12.5683 }, // Copenhagen
+            zoom: 10,
+          });
+          console.log("✅ Google Maps initialized successfully");
+        } else {
+          console.error("❌ Google Maps script not loaded properly or map element not found");
+          console.log("Debug info:", {
+            google: !!window.google,
+            googleMaps: !!window.google?.maps,
+            mapElement: !!mapRef.current
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error initializing Google Maps:", error);
       }
     };
 
-    if (document.readyState === "complete") initMap();
-    else window.addEventListener("load", initMap);
+    // Wait for Google Maps to be fully loaded
+    const waitForGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        initMap();
+      } else {
+        console.log("⏳ Waiting for Google Maps to load...");
+        setTimeout(waitForGoogleMaps, 100);
+      }
+    };
 
-    return () => window.removeEventListener("load", initMap);
+    if (document.readyState === "complete") {
+      waitForGoogleMaps();
+    } else {
+      window.addEventListener("load", waitForGoogleMaps);
+    }
+
+    return () => window.removeEventListener("load", waitForGoogleMaps);
   }, []);
 
   const scrollToBooking = () =>
