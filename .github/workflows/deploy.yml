@@ -189,17 +189,17 @@ jobs:
           echo "🎨 Deploying frontend..."
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
           
-          # Create .env file with build-time variables  
-          echo "Creating .env file with variables..."
-          echo "VITE_API_BASE=${BACKEND_URL}" > .env
-          echo "VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
-          echo "📋 .env file contents:"
-          cat .env
-          echo "📁 Current directory files:"
-          ls -la
+          # Debug: Show environment variables
+          echo "🔍 Environment variables available:"
+          echo "BACKEND_URL: $BACKEND_URL"
+          echo "GOOGLE_MAPS_API_KEY available: $([[ -n '${{ secrets.GOOGLE_MAPS_API_KEY }}' ]] && echo 'YES' || echo 'NO')"
           
-          # Build and deploy
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
+          # Build using cloudbuild.yaml with substitutions
+          gcloud builds submit \
+            --config cloudbuild.yaml \
+            --substitutions "_IMAGE_NAME=europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend,_VITE_API_BASE=$BACKEND_URL,_VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
+            .
+          
           gcloud run deploy cleanpro-frontend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
             --region europe-west1 \

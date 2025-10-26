@@ -1,0 +1,18 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: 
+  - 'build'
+  - '--build-arg'
+  - 'VITE_API_BASE=${_VITE_API_BASE}'
+  - '--build-arg'
+  - 'VITE_GOOGLE_MAPS_API_KEY=${_VITE_GOOGLE_MAPS_API_KEY}'
+  - '-t'
+  - '${_IMAGE_NAME}'
+  - '.'
+
+substitutions:
+  _VITE_API_BASE: 'https://cleanpro-backend-default.com'  # Default fallback
+  _VITE_GOOGLE_MAPS_API_KEY: 'default-key'  # Default fallback
+
+images:
+- '${_IMAGE_NAME}'
