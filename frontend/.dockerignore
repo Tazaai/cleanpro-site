@@ -15,7 +15,7 @@ dist
 build
 
 # Local environment & secrets (never send to Cloud Run)
-.env
+# .env - temporarily allowing for build-time variables
 serviceAccountKey.json
 firebase_config.json
 firebase_template.json
