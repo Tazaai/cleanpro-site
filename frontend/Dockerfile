@@ -2,13 +2,8 @@ FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
+# Copy source code including .env file created during CI
 COPY . .
-# Accept build arguments for environment variables
-ARG VITE_API_BASE=https://cleanpro-backend-5539254765.europe-west1.run.app
-ARG VITE_GOOGLE_MAPS_API_KEY
-# Set environment variables from build arguments
-ENV VITE_API_BASE=${VITE_API_BASE}
-ENV VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
 RUN npm run build
 
 FROM nginx:1.25-alpine
