@@ -52,7 +52,10 @@ router.get("/", async (req, res) => {
       console.warn("⚠️ Firebase unavailable, using fallback data:", firebaseError.message);
       fromFirebase = false;
     }
-      
+    
+    // Use fallback data only if Firebase is unavailable or returned no data
+    if (!fromFirebase || coordinationPoints.length === 0) {
+      console.log("🔄 Loading fallback coordination points data...");
       // Fallback to hardcoded coordination points for system reliability
       coordinationPoints = [
         {

@@ -181,6 +181,11 @@ jobs:
           # Install jq for JSON parsing
           sudo apt-get update && sudo apt-get install -y jq
           
+          echo "🧪 MANDATORY: Local testing should be completed before deployment"
+          echo "📋 Run './test_backend_local.sh' locally to validate changes"
+          echo "🚫 NO BYPASS: Always test locally before Cloud Run deployment"
+          echo ""
+          
           chmod +x scripts/health_check.sh
           if ./scripts/health_check.sh; then
             echo "✅ Health check passed - proceeding with deployment"

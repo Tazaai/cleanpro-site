@@ -30,13 +30,18 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 ## 🤖 MANDATORY GITHUB COPILOT REVIEW PROCESS
 
 ### 📋 **CRITICAL WORKFLOW REQUIREMENTS**
-1. **Post-Deployment**: MUST run `./copilot_mandatory_review.sh` after every deployment
-2. **Pre-Task**: MUST review this PROJECT_GUIDE.md before starting new development tasks  
-3. **Post-Task**: MUST update documentation and validate all changes
-4. **NO EXCEPTIONS**: Full validation cycle required for every development iteration
+1. **Pre-Deployment**: MUST run local testing via `./test_backend_local.sh` before any deployment
+2. **Post-Deployment**: MUST run `./copilot_mandatory_review.sh` after every deployment
+3. **Pre-Task**: MUST review this PROJECT_GUIDE.md before starting new development tasks  
+4. **Post-Task**: MUST update documentation and validate all changes
+5. **NO EXCEPTIONS**: Full validation cycle required for every development iteration
+6. **LOCAL FIRST**: Test locally with curl/bash before deploying to prevent Cloud Run failures
 
 ### 🔍 **Review Automation Script**
 ```bash
+# MANDATORY: Test locally before deployment
+./test_backend_local.sh           # Local backend testing with curl
+
 # Run comprehensive review system
 ./copilot_mandatory_review.sh
 

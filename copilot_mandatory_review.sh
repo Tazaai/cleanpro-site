@@ -42,8 +42,28 @@ fi
 
 echo ""
 
-# Step 2: System Health Check
-echo "🏥 STEP 2: System Health & Validation"
+# Step 2: Local Backend Testing (if applicable)
+echo "🧪 STEP 2: Local Backend Testing Validation"
+echo "==========================================="
+if [ -f test_backend_local.sh ]; then
+    echo "✅ Local backend testing script available"
+    echo "📋 CRITICAL: Run './test_backend_local.sh' before any deployment"
+    echo "🚫 NO BYPASS: Local testing prevents Cloud Run startup failures"
+    
+    # Check if dependencies are installed
+    if [ -d backend/node_modules ]; then
+        echo "✅ Backend dependencies installed (ready for local testing)"
+    else
+        echo "⚠️ Backend dependencies not installed - run 'cd backend && npm install'"
+    fi
+else
+    echo "❌ Local backend testing script missing - CRITICAL ERROR"
+fi
+
+echo ""
+
+# Step 3: System Health & Validation
+echo "🏥 STEP 3: System Health & Validation"
 echo "====================================="
 if [ -f review_report.sh ]; then
     echo "🔍 Running comprehensive system review..."
@@ -56,8 +76,8 @@ fi
 
 echo ""
 
-# Step 3: Local Secret Management Check
-echo "🔐 STEP 3: Local Secret Management Validation"
+# Step 4: Local Secret Management Check
+echo "🔐 STEP 4: Local Secret Management Validation"
 echo "=============================================="
 if [ -f setup_local_secrets.sh ]; then
     echo "✅ Local secret setup script available"
@@ -77,8 +97,8 @@ fi
 
 echo ""
 
-# Step 4: API Endpoint Validation
-echo "🧪 STEP 4: API Endpoint Validation"
+# Step 5: API Endpoint Validation
+echo "🧪 STEP 5: API Endpoint Validation"
 echo "=================================="
 if [ -f test_coordination_api.sh ]; then
     echo "🧪 Running coordination points API diagnostic..."
@@ -91,8 +111,8 @@ fi
 
 echo ""
 
-# Step 5: Documentation Status
-echo "📚 STEP 5: Documentation Completeness"
+# Step 6: Documentation Status
+echo "📚 STEP 6: Documentation Completeness"
 echo "====================================="
 echo "📄 Available documentation:"
 for doc in PROJECT_GUIDE.md SECRET_MANAGEMENT_DIAGNOSTIC.md LOCAL_SECRET_MANAGEMENT.md COORDINATION_API_FIX_REPORT.md NO_BYPASS_POLICY.md; do
@@ -105,8 +125,8 @@ done
 
 echo ""
 
-# Step 6: Deployment Status Check
-echo "🚀 STEP 6: Deployment Status"
+# Step 7: Deployment Status Check
+echo "🚀 STEP 7: Deployment Status"
 echo "============================"
 echo "📋 Recent commits:"
 git log --oneline -5 | sed 's/^/  /'
@@ -125,6 +145,7 @@ echo ""
 echo "✅ REVIEW COMPLETION CHECKLIST"
 echo "==============================="
 echo "□ PROJECT_GUIDE.md reviewed and current"
+echo "□ Local backend testing completed before deployment"
 echo "□ System health validated via review_report.sh"
 echo "□ Local secret management configured and secure"
 echo "□ API endpoints tested and functional"
@@ -132,6 +153,6 @@ echo "□ Documentation complete and up-to-date"
 echo "□ Recent deployment status confirmed"
 echo ""
 echo "🤖 GitHub Copilot: Mark all items as complete before proceeding with new tasks"
-echo "🚫 NO BYPASS POLICY: Full review required after every deployment"
+echo "🚫 NO BYPASS POLICY: Full review AND local testing required after every deployment"
 echo ""
 echo "📅 Review completed at: $(date '+%Y-%m-%d %H:%M:%S UTC')"
