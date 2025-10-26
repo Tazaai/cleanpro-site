@@ -83,12 +83,28 @@ jobs:
       run: |
         echo "🔬 Running advanced secret validation..."
         
-        # Validate GCP_SA_KEY JSON format
-        echo "🔍 Validating GCP_SA_KEY JSON format..."
+        # STRICT JSON validation - NO BYPASSES ALLOWED
+        echo "🔍 Validating GCP_SA_KEY JSON format (STRICT MODE)..."
         if echo "${{ secrets.GCP_SA_KEY }}" | jq . > /dev/null 2>&1; then
           echo "✅ GCP_SA_KEY: Valid JSON format"
+          
+          # Validate required JSON fields
+          PROJECT_ID=$(echo "${{ secrets.GCP_SA_KEY }}" | jq -r '.project_id // empty')
+          PRIVATE_KEY=$(echo "${{ secrets.GCP_SA_KEY }}" | jq -r '.private_key // empty')
+          CLIENT_EMAIL=$(echo "${{ secrets.GCP_SA_KEY }}" | jq -r '.client_email // empty')
+          
+          if [ -z "$PROJECT_ID" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$CLIENT_EMAIL" ]; then
+            echo "❌ GCP_SA_KEY: Missing required fields (project_id, private_key, client_email)"
+            echo "🚫 DEPLOYMENT BLOCKED - FIX THE SECRET FORMAT"
+            exit 1
+          fi
+          
+          echo "✅ GCP_SA_KEY: All required fields present"
         else
           echo "❌ GCP_SA_KEY: Invalid JSON format"
+          echo "🚫 DEPLOYMENT BLOCKED - SECRETS MUST BE VALID"
+          echo "📋 Fix the JSON format in GitHub repository settings"
+          echo "🔧 Use the exact content from Google Cloud Console download"
           exit 1
         fi
         
