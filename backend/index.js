@@ -30,7 +30,8 @@ import legalApi from "./routes/legal_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import mapsApi from "./routes/maps_api.mjs";
-// Note: Removed calendar and config APIs temporarily to resolve startup issues
+import calendarApi from "./routes/calendar_api.mjs";
+import configApi from "./routes/config_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -106,7 +107,8 @@ app.use("/api/legal", legalApi);
 app.use("/api/services", servicesApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/maps", mapsApi);
-// Note: Calendar and config APIs temporarily disabled to resolve startup issues
+app.use("/api/calendar", calendarApi);
+app.use("/api/config", configApi);
 console.log("✅ API routes mounted successfully");
 
 // Keep the inline routes for backward compatibility
