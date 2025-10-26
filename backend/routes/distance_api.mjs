@@ -1,16 +1,53 @@
-import admin from "firebase-admin";
 import express from "express";
-import { getFirestore } from "firebase-admin/firestore";
+import { getDb } from "../firebase.js";
 
 const router = express.Router();
 
-// DO NOT initialize Firebase here — index.js must initialize it.
-const getDb = () => {
-  if (!admin.apps.length) {
-    throw new Error("Firebase not initialized");
+// Get fallback coordination points when Firebase is unavailable
+const getFallbackCoordinationPoints = () => [
+  {
+    id: "hq_main",
+    name: "Main Headquarters",
+    address: "1234 Main Street, San Francisco, CA 94102, USA",
+    city: "San Francisco",
+    state: "CA",
+    zipCode: "94102",
+    phone: "+1 (555) 123-4567",
+    email: "main@cleandeparture.com",
+    active: true,
+    coordinates: { lat: 37.7749, lng: -122.4194 },
+    serviceRadius: 50,
+    capacity: { daily: 20, weekly: 120 }
+  },
+  {
+    id: "hq_east",
+    name: "East Bay Operations", 
+    address: "5678 Oakland Avenue, Oakland, CA 94607, USA",
+    city: "Oakland",
+    state: "CA",
+    zipCode: "94607",
+    phone: "+1 (555) 234-5678",
+    email: "eastbay@cleandeparture.com",
+    active: true,
+    coordinates: { lat: 37.8044, lng: -122.2711 },
+    serviceRadius: 40,
+    capacity: { daily: 15, weekly: 90 }
+  },
+  {
+    id: "hq_south",
+    name: "South Bay Center",
+    address: "9999 Silicon Valley Boulevard, San Jose, CA 95110, USA",
+    city: "San Jose",
+    state: "CA", 
+    zipCode: "95110",
+    phone: "+1 (555) 345-6789",
+    email: "southbay@cleandeparture.com",
+    active: true,
+    coordinates: { lat: 37.3382, lng: -121.8863 },
+    serviceRadius: 45,
+    capacity: { daily: 18, weekly: 108 }
   }
-  return getFirestore();
-};
+];
 
 // Calculate distance to nearest coordination point
 router.get("/nearest", async (req, res) => {
@@ -24,18 +61,36 @@ router.get("/nearest", async (req, res) => {
       });
     }
 
-    const db = getDb();
-    const snapshot = await db.collection("coordination_points").where("active", "==", true).get();
-    
-    if (snapshot.empty) {
-      return res.status(404).json({
-        ok: false,
-        error: "No active coordination points found"
-      });
+    let coordinationPoints = [];
+    let dataSource = "database";
+
+    // Try to get coordination points from Firebase
+    try {
+      const db = getDb();
+      if (db) {
+        const snapshot = await db.collection("coordination_points").where("active", "==", true).get();
+        if (!snapshot.empty) {
+          coordinationPoints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+      }
+    } catch (error) {
+      console.warn("Firebase unavailable, using fallback data:", error.message);
     }
 
-    const coordinationPoints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Use fallback data if Firebase failed or no data found
+    if (coordinationPoints.length === 0) {
+      coordinationPoints = getFallbackCoordinationPoints();
+      dataSource = "fallback";
+    }
+
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({
+        ok: false,
+        error: "Google Maps API key not configured"
+      });
+    }
     
     if (!apiKey) {
       return res.status(500).json({
@@ -109,7 +164,9 @@ router.get("/nearest", async (req, res) => {
       serviceableMessage: isServiceable 
         ? `We serve this area from our ${nearestPoint.coordinationPoint.name}` 
         : `This address is outside our current service area (${nearestPoint.distance.miles} miles from nearest point)`,
-      allDistances: allDistances.sort((a, b) => a.distance.miles - b.distance.miles)
+      allDistances: allDistances.sort((a, b) => a.distance.miles - b.distance.miles),
+      source: dataSource,
+      message: dataSource === "fallback" ? "Using fallback data - Firebase unavailable" : "Data from database"
     });
 
   } catch (error) {
@@ -124,10 +181,27 @@ router.get("/nearest", async (req, res) => {
 // Get service area coverage
 router.get("/coverage", async (req, res) => {
   try {
-    const db = getDb();
-    const snapshot = await db.collection("coordination_points").where("active", "==", true).get();
-    
-    const coordinationPoints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let coordinationPoints = [];
+    let dataSource = "database";
+
+    // Try to get coordination points from Firebase
+    try {
+      const db = getDb();
+      if (db) {
+        const snapshot = await db.collection("coordination_points").where("active", "==", true).get();
+        if (!snapshot.empty) {
+          coordinationPoints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+      }
+    } catch (error) {
+      console.warn("Firebase unavailable for coverage, using fallback data:", error.message);
+    }
+
+    // Use fallback data if Firebase failed or no data found
+    if (coordinationPoints.length === 0) {
+      coordinationPoints = getFallbackCoordinationPoints();
+      dataSource = "fallback";
+    }
     
     const coverage = coordinationPoints.map(point => ({
       id: point.id,
@@ -144,7 +218,9 @@ router.get("/coverage", async (req, res) => {
       ok: true,
       coordinationPoints: coverage,
       totalPoints: coverage.length,
-      totalCapacity: coverage.reduce((sum, point) => sum + (point.capacity?.daily || 0), 0)
+      totalCapacity: coverage.reduce((sum, point) => sum + (point.capacity?.daily || 0), 0),
+      source: dataSource,
+      message: dataSource === "fallback" ? "Using fallback data - Firebase unavailable" : "Data from database"
     });
 
   } catch (error) {
