@@ -25,6 +25,13 @@ import adminApi from "./routes/admin_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 import distanceApi from "./routes/distance_api.mjs";
+import paymentApi from "./routes/payment_api.mjs";
+import legalApi from "./routes/legal_api.mjs";
+import servicesApi from "./routes/services_api.mjs";
+import quotesApi from "./routes/quotes_api.mjs";
+import mapsApi from "./routes/maps_api.mjs";
+import calendarApi from "./routes/calendar_api.mjs";
+import configApi from "./routes/config_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -93,19 +100,23 @@ app.use("/api/admin", adminApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/coordination_points", coordinationPointsApi);
 app.use("/api/distance", distanceApi);
+app.use("/api/payment", paymentApi);
+app.use("/api/legal", legalApi);
+app.use("/api/services", servicesApi);
+app.use("/api/quotes", quotesApi);
+app.use("/api/maps", mapsApi);
+app.use("/api/calendar", calendarApi);
+app.use("/api/config", configApi);
 
 // Keep the inline routes for backward compatibility
-app.get("/api/calendar", (req, res) => {
+app.get("/api/calendar/legacy", (req, res) => {
   res.json({
     ok: true,
-    message: "🗓️ Calendar API is working",
+    message: "🗓️ Legacy Calendar API is working",
     timestamp: new Date().toISOString(),
     query: req.query
   });
 });
-
-// Mount coordination points route
-app.use("/api/coordination_points", coordinationPointsApi);
 
 console.log("✅ API routes mounted successfully");
 

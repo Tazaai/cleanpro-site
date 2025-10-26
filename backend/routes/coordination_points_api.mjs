@@ -20,11 +20,14 @@ const getDb = async () => {
       console.log("✅ Firebase initialization successful");
       return getFirestore();
     } else {
-      throw new Error("Firebase initialization completed but no apps found");
+      console.warn("⚠️ Firebase initialization completed but no apps found - this is expected in some environments");
+      // Don't throw error, just return null to trigger fallback
+      return null;
     }
   } catch (error) {
     console.error("❌ Firebase initialization failed:", error.message);
-    throw new Error(`Firebase initialization failed: ${error.message}`);
+    // Don't throw error, just return null to trigger fallback
+    return null;
   }
 };
 
@@ -36,12 +39,19 @@ router.get("/", async (req, res) => {
     
     try {
       const db = await getDb();
-      const snapshot = await db.collection("coordination_points").get();
-      coordinationPoints = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      fromFirebase = true;
-      console.log(`✅ Loaded ${coordinationPoints.length} coordination points from Firebase`);
+      if (db) {
+        const snapshot = await db.collection("coordination_points").get();
+        coordinationPoints = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        fromFirebase = true;
+        console.log(`✅ Loaded ${coordinationPoints.length} coordination points from Firebase`);
+      } else {
+        console.warn("⚠️ Firebase database not available, using fallback data");
+        fromFirebase = false;
+      }
     } catch (firebaseError) {
       console.warn("⚠️ Firebase unavailable, using fallback data:", firebaseError.message);
+      fromFirebase = false;
+    }
       
       // Fallback to hardcoded coordination points for system reliability
       coordinationPoints = [
