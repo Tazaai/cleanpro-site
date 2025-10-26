@@ -7,9 +7,16 @@ Used by **GitHub Copilot** to understand project goals, structure, and workflow 
 🔐 GitHub Copilot Policy: This file is read-only by default.  
 Any edits must follow the 2-step developer authorization process (manual confirmation in Codespaces + signed commit).
 
+📋 **MANDATORY REVIEW PROCESS**: 
+- **After each deployment**: GitHub Copilot MUST run `./review_report.sh` to validate system state
+- **Before new tasks**: GitHub Copilot MUST review this PROJECT_GUIDE.md for current context
+- **Post-task completion**: Update documentation and run comprehensive validation
+- **NO EXCEPTIONS**: Every deployment cycle requires full review and validation
+
 
 **Last Updated**: October 26, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅  
-**Secret Management**: Enhanced with local vs CI/CD environment differentiation
+**Secret Management**: Enhanced with local vs CI/CD environment differentiation  
+**Review Process**: Mandatory validation after each deployment and before new tasks
 
 ---
 
@@ -17,6 +24,33 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 Create a **complete cleaning platform MVP** with dynamic services, Google Maps/Calendar integration, user authentication, admin dashboard, payment processing, and legal compliance — **FULLY IMPLEMENTED** and supported by **GitHub Copilot** for automation, diagnostics, and deployment with modern Artifact Registry approach.
 
 **STATUS**: 🎉 **MVP COMPLETE & DEPLOYED** - All core features functional and live!
+
+---
+
+## 🤖 MANDATORY GITHUB COPILOT REVIEW PROCESS
+
+### 📋 **CRITICAL WORKFLOW REQUIREMENTS**
+1. **Post-Deployment**: MUST run `./copilot_mandatory_review.sh` after every deployment
+2. **Pre-Task**: MUST review this PROJECT_GUIDE.md before starting new development tasks  
+3. **Post-Task**: MUST update documentation and validate all changes
+4. **NO EXCEPTIONS**: Full validation cycle required for every development iteration
+
+### 🔍 **Review Automation Script**
+```bash
+# Run comprehensive review system
+./copilot_mandatory_review.sh
+
+# Individual components
+./review_report.sh              # System health & secrets
+./test_coordination_api.sh      # API endpoint validation  
+./setup_local_secrets.sh        # Local development setup
+```
+
+### 🚫 **NO BYPASS POLICY ENFORCEMENT**
+- Every deployment must pass comprehensive validation
+- All temporary fixes forbidden - permanent solutions only
+- Documentation must be current and complete
+- Secret management must follow established patterns
 
 ---
 
@@ -34,6 +68,13 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 - **💳 Payment Processing**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - **📊 Integration**: `APPSHEET_API_KEY`, `APPSHEET_APP_ID`
 
+### 🔧 Local Development Secret Management
+- **Setup Script**: `./setup_local_secrets.sh` (automated configuration)
+- **Local File**: `.env.local` (git-ignored, development credentials only)
+- **Protection**: Enhanced `.gitignore` with comprehensive secret patterns
+- **Separation**: Development vs Production credentials (never mix)
+- **Security**: Zero risk of public exposure, automatic loading
+
 ### ⚠️ Common Issues & Diagnostics
 1. **GCP_SA_KEY JSON Format**:
    - Issue: Multi-line private keys breaking shell parsing in GitHub Actions
@@ -41,9 +82,9 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
    - Validation: Requires `project_id`, `private_key`, `client_email` fields
 
 2. **Local vs CI/CD Environment**:
-   - Local: ℹ️ "Not available locally (stored in GitHub Secrets)" - NORMAL
+   - Local: Use `.env.local` with development credentials
    - CI/CD: ✅/❌ Strict validation with deployment blocking
-   - Production: Auto-injection from validated secrets
+   - Production: Auto-injection from validated GitHub Secrets
 
 3. **Secret Validation Levels**:
    - Basic: Presence check (`-z` test)

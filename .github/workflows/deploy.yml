@@ -294,6 +294,15 @@ jobs:
           echo "🎯 Clean Departure is live and ready for customers!"
           echo "✅ Campaign discounts and square feet pricing deployed"
           echo "✅ AppSheet integration ready for configuration"
+          
+          echo ""
+          echo "📊 MANDATORY POST-DEPLOYMENT REVIEW:"
+          echo "======================================"
+          echo "1. 🔍 GitHub Copilot MUST run ./review_report.sh"
+          echo "2. 📖 GitHub Copilot MUST review PROJECT_GUIDE.md"
+          echo "3. 🧪 GitHub Copilot MUST validate coordination points API"
+          echo "4. 📝 Update documentation with any changes discovered"
+          echo "🚫 NO EXCEPTIONS: Full validation required after every deployment"
 
       - name: Post-Deployment Setup & Verification
         run: |

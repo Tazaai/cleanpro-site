@@ -9,6 +9,19 @@
 firebase_config.json
 serviceAccountKey.json
 backend/firebase_config.json
+
+# Environment variables - LOCAL DEVELOPMENT SECRETS
+.env
+.env.local
+.env.*.local
+*.env
+.env.development
+.env.production
+config/local/
+secrets/
+*.key
+*.pem
+firebase-credentials.json
 backend/serviceAccountKey.json
 functions/serviceAccountKey.json
 key.json

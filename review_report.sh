@@ -154,6 +154,26 @@ validate_secret_detailed "APPSHEET_APP_ID"
 # Summary of secret validation
 echo "============================================================================================================"
 
+# Local Secret Management Diagnostic
+echo "🔧 Local Secret Management Status:"
+if [ -f ".env.local" ]; then
+  echo "✅ .env.local file exists (development secrets ready)"
+  if git check-ignore .env.local >/dev/null 2>&1; then
+    echo "✅ .env.local properly protected by .gitignore"
+  else
+    echo "❌ .env.local NOT protected - SECURITY RISK"
+    VALIDATION_PASSED=false
+  fi
+else
+  echo "ℹ️  .env.local not found - run ./setup_local_secrets.sh for local development"
+fi
+
+if [ -x "setup_local_secrets.sh" ]; then
+  echo "✅ Local secret setup script available"
+else
+  echo "⚠️  setup_local_secrets.sh missing or not executable"
+fi
+
 # Special diagnostic for GCP_SA_KEY JSON format issues
 if [ "$ENVIRONMENT" = "GitHub Actions" ] && [ -n "$GCP_SA_KEY" ]; then
   echo "🔬 Advanced GCP_SA_KEY Diagnostic (GitHub Actions):"
