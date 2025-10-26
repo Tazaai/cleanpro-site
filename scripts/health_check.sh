@@ -156,12 +156,6 @@ else
         warn_status "Database connection failed - API not responding (error: $coord_error)"
     fi
 fi
-    else
-        check_status 0 "Database accessible via API (source: $coord_source)"
-    fi
-else
-    check_status 1 "Database connection failed - API not responding"
-fi
 
 # 6. Security Headers Check
 echo ""
