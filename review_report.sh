@@ -174,10 +174,12 @@ else
   echo "⚠️  setup_local_secrets.sh missing or not executable"
 fi
 
-# Special diagnostic for GCP_SA_KEY JSON format issues
+# Enhanced diagnostic for GCP_SA_KEY JSON format issues (DETAILED VALIDATION)
+echo "🔬 DETAILED SECRET VALIDATION (Review Mode)"
+echo "=========================================="
 if [ "$ENVIRONMENT" = "GitHub Actions" ] && [ -n "$GCP_SA_KEY" ]; then
   echo "🔬 Advanced GCP_SA_KEY Diagnostic (GitHub Actions):"
-  echo "📄 Writing secret to temp file for validation..."
+  echo "📄 Writing secret to temp file for safe validation..."
   echo "$GCP_SA_KEY" > /tmp/gcp_sa_check.json 2>/dev/null || echo "⚠️ Could not write temp file"
   if jq . /tmp/gcp_sa_check.json > /dev/null 2>&1; then
     echo "✅ JSON format valid"
@@ -196,6 +198,9 @@ if [ "$ENVIRONMENT" = "GitHub Actions" ] && [ -n "$GCP_SA_KEY" ]; then
 elif [ "$ENVIRONMENT" = "Local Development" ]; then
   echo "ℹ️  GCP_SA_KEY diagnostic: Only available in GitHub Actions environment"
 fi
+echo "💡 Note: This detailed validation is used for diagnostics only"
+echo "🚀 Deployment workflow uses streamlined validation for faster deploys"
+echo "=========================================="
 
 if [ "$VALIDATION_PASSED" = true ]; then
   echo "🎉 All secrets validated successfully!"
