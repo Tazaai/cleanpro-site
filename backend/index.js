@@ -30,8 +30,7 @@ import legalApi from "./routes/legal_api.mjs";
 import servicesApi from "./routes/services_api.mjs";
 import quotesApi from "./routes/quotes_api.mjs";
 import mapsApi from "./routes/maps_api.mjs";
-import calendarApi from "./routes/calendar_api.mjs";
-import configApi from "./routes/config_api.mjs";
+// Note: Removed calendar and config APIs temporarily to resolve startup issues
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -41,6 +40,7 @@ console.log("📅 Deployment:", new Date().toISOString());
 
 // Initialize Firebase in background - don't block server startup
 let firebaseReady = false;
+console.log("🔥 Initializing Firebase...");
 initFirebase()
   .then(() => {
     console.log("✅ Firebase initialized successfully");
@@ -94,6 +94,7 @@ app.get("/debug/firebase", (req, res) => {
 
 // Basic API routes - direct inline to avoid import issues
 // Mount API routes
+console.log("🧩 Mounting API routes...");
 app.use("/api/bookings", bookingsApi);
 app.use("/api/auth", authApi);
 app.use("/api/admin", adminApi);
@@ -105,8 +106,8 @@ app.use("/api/legal", legalApi);
 app.use("/api/services", servicesApi);
 app.use("/api/quotes", quotesApi);
 app.use("/api/maps", mapsApi);
-app.use("/api/calendar", calendarApi);
-app.use("/api/config", configApi);
+// Note: Calendar and config APIs temporarily disabled to resolve startup issues
+console.log("✅ API routes mounted successfully");
 
 // Keep the inline routes for backward compatibility
 app.get("/api/calendar/legacy", (req, res) => {
@@ -118,8 +119,6 @@ app.get("/api/calendar/legacy", (req, res) => {
   });
 });
 
-console.log("✅ API routes mounted successfully");
-
 // 404 handler - MUST be last, before app.listen()
 app.use("*", (req, res) => {
   res.status(404).json({ 
@@ -130,7 +129,35 @@ app.use("*", (req, res) => {
 });
 
 // Start server immediately - don't wait for routes
-app.listen(PORT, HOST, () => {
+console.log(`🚀 Starting server on ${HOST}:${PORT}...`);
+const server = app.listen(PORT, HOST, () => {
   console.log(`✅ Server listening at http://${HOST}:${PORT}`);
   console.log("🚀 CleanPro Backend is ready!");
+  console.log(`📊 Process ID: ${process.pid}`);
+  console.log(`📊 Memory usage: ${JSON.stringify(process.memoryUsage())}`);
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  console.error(`❌ Server error: ${err.message}`);
+  console.error(`🔍 Error code: ${err.code}`);
+  console.error(`🔍 Error syscall: ${err.syscall}`);
+  process.exit(1);
+});
+
+// Handle process termination
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });

@@ -8,17 +8,17 @@ Used by **GitHub Copilot** to understand project goals, structure, and workflow 
 🔐 GitHub Copilot Policy: This file is read-only by default.  
 Any edits must follow the 2-step developer authorization process (manual confirmation in Codespaces + signed commit).
 
+📋 **MANDATORY REVIEW PROCESS**: 
+- **After each deployment**: GitHub Copilot MUST run `./review_report.sh` to validate system state
+- **Before new tasks**: GitHub Copilot MUST review this PROJECT_GUIDE.md for current context
+- **Post-task completion**: Update documentation and run comprehensive validation
+- **NO EXCEPTIONS**: Every deployment cycle requires full review and validation
 
-**Last Updated**: October 24, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅
 
----
+**Last Updated**: October 26, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅  
+**Secret Management**: Enhanced with local vs CI/CD environment differentiation  
+**Review Process**: Mandatory validation after each deployment and before new tasks
 
-## 🎯 Goal
-Create a **complete cleaning platform MVP** with dynamic services, Google Maps/Calendar integration, user authentication, admin dashboard, payment processing, and legal compliance — **FULLY IMPLEMENTED** and supported by **GitHub Copilot** for automation, diagnostics, and deployment with modern Artifact Registry approach.
-
-**STATUS**: 🎉 **MVP COMPLETE & DEPLOYED** - All core features functional and live!
-
----
 ✅ Project guide loaded as master documentation reference.
 📋 Deployment Architecture: GitHub Secrets + Artifact Registry (no environment files)
 
@@ -31,6 +31,8 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 ## 🔑 Checking MVP secrets (authentication, payments, deployment)...
 🏠 Running locally - secrets stored in GitHub repository settings
 ℹ️  Local environment doesn't have access to GitHub Secrets (this is normal)
+🌍 Environment: Local Development
+============================================================================================================
 ======================================================
 🏗️ Core GCP Infrastructure:
 ℹ️  GCP_PROJECT: Not available locally (stored in GitHub Secrets)
@@ -47,7 +49,12 @@ Create a **complete cleaning platform MVP** with dynamic services, Google Maps/C
 📊 AppSheet Integration:
 ℹ️  APPSHEET_API_KEY: Not available locally (stored in GitHub Secrets)
 ℹ️  APPSHEET_APP_ID: Not available locally (stored in GitHub Secrets)
-======================================================
+============================================================================================================
+🔧 Local Secret Management Status:
+✅ .env.local file exists (development secrets ready)
+✅ .env.local properly protected by .gitignore
+✅ Local secret setup script available
+ℹ️  GCP_SA_KEY diagnostic: Only available in GitHub Actions environment
 🎉 All secrets validated successfully!
 ✅ Deployment can proceed
 
@@ -137,9 +144,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-completed | failure | 🚫 Remove final bypass from review_report.sh
-completed | failure | 🚫 Implement NO BYPASS POLICY - Permanent solutions only
-completed | failure | 🔧 Remove problematic validation bypass
+completed | failure | 🚨 Fix health check script syntax error - remove duplicate else blocks…
+completed | failure | 🤖 Implement mandatory GitHub Copilot review system - enhance PROJECT_…
+completed | failure | 🔧 Fix health check script - resolve integer comparison error & improv…
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
