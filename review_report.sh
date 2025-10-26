@@ -4,11 +4,15 @@
 # Master Documentation: PROJECT_GUIDE.md contains the authoritative deployment architecture
 # This script validates deployment readiness according to PROJECT_GUIDE.md standards
 
-# Skip local validation when running inside GitHub Actions
+# Validate secrets and configuration - NO SKIPPING ALLOWED
 if [ "$GITHUB_ACTIONS" = "true" ]; then
-  echo "✅ Running inside GitHub Actions — skipping local secret validation"
+  echo "🔍 Running in GitHub Actions - performing full validation"
   echo "📖 Deployment follows PROJECT_GUIDE.md: GitHub Secrets + Artifact Registry architecture"
-  exit 0
+  echo "🚫 NO BYPASSES: All validations must pass"
+  # Continue with full validation even in GitHub Actions
+else
+  echo "🔍 Running local validation"
+  echo "📋 Ensure all required secrets are configured"
 fi
 
 set +e

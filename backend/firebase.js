@@ -64,9 +64,9 @@ export async function initFirebase() {
         raw = fixedRaw; // Use the fixed version
       } catch (fixError) {
         console.error("❌ JSON fix attempt failed:", fixError.message);
-        // Continue without Firebase rather than crash
-        console.warn("⚠️ Skipping Firebase initialization due to invalid JSON");
-        return;
+        console.error("🚫 INVALID FIREBASE CREDENTIALS - DEPLOYMENT BLOCKED");
+        console.error("📋 Fix the JSON format in GitHub repository settings");
+        throw new Error("Firebase credentials validation failed - invalid JSON format");
       }
     }
 
