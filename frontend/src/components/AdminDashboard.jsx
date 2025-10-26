@@ -174,14 +174,14 @@ export default function AdminDashboard({ onClose }) {
             <div className="bg-orange-100 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-orange-800">Pending Approvals</h3>
               <p className="text-2xl font-bold text-orange-600">
-                {bookings.filter(b => b.status === 'pending_approval').length}
+                {(bookings || []).filter(b => b && b.status === 'pending_approval').length}
               </p>
             </div>
           </div>
         </div>
 
         {/* Priority Alerts for Pending Approvals */}
-        {bookings.filter(b => b.status === 'pending_approval').length > 0 && (
+        {(bookings || []).filter(b => b && b.status === 'pending_approval').length > 0 && (
           <div className="p-4 bg-orange-50 border-l-4 border-orange-400">
             <div className="flex items-start">
               <div className="flex-shrink-0">

@@ -3,6 +3,7 @@ import BookingForm from "./components/BookingForm";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import AdminDashboard from "./components/AdminDashboard";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
 
@@ -253,8 +254,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

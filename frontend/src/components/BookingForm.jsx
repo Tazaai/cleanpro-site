@@ -159,7 +159,7 @@ export default function BookingForm() {
         setAddress(fullAddress);
         
         // Auto-fetch distance when address is selected
-        if (fullAddress && hqs.length > 0) {
+        if (fullAddress && (hqs || []).length > 0) {
           fetchDistance(fullAddress);
         }
         
@@ -168,14 +168,14 @@ export default function BookingForm() {
     };
     
     // Initialize when HQs are loaded
-    if (hqs.length > 0) {
+    if ((hqs || []).length > 0) {
       initAutocomplete();
     }
   }, [hqs]); // Re-run when HQs change
 
   // 🌍 Distance - Improved with better error handling
   const fetchDistance = async (dest) => {
-    if (!dest || !hqs.length) return;
+    if (!dest || !(hqs || []).length) return;
     
     setWarning(""); // Clear previous warnings
     setWaitlist(false);

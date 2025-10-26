@@ -25,16 +25,23 @@ export const AuthProvider = ({ children }) => {
           'Authorization': `Bearer ${token}`
         }
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
-        if (data.ok) {
+        if (data && data.ok && data.user) {
           setUser(data.user);
         } else {
+          console.warn('Invalid token verification response:', data);
           localStorage.removeItem('token');
           setToken(null);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Token verification failed:', error);
         localStorage.removeItem('token');
         setToken(null);
       })
