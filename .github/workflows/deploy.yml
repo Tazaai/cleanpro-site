@@ -89,8 +89,7 @@ jobs:
   test:
     needs: secret-validation
     runs-on: ubuntu-latest
-    # TODO: Temporarily disabled to break chicken-egg deployment problem
-    if: false && needs.secret-validation.outputs.secrets_valid == 'true'
+    if: needs.secret-validation.outputs.secrets_valid == 'true'
     steps:
     - uses: actions/checkout@v4
     
@@ -116,9 +115,7 @@ jobs:
       run: npx playwright test
 
   deploy:
-    needs: [secret-validation]
-    # TODO: Re-enable test dependency after deployment fixes
-    # needs: [secret-validation, test]
+    needs: [secret-validation, test]
     runs-on: ubuntu-latest
     if: needs.secret-validation.outputs.secrets_valid == 'true' && github.ref == 'refs/heads/main'
     env:
