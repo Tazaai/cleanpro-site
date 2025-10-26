@@ -239,3 +239,9 @@ jobs:
           echo "🎯 Clean Departure is live and ready for customers!"
           echo "✅ Campaign discounts and square feet pricing deployed"
           echo "✅ AppSheet integration ready for configuration"
+
+      - name: Post-Deployment Setup & Verification
+        run: |
+          echo "🌱 Running post-deployment setup..."
+          chmod +x scripts/post_deployment_setup.sh
+          ./scripts/post_deployment_setup.sh

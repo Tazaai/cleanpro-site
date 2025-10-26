@@ -121,12 +121,25 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
-  // 🏢 Load HQs
+  // 🏢 Load HQs - with better error handling
   useEffect(() => {
     fetch(`${API_BASE}/api/coordination_points`)
       .then((r) => r.json())
-      .then((d) => d.ok && setHqs(d.hqs))
-      .catch(() => {});
+      .then((d) => {
+        if (d.ok) {
+          setHqs(d.hqs || []);
+          if (d.needsSeeding) {
+            console.warn("⚠️ Coordination points need to be seeded in database");
+          }
+        } else {
+          console.error("Failed to load coordination points:", d.error);
+          setHqs([]); // Set empty array on error
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading coordination points:", error);
+        setHqs([]); // Set empty array on error
+      });
   }, []);
 
   // 📍 Google Autocomplete - Improved implementation

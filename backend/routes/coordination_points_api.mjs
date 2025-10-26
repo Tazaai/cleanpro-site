@@ -19,26 +19,56 @@ router.get("/", async (req, res) => {
     const snapshot = await db.collection("coordination_points").get();
     const hqs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
+    // Handle empty collection gracefully
+    if (hqs.length === 0) {
+      console.warn("⚠️ No coordination points found in database");
+      return res.json({
+        ok: true,
+        hqs: [],
+        message: "No coordination points configured yet",
+        needsSeeding: true
+      });
+    }
+
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     const { origin, destination } = req.query;
 
     if (apiKey && origin && destination) {
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
-        origin
-      )}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
-      const r = await fetch(url);
-      const data = await r.json();
-      return res.json({
-        ok: true,
-        hqs,
-        distance: data.rows?.[0]?.elements?.[0]?.distance || null,
-      });
+      try {
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
+          origin
+        )}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
+        const r = await fetch(url);
+        const data = await r.json();
+        return res.json({
+          ok: true,
+          hqs,
+          distance: data.rows?.[0]?.elements?.[0]?.distance || null,
+        });
+      } catch (distanceError) {
+        console.warn("Distance calculation failed:", distanceError.message);
+        // Return HQs without distance calculation
+      }
     }
 
     res.json({ ok: true, hqs });
   } catch (err) {
     console.error("coordination_points error:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    
+    // Provide more specific error information
+    if (err.message.includes("Firebase not initialized")) {
+      res.status(500).json({ 
+        ok: false, 
+        error: "Database connection not available",
+        details: "Firebase initialization required"
+      });
+    } else {
+      res.status(500).json({ 
+        ok: false, 
+        error: err.message,
+        endpoint: "coordination_points"
+      });
+    }
   }
 });
 
