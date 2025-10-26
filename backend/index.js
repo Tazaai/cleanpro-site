@@ -22,6 +22,7 @@ import bookingsApi from "./routes/bookings_api.mjs";
 import authApi from "./routes/auth_api.mjs";
 import adminApi from "./routes/admin_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
+import coordinationPointsApi from "./routes/coordination_points_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -69,6 +70,7 @@ app.use("/api/bookings", bookingsApi);
 app.use("/api/auth", authApi);
 app.use("/api/admin", adminApi);
 app.use("/api/pricing", pricingApi);
+app.use("/api/coordination_points", coordinationPointsApi);
 
 // Keep the inline routes for backward compatibility
 app.get("/api/calendar", (req, res) => {
@@ -80,13 +82,8 @@ app.get("/api/calendar", (req, res) => {
   });
 });
 
-app.get("/api/coordination_points", (req, res) => {
-  res.json({
-    ok: true,
-    message: "📍 Coordination Points API is working", 
-    timestamp: new Date().toISOString()
-  });
-});
+// Mount coordination points route
+app.use("/api/coordination_points", coordinationPointsApi);
 
 console.log("✅ API routes mounted successfully");
 
