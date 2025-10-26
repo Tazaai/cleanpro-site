@@ -5,8 +5,8 @@ import toast, { Toaster } from "react-hot-toast";
 import PaymentModal from "./PaymentModal";
 import { useAuth } from "../contexts/AuthContext";
 
-// ✅ Correct base URL
-const API_BASE = import.meta.env.VITE_API_BASE;
+// ✅ Correct base URL with fallback
+const API_BASE = import.meta.env.VITE_API_BASE || window.API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
 
 // Custom calendar styles
 const calendarStyles = `

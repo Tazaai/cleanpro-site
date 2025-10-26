@@ -10,7 +10,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || window.API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
