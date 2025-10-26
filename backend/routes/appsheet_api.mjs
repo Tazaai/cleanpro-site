@@ -311,19 +311,19 @@ router.post("/sync/all", authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
-// Get AppSheet configuration status
-router.get("/config", authenticateToken, requireAdmin, async (req, res) => {
+// Get AppSheet configuration status (public endpoint for diagnostics)
+router.get("/config", async (req, res) => {
   try {
     const config = {
       configured: !!(APPSHEET_API_KEY && APP_ID),
-      apiKeyPresent: !!APPSHEET_API_KEY,
-      appIdPresent: !!APP_ID,
+      hasApiKey: !!APPSHEET_API_KEY,
+      hasAppId: !!APP_ID,
       baseUrl: APPSHEET_BASE_URL
     };
 
     res.json({
       ok: true,
-      config
+      ...config
     });
 
   } catch (err) {
@@ -335,8 +335,8 @@ router.get("/config", authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
-// Test AppSheet connection
-router.post("/test", authenticateToken, requireAdmin, async (req, res) => {
+// Test AppSheet connection (public endpoint for diagnostics)
+router.post("/test", async (req, res) => {
   try {
     validateAppSheetConfig();
     
