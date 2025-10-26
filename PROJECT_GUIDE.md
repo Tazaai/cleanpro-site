@@ -8,7 +8,8 @@ Used by **GitHub Copilot** to understand project goals, structure, and workflow 
 Any edits must follow the 2-step developer authorization process (manual confirmation in Codespaces + signed commit).
 
 
-**Last Updated**: October 24, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅
+**Last Updated**: October 26, 2025 - MVP COMPLETE with Full Authentication, Admin Dashboard, Payments & Maps ✅  
+**Secret Management**: Enhanced with local vs CI/CD environment differentiation
 
 ---
 
@@ -16,6 +17,38 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 Create a **complete cleaning platform MVP** with dynamic services, Google Maps/Calendar integration, user authentication, admin dashboard, payment processing, and legal compliance — **FULLY IMPLEMENTED** and supported by **GitHub Copilot** for automation, diagnostics, and deployment with modern Artifact Registry approach.
 
 **STATUS**: 🎉 **MVP COMPLETE & DEPLOYED** - All core features functional and live!
+
+---
+
+## 🔐 Secret Management & Environment Differentiation
+
+### 📊 Environment Types
+- **🏠 Local Development**: `.env` files, no GitHub Secrets access (normal behavior)
+- **🔧 GitHub Actions CI/CD**: GitHub repository secrets, strict validation
+- **☁️ Cloud Run Production**: Environment variables injected from GitHub Secrets
+
+### 🔑 Secret Categories
+- **🏗️ Core Infrastructure**: `GCP_PROJECT`, `GCP_SA_KEY` (service account JSON)
+- **🔐 Authentication & Security**: `JWT_SECRET`, `FIREBASE_KEY`
+- **🗺️ External APIs**: `GOOGLE_MAPS_API_KEY`, `OPENAI_API_KEY`
+- **💳 Payment Processing**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- **📊 Integration**: `APPSHEET_API_KEY`, `APPSHEET_APP_ID`
+
+### ⚠️ Common Issues & Diagnostics
+1. **GCP_SA_KEY JSON Format**:
+   - Issue: Multi-line private keys breaking shell parsing in GitHub Actions
+   - Fix: Use temp file approach in validation scripts
+   - Validation: Requires `project_id`, `private_key`, `client_email` fields
+
+2. **Local vs CI/CD Environment**:
+   - Local: ℹ️ "Not available locally (stored in GitHub Secrets)" - NORMAL
+   - CI/CD: ✅/❌ Strict validation with deployment blocking
+   - Production: Auto-injection from validated secrets
+
+3. **Secret Validation Levels**:
+   - Basic: Presence check (`-z` test)
+   - Advanced: JSON structure validation with required fields
+   - Deployment: Runtime functionality verification
 
 ---
 

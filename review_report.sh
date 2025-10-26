@@ -45,11 +45,15 @@ echo "## 🔑 Checking MVP secrets (authentication, payments, deployment)..."
 if [ -n "$GITHUB_ACTIONS" ]; then
   ENVIRONMENT="GitHub Actions"
   echo "🚀 Running in GitHub Actions - checking deployment secrets..."
+  echo "📋 Secret Validation: STRICT MODE - deployment blocking enabled"
 else
   ENVIRONMENT="Local Development"
   echo "🏠 Running locally - secrets stored in GitHub repository settings"
   echo "ℹ️  Local environment doesn't have access to GitHub Secrets (this is normal)"
 fi
+
+echo "🌍 Environment: $ENVIRONMENT"
+echo "============================================================================================================"
 
 echo "======================================================"
 
@@ -148,7 +152,30 @@ validate_secret_detailed "APPSHEET_API_KEY"
 validate_secret_detailed "APPSHEET_APP_ID"
 
 # Summary of secret validation
-echo "======================================================"
+echo "============================================================================================================"
+
+# Special diagnostic for GCP_SA_KEY JSON format issues
+if [ "$ENVIRONMENT" = "GitHub Actions" ] && [ -n "$GCP_SA_KEY" ]; then
+  echo "🔬 Advanced GCP_SA_KEY Diagnostic (GitHub Actions):"
+  echo "📄 Writing secret to temp file for validation..."
+  echo "$GCP_SA_KEY" > /tmp/gcp_sa_check.json 2>/dev/null || echo "⚠️ Could not write temp file"
+  if jq . /tmp/gcp_sa_check.json > /dev/null 2>&1; then
+    echo "✅ JSON format valid"
+    PROJECT_ID=$(jq -r '.project_id // empty' /tmp/gcp_sa_check.json 2>/dev/null)
+    PRIVATE_KEY=$(jq -r '.private_key // empty' /tmp/gcp_sa_check.json 2>/dev/null)
+    CLIENT_EMAIL=$(jq -r '.client_email // empty' /tmp/gcp_sa_check.json 2>/dev/null)
+    echo "📋 Project ID: ${PROJECT_ID:0:20}..."
+    echo "📋 Client Email: ${CLIENT_EMAIL:0:30}..."
+    echo "🔑 Private Key: ${#PRIVATE_KEY} characters"
+  else
+    echo "❌ JSON format invalid - deployment will be blocked"
+    echo "🔧 Fix: Update GCP_SA_KEY in GitHub repository secrets with valid JSON"
+    VALIDATION_PASSED=false
+  fi
+  rm -f /tmp/gcp_sa_check.json 2>/dev/null
+elif [ "$ENVIRONMENT" = "Local Development" ]; then
+  echo "ℹ️  GCP_SA_KEY diagnostic: Only available in GitHub Actions environment"
+fi
 
 if [ "$VALIDATION_PASSED" = true ]; then
   echo "🎉 All secrets validated successfully!"
@@ -158,7 +185,7 @@ else
   if [ "$ENVIRONMENT" = "Local Development" ]; then
     echo "ℹ️  Local environment detected - secrets not available (this is normal)"
     echo "✅ Secrets are stored in GitHub repository settings for deployment"
-    echo "� To configure secrets: Repository → Settings → Secrets and variables → Actions"
+    echo "🔧 To configure secrets: Repository → Settings → Secrets and variables → Actions"
     SECRET_VALIDATION_RESULT="LOCAL"
   else
     echo "�🚨 Secret validation FAILED!"
