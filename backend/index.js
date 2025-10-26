@@ -17,6 +17,12 @@ const HOST = process.env.HOST || "0.0.0.0";
 // Initialize Firebase before importing routes
 import { initFirebase } from "./firebase.js";
 
+// Import API routes
+import bookingsApi from "./routes/bookings_api.mjs";
+import authApi from "./routes/auth_api.mjs";
+import adminApi from "./routes/admin_api.mjs";
+import pricingApi from "./routes/pricing_api.mjs";
+
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
 console.log("🔧 Port:", PORT);
@@ -58,6 +64,13 @@ app.get("/health", (req, res) => {
 
 
 // Basic API routes - direct inline to avoid import issues
+// Mount API routes
+app.use("/api/bookings", bookingsApi);
+app.use("/api/auth", authApi);
+app.use("/api/admin", adminApi);
+app.use("/api/pricing", pricingApi);
+
+// Keep the inline routes for backward compatibility
 app.get("/api/calendar", (req, res) => {
   res.json({
     ok: true,
