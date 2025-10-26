@@ -25,6 +25,7 @@ NC='\033[0m' # No Color
 
 # Track overall status
 OVERALL_STATUS=0
+WARNINGS=0
 
 # Helper function for status reporting
 check_status() {
@@ -39,6 +40,7 @@ check_status() {
 # Helper function for warnings
 warn_status() {
     echo -e "${YELLOW}⚠️ $1${NC}"
+    WARNINGS=$((WARNINGS + 1))
 }
 
 # 1. Backend Health Check
@@ -74,12 +76,19 @@ echo "======================"
 coord_result=$(curl -s --max-time $TIMEOUT "$BACKEND_URL/api/coordination_points" || echo '{"ok":false}')
 coord_ok=$(echo "$coord_result" | jq -r '.ok // false' 2>/dev/null || echo "false")
 coord_error=$(echo "$coord_result" | jq -r '.error // ""' 2>/dev/null || echo "")
+coord_source=$(echo "$coord_result" | jq -r '.source // "unknown"' 2>/dev/null || echo "unknown")
 
 if [ "$coord_ok" = "true" ]; then
     coord_count=$(echo "$coord_result" | jq -r '.coordinationPoints | length // (.hqs | length) // 0' 2>/dev/null || echo "0")
-    check_status 0 "Coordination Points API ($coord_count points)"
+    if [ "$coord_source" = "firebase" ]; then
+        check_status 0 "Coordination Points API ($coord_count points from Firebase)"
+    elif [ "$coord_source" = "fallback" ]; then
+        warn_status "Coordination Points API ($coord_count points from fallback - Firebase unavailable)"
+    else
+        check_status 0 "Coordination Points API ($coord_count points)"
+    fi
 else
-    check_status 1 "Coordination Points API failed: $coord_error"
+    warn_status "Coordination Points API failed: $coord_error (non-critical - fallback should engage)"
 fi
 
 # Pricing API
@@ -120,14 +129,20 @@ echo ""
 echo "🗄️ Database Connectivity:"
 echo "========================="
 # Test through coordination points since it requires DB access
-if [ "$coord_ok" = "true" ]; then
-    check_status 0 "Database accessible via API"
-else
-    if [[ "$coord_error" == *"Firebase"* ]]; then
-        check_status 1 "Database connection failed (Firebase issue)"
+coord_result_db=$(curl -s --max-time $TIMEOUT "$BACKEND_URL/api/coordination_points" || echo '{"ok":false}')
+coord_ok_db=$(echo "$coord_result_db" | jq -r '.ok // false' 2>/dev/null || echo "false")
+coord_source=$(echo "$coord_result_db" | jq -r '.source // "unknown"' 2>/dev/null || echo "unknown")
+
+if [ "$coord_ok_db" = "true" ]; then
+    if [ "$coord_source" = "firebase" ]; then
+        check_status 0 "Database fully operational (Firebase connected)"
+    elif [ "$coord_source" = "fallback" ]; then
+        warn_status "Database using fallback mode (Firebase unavailable but system functional)"
     else
-        warn_status "Database status unclear"
+        check_status 0 "Database accessible via API (source: $coord_source)"
     fi
+else
+    check_status 1 "Database connection failed - API not responding"
 fi
 
 # 6. Security Headers Check
@@ -149,12 +164,20 @@ echo "========================"
 
 if [ $OVERALL_STATUS -eq 0 ]; then
     echo -e "${GREEN}🎉 ALL CRITICAL SYSTEMS OPERATIONAL${NC}"
-    echo -e "${GREEN}✅ SAFE TO DEPLOY${NC}"
+    if [ $WARNINGS -gt 0 ]; then
+        echo -e "${YELLOW}⚠️ $WARNINGS warnings detected (non-critical)${NC}"
+        echo -e "${GREEN}✅ SAFE TO DEPLOY (warnings are acceptable)${NC}"
+    else
+        echo -e "${GREEN}✅ SAFE TO DEPLOY${NC}"
+    fi
     exit 0
 else
     echo -e "${RED}⚠️ CRITICAL ISSUES DETECTED${NC}"
     echo -e "${RED}❌ DEPLOYMENT NOT RECOMMENDED${NC}"
     echo ""
-    echo "Please fix the above issues before deploying."
+    echo "Please fix the above critical issues before deploying."
+    if [ $WARNINGS -gt 0 ]; then
+        echo "Note: $WARNINGS warnings are present but won't block deployment once critical issues are resolved."
+    fi
     exit 1
 fi
