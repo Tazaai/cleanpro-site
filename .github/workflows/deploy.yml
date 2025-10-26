@@ -189,9 +189,12 @@ jobs:
           echo "🎨 Deploying frontend..."
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
           
-          # Create .env file with build-time variables
+          # Create .env file with build-time variables  
+          echo "Creating .env file with variables..."
           echo "VITE_API_BASE=${BACKEND_URL}" > .env
           echo "VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
+          echo "📋 .env file contents:"
+          cat .env
           
           # Build and deploy
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
