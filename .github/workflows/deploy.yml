@@ -183,30 +183,21 @@ jobs:
             --set-env-vars "APPSHEET_APP_ID=${{ secrets.APPSHEET_APP_ID }}" \
             --set-env-vars "NODE_ENV=production"
 
-      - name: Build Frontend
-        run: |
-          cd frontend
-          echo "🎨 Building frontend..."
-          npm ci
-          # Get backend URL for frontend build
-          BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
-          export VITE_API_BASE=$BACKEND_URL
-          export VITE_GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}"
-          npm run build
-
       - name: Build & Deploy Frontend to Cloud Run
         run: |
           cd frontend
           echo "🎨 Deploying frontend..."
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
+          # Build with environment variables as build arguments
+          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
+            --build-arg VITE_API_BASE="${BACKEND_URL}" \
+            --build-arg VITE_GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}" .
           gcloud run deploy cleanpro-frontend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
             --region europe-west1 \
             --allow-unauthenticated \
             --port 8080 \
-            --project $GCP_PROJECT \
-            --set-env-vars "VITE_API_BASE=${BACKEND_URL},VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}"
+            --project $GCP_PROJECT
 
       - name: Deployment Summary
         run: |
