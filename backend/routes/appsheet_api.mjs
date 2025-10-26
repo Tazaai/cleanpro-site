@@ -3,11 +3,9 @@
 // =============================================================
 
 import express from "express";
-import admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore";
+import { getDb } from "../firebase.js";
 import { body, validationResult } from "express-validator";
 import { authenticateToken, requireAdmin } from "./auth_api.mjs";
-import fetch from "node-fetch";
 
 const router = express.Router();
 
@@ -15,11 +13,6 @@ const router = express.Router();
 const APPSHEET_API_KEY = process.env.APPSHEET_API_KEY;
 const APP_ID = process.env.APPSHEET_APP_ID;
 const APPSHEET_BASE_URL = "https://api.appsheet.com/api/v2/apps";
-
-const getDb = () => {
-  if (!admin.apps.length) throw new Error("Firebase not initialized");
-  return getFirestore();
-};
 
 // Validate AppSheet configuration
 const validateAppSheetConfig = () => {

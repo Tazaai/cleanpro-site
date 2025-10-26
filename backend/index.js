@@ -32,6 +32,7 @@ import quotesApi from "./routes/quotes_api.mjs";
 import mapsApi from "./routes/maps_api.mjs";
 import calendarApi from "./routes/calendar_api.mjs";
 import configApi from "./routes/config_api.mjs";
+import appsheetApi from "./routes/appsheet_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -109,6 +110,7 @@ app.use("/api/quotes", quotesApi);
 app.use("/api/maps", mapsApi);
 app.use("/api/calendar", calendarApi);
 app.use("/api/config", configApi);
+app.use("/api/appsheet", appsheetApi);
 console.log("✅ API routes mounted successfully");
 
 // Keep the inline routes for backward compatibility

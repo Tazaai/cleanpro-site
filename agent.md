@@ -54,7 +54,12 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 ✅ .env.local file exists (development secrets ready)
 ✅ .env.local properly protected by .gitignore
 ✅ Local secret setup script available
+🔬 DETAILED SECRET VALIDATION (Review Mode)
+==========================================
 ℹ️  GCP_SA_KEY diagnostic: Only available in GitHub Actions environment
+💡 Note: This detailed validation is used for diagnostics only
+🚀 Deployment workflow uses streamlined validation for faster deploys
+==========================================
 🎉 All secrets validated successfully!
 ✅ Deployment can proceed
 
@@ -144,9 +149,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-in_progress |  | 🧪 Implement mandatory local testing - add test_backend_local.sh, fix …
-completed | failure | 🔧 Fix Cloud Run startup failure - remove problematic route imports, a…
-completed | failure | 🚨 Fix health check script syntax error - remove duplicate else blocks…
+in_progress |  | 🔧 Fix 500 distance API error - implement lazy Firebase initialization
+completed | success | 🔧 Fix 404 calendar API error - re-enable calendar and config APIs
+completed | success | 🧪 Implement mandatory local testing - add test_backend_local.sh, fix …
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
