@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE_URL = process.env.BASE_URL || "https://cleanpro-frontend-2a5pka5baa-ew.a.run.app";
+const BASE_URL = process.env.BASE_URL || "https://cleanpro-frontend-5539254765.europe-west1.run.app";
 
 test("homepage loads", async ({ page }) => {
   await page.goto(BASE_URL, { waitUntil: "networkidle" });
