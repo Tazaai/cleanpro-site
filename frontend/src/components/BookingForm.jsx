@@ -167,11 +167,15 @@ export default function BookingForm() {
       });
     };
     
-    // Initialize when HQs are loaded
-    if ((hqs || []).length > 0) {
-      initAutocomplete();
-    }
-  }, [hqs]); // Re-run when HQs change
+    // Initialize Google Maps autocomplete
+    initAutocomplete();
+  }, []); // Initialize once on component mount
+
+  // Second useEffect to reinitialize when HQs are loaded (for distance calculation)
+  useEffect(() => {
+    // No need to reinitialize autocomplete when HQs change
+    // The autocomplete should work independently
+  }, [hqs]);
 
   // 🌍 Distance - Improved with better error handling
   const fetchDistance = async (dest) => {
