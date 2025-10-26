@@ -16,6 +16,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 // Initialize Firebase before importing routes
 import { initFirebase } from "./firebase.js";
+import admin from "firebase-admin";
 
 // Import API routes
 import bookingsApi from "./routes/bookings_api.mjs";
@@ -61,6 +62,25 @@ app.get("/health", (req, res) => {
     status: "healthy", 
     timestamp: new Date().toISOString(),
     firebase: firebaseReady
+  });
+});
+
+// Firebase diagnostic endpoint
+app.get("/debug/firebase", (req, res) => {
+  const diagnostics = {
+    firebaseReady,
+    adminAppsCount: admin.apps.length,
+    hasFirebaseKey: !!process.env.FIREBASE_KEY,
+    firebaseKeyLength: process.env.FIREBASE_KEY ? process.env.FIREBASE_KEY.length : 0,
+    gcpProject: process.env.GCP_PROJECT || "not-set",
+    nodeEnv: process.env.NODE_ENV || "not-set",
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json({
+    ok: true,
+    message: "Firebase diagnostic information",
+    diagnostics
   });
 });
 
