@@ -4,6 +4,7 @@ import "react-calendar/dist/Calendar.css";
 import toast, { Toaster } from "react-hot-toast";
 import PaymentModal from "./PaymentModal";
 import { useAuth } from "../contexts/AuthContext";
+import { extractCoordinationPoints, syncDualState } from "../utils/dualNaming";
 
 // ✅ Correct base URL with fallback
 const API_BASE = import.meta.env.VITE_API_BASE || window.API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
@@ -106,7 +107,8 @@ export default function BookingForm() {
   const [preview, setPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [hqs, setHqs] = useState([]);
+  const [coordinationPoints, setCoordinationPoints] = useState([]);
+  const [hqs, setHqs] = useState([]); // Backward compatibility
   const [waitlist, setWaitlist] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [bookingId, setBookingId] = useState(null);
@@ -121,24 +123,31 @@ export default function BookingForm() {
       .catch(() => {});
   }, []);
 
-  // 🏢 Load HQs - with better error handling
+  // 🏢 Load Coordination Points - with better error handling and dual naming support
   useEffect(() => {
     fetch(`${API_BASE}/api/coordination_points`)
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) {
-          setHqs(d.hqs || []);
+          // Use utility function for extracting points with dual naming support
+          const points = extractCoordinationPoints(d);
+          syncDualState(points, setCoordinationPoints, setHqs);
+          
           if (d.needsSeeding) {
             console.warn("⚠️ Coordination points need to be seeded in database");
           }
+          
+          // Log dual naming support status
+          const hasBoth = d.coordinationPoints && d.hqs;
+          console.log(`📍 Loaded ${points.length} coordination points${hasBoth ? ' (dual naming supported)' : ''}`);
         } else {
           console.error("Failed to load coordination points:", d.error);
-          setHqs([]); // Set empty array on error
+          syncDualState([], setCoordinationPoints, setHqs);
         }
       })
       .catch((error) => {
         console.error("Error loading coordination points:", error);
-        setHqs([]); // Set empty array on error
+        syncDualState([], setCoordinationPoints, setHqs);
       });
   }, []);
 
@@ -184,11 +193,11 @@ export default function BookingForm() {
     initAutocomplete();
   }, []); // Initialize once on component mount
 
-  // Second useEffect to reinitialize when HQs are loaded (for distance calculation)
+  // Second useEffect to reinitialize when coordination points are loaded (for distance calculation)
   useEffect(() => {
-    // No need to reinitialize autocomplete when HQs change
+    // No need to reinitialize autocomplete when coordination points change
     // The autocomplete should work independently
-  }, [hqs]);
+  }, [coordinationPoints]);
 
   // 🌍 Distance - Updated to use coordination points API
   const fetchDistance = async (dest) => {

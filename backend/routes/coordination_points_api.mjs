@@ -17,14 +17,15 @@ router.get("/", async (req, res) => {
   try {
     const db = getDb();
     const snapshot = await db.collection("coordination_points").get();
-    const hqs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const coordinationPoints = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     // Handle empty collection gracefully
-    if (hqs.length === 0) {
+    if (coordinationPoints.length === 0) {
       console.warn("⚠️ No coordination points found in database");
       return res.json({
         ok: true,
-        hqs: [],
+        coordinationPoints: [],
+        hqs: [], // Keep for backward compatibility
         message: "No coordination points configured yet",
         needsSeeding: true
       });
@@ -42,16 +43,21 @@ router.get("/", async (req, res) => {
         const data = await r.json();
         return res.json({
           ok: true,
-          hqs,
+          coordinationPoints,
+          hqs: coordinationPoints, // Keep for backward compatibility
           distance: data.rows?.[0]?.elements?.[0]?.distance || null,
         });
       } catch (distanceError) {
         console.warn("Distance calculation failed:", distanceError.message);
-        // Return HQs without distance calculation
+        // Return coordination points without distance calculation
       }
     }
 
-    res.json({ ok: true, hqs });
+    res.json({ 
+      ok: true, 
+      coordinationPoints,
+      hqs: coordinationPoints // Keep for backward compatibility
+    });
   } catch (err) {
     console.error("coordination_points error:", err);
     

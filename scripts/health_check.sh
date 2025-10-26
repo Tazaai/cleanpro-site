@@ -76,8 +76,8 @@ coord_ok=$(echo "$coord_result" | jq -r '.ok // false' 2>/dev/null || echo "fals
 coord_error=$(echo "$coord_result" | jq -r '.error // ""' 2>/dev/null || echo "")
 
 if [ "$coord_ok" = "true" ]; then
-    hqs_count=$(echo "$coord_result" | jq -r '.hqs | length // 0' 2>/dev/null || echo "0")
-    check_status 0 "Coordination Points API ($hqs_count points)"
+    coord_count=$(echo "$coord_result" | jq -r '.coordinationPoints | length // (.hqs | length) // 0' 2>/dev/null || echo "0")
+    check_status 0 "Coordination Points API ($coord_count points)"
 else
     check_status 1 "Coordination Points API failed: $coord_error"
 fi

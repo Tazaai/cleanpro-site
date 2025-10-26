@@ -136,11 +136,16 @@ jobs:
       - name: Pre-deployment Health Check
         run: |
           echo "🩺 Running pre-deployment health check..."
+          
+          # Install jq for JSON parsing
+          sudo apt-get update && sudo apt-get install -y jq
+          
           chmod +x scripts/health_check.sh
           if ./scripts/health_check.sh; then
             echo "✅ Health check passed - proceeding with deployment"
           else
             echo "❌ Health check failed - stopping deployment"
+            echo "🛡️ This prevents broken deployments from reaching production"
             exit 1
           fi
 

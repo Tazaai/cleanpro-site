@@ -55,7 +55,7 @@ if [ "$coord_check" = "false" ]; then
     echo -e "${BLUE}💡 Note: Firebase initialization and data seeding needed${NC}"
 else
     # Check how many coordination points exist
-    coord_count=$(curl -s "$BACKEND_URL/api/coordination_points" | jq -r '.hqs | length // 0' 2>/dev/null || echo "0")
+    coord_count=$(curl -s "$BACKEND_URL/api/coordination_points" | jq -r '.coordinationPoints | length // (.hqs | length) // 0' 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Coordination points API accessible ($coord_count points)${NC}"
     
     if [ "$coord_count" -eq 0 ]; then
