@@ -25,7 +25,7 @@ jobs:
         # Simple validation - just check if critical secrets exist
         VALIDATION_PASSED=true
         
-        # Check each secret individually (safer approach)
+        # Check each secret individually (safer approach with proper quoting)
         if [ -z "${{ secrets.GCP_PROJECT }}" ] || [ "${{ secrets.GCP_PROJECT }}" = "null" ]; then
           echo "❌ GCP_PROJECT: MISSING"
           VALIDATION_PASSED=false
@@ -33,21 +33,34 @@ jobs:
           echo "✅ GCP_PROJECT: PRESENT"
         fi
         
-        if [ -z "${{ secrets.GCP_SA_KEY }}" ] || [ "${{ secrets.GCP_SA_KEY }}" = "null" ]; then
+        # Use different approach for secrets that might contain special characters
+        GCP_SA_KEY_SET="false"
+        if [ -n "${{ secrets.GCP_SA_KEY }}" ] && [ "${{ secrets.GCP_SA_KEY }}" != "null" ]; then
+          GCP_SA_KEY_SET="true"
+        fi
+        if [ "$GCP_SA_KEY_SET" = "false" ]; then
           echo "❌ GCP_SA_KEY: MISSING"
           VALIDATION_PASSED=false
         else
           echo "✅ GCP_SA_KEY: PRESENT"
         fi
         
-        if [ -z "${{ secrets.GOOGLE_MAPS_API_KEY }}" ] || [ "${{ secrets.GOOGLE_MAPS_API_KEY }}" = "null" ]; then
+        GOOGLE_MAPS_KEY_SET="false"
+        if [ -n "${{ secrets.GOOGLE_MAPS_API_KEY }}" ] && [ "${{ secrets.GOOGLE_MAPS_API_KEY }}" != "null" ]; then
+          GOOGLE_MAPS_KEY_SET="true"
+        fi
+        if [ "$GOOGLE_MAPS_KEY_SET" = "false" ]; then
           echo "❌ GOOGLE_MAPS_API_KEY: MISSING"
           VALIDATION_PASSED=false
         else
           echo "✅ GOOGLE_MAPS_API_KEY: PRESENT"
         fi
         
-        if [ -z "${{ secrets.JWT_SECRET }}" ] || [ "${{ secrets.JWT_SECRET }}" = "null" ]; then
+        JWT_SECRET_SET="false"
+        if [ -n "${{ secrets.JWT_SECRET }}" ] && [ "${{ secrets.JWT_SECRET }}" != "null" ]; then
+          JWT_SECRET_SET="true"
+        fi
+        if [ "$JWT_SECRET_SET" = "false" ]; then
           echo "❌ JWT_SECRET: MISSING"
           VALIDATION_PASSED=false
         else
