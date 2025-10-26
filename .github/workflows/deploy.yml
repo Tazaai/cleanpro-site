@@ -195,6 +195,8 @@ jobs:
           echo "VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
           echo "📋 .env file contents:"
           cat .env
+          echo "📁 Current directory files:"
+          ls -la
           
           # Build and deploy
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" .
