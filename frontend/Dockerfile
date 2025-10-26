@@ -4,7 +4,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 # Accept build arguments for environment variables
-ARG VITE_API_BASE
+ARG VITE_API_BASE=https://cleanpro-backend-5539254765.europe-west1.run.app
 ARG VITE_GOOGLE_MAPS_API_KEY
 # Set environment variables from build arguments
 ENV VITE_API_BASE=${VITE_API_BASE}

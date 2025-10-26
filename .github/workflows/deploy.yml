@@ -188,10 +188,10 @@ jobs:
           cd frontend
           echo "🎨 Deploying frontend..."
           BACKEND_URL=$(gcloud run services describe cleanpro-backend --region=europe-west1 --project=$GCP_PROJECT --format='value(status.url)')
-          # Build with environment variables as build arguments
-          gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
-            --build-arg VITE_API_BASE="${BACKEND_URL}" \
-            --build-arg VITE_GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}" .
+          # Build using cloudbuild.yaml with substitutions
+          gcloud builds submit \
+            --config=cloudbuild.yaml \
+            --substitutions="_VITE_API_BASE=${BACKEND_URL},_VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" .
           gcloud run deploy cleanpro-frontend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-frontend" \
             --region europe-west1 \

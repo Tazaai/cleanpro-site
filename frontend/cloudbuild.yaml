@@ -1,0 +1,17 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: 
+  - 'build'
+  - '--build-arg'
+  - 'VITE_API_BASE=${_VITE_API_BASE}'
+  - '--build-arg'
+  - 'VITE_GOOGLE_MAPS_API_KEY=${_VITE_GOOGLE_MAPS_API_KEY}'
+  - '-t'
+  - '${_DESTINATION}'
+  - '.'
+substitutions:
+  _VITE_API_BASE: 'https://cleanpro-backend-5539254765.europe-west1.run.app'
+  _VITE_GOOGLE_MAPS_API_KEY: ''
+  _DESTINATION: 'europe-west1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/cleanpro-frontend'
+images:
+- '${_DESTINATION}'
