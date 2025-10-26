@@ -159,7 +159,7 @@ export default function BookingForm() {
         setAddress(fullAddress);
         
         // Auto-fetch distance when address is selected
-        if (fullAddress && (hqs || []).length > 0) {
+        if (fullAddress) {
           fetchDistance(fullAddress);
         }
         
@@ -177,67 +177,43 @@ export default function BookingForm() {
     // The autocomplete should work independently
   }, [hqs]);
 
-  // 🌍 Distance - Improved with better error handling
+  // 🌍 Distance - Updated to use coordination points API
   const fetchDistance = async (dest) => {
-    if (!dest || !(hqs || []).length) return;
+    if (!dest) return;
     
     setWarning(""); // Clear previous warnings
     setWaitlist(false);
     
     try {
-      let nearest = { miles: Infinity, hq: null };
+      const response = await fetch(
+        `${API_BASE}/api/distance/nearest?address=${encodeURIComponent(dest)}`
+      );
       
-      for (const HQ of hqs.filter(hq => hq.active)) { // Only check active HQs
-        try {
-          const response = await fetch(
-            `${API_BASE}/api/maps/distance?origin=${encodeURIComponent(
-              HQ.address
-            )}&destination=${encodeURIComponent(dest)}`
-          );
-          
-          if (!response.ok) continue;
-          
-          const data = await response.json();
-          
-          if (data?.rows?.[0]?.elements?.[0]?.status === "OK") {
-            const distanceData = data.rows[0].elements[0].distance;
-            const miles = distanceData.value / 1609.34; // Convert meters to miles
-            
-            if (miles < nearest.miles) {
-              nearest = { 
-                miles: Number(miles.toFixed(1)), 
-                hq: HQ,
-                readableDistance: distanceData.text
-              };
-            }
-          }
-        } catch (error) {
-          console.warn(`Distance calculation failed for HQ ${HQ.name}:`, error);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.ok && data.nearest) {
+        const distance = data.nearest.distance.miles;
+        setDistance(distance);
+        setNearestHQ(data.nearest.coordinationPoint);
+        
+        if (!data.isServiceable) {
+          setWarning(data.serviceableMessage);
+          setWaitlist(true);
+        } else {
+          setWarning("");
+          setWaitlist(false);
+          toast.success(`✅ Service available from ${data.nearest.coordinationPoint.name} (${distance} miles away)`);
         }
+      } else {
+        throw new Error(data.error || "Unable to calculate distance");
       }
-      
-      if (nearest.miles === Infinity) {
-        setWarning("⚠️ Could not calculate distance. Please check your address.");
-        return;
-      }
-      
-      if (nearest.miles > 150) {
-        setWarning("❌ Service not available in your area yet. Join our waitlist!");
-        setWaitlist(true);
-        return;
-      }
-      
-      setDistance(nearest.miles);
-      setNearestHQ(nearest.hq);
-      setWarning("");
-      setWaitlist(false);
-      
-      // Show success feedback
-      toast.success(`✅ Found nearest location: ${nearest.hq.name} (${nearest.miles} miles away)`);
-      
     } catch (error) {
-      console.error("Distance calculation error:", error);
-      setWarning("⚠️ Unable to calculate distance. Please try again.");
+      console.error("Distance calculation error:", error.message);
+      setWarning("Unable to verify service area. Please contact us for availability.");
     }
   };
 

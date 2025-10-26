@@ -23,6 +23,7 @@ import authApi from "./routes/auth_api.mjs";
 import adminApi from "./routes/admin_api.mjs";
 import pricingApi from "./routes/pricing_api.mjs";
 import coordinationPointsApi from "./routes/coordination_points_api.mjs";
+import distanceApi from "./routes/distance_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -71,6 +72,7 @@ app.use("/api/auth", authApi);
 app.use("/api/admin", adminApi);
 app.use("/api/pricing", pricingApi);
 app.use("/api/coordination_points", coordinationPointsApi);
+app.use("/api/distance", distanceApi);
 
 // Keep the inline routes for backward compatibility
 app.get("/api/calendar", (req, res) => {
