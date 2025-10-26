@@ -83,9 +83,14 @@ jobs:
       run: |
         echo "🔬 Running advanced secret validation..."
         
-        # Temporarily skip GCP_SA_KEY JSON validation to allow deployment
-        echo "⚠️ Skipping GCP_SA_KEY JSON validation for deployment testing"
-        echo "✅ GCP_SA_KEY: Validation temporarily bypassed"
+        # Validate GCP_SA_KEY JSON format
+        echo "🔍 Validating GCP_SA_KEY JSON format..."
+        if echo "${{ secrets.GCP_SA_KEY }}" | jq . > /dev/null 2>&1; then
+          echo "✅ GCP_SA_KEY: Valid JSON format"
+        else
+          echo "❌ GCP_SA_KEY: Invalid JSON format"
+          exit 1
+        fi
         
         # Validate JWT_SECRET strength
         JWT_LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c)
