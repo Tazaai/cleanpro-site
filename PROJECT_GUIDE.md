@@ -163,44 +163,127 @@ Final Total = Subtotal - Discount
 
 ---
 
-## 🧭 Coordination Points
-- Stored in AppSheet (address, contact, active flag)  
-- Used for matching and distance validation  
-- If no point < 100 miles → "No available coordination point nearby"  
+## 🌍 Clean Departure Marketplace + AI-Powered AdminSheet System
 
----
+> **Clean Departure — your trusted platform for safe, verified, and transparent cleaning services, powered by smart automation.**
 
-## 📊 AppSheet Integration
-- **Complete two-way data sync** between Clean Departure and AppSheet
-- **Admin-friendly interface** for managing pricing and coordination points
-- **Real-time synchronization** with Firestore database
+### 🛡️ Platform Role & Trust
+- Clean Departure is a **trusted platform** that connects clients with verified cleaning professionals
+- Every service partner is **identity-checked and reviewed for quality**
+- The platform ensures **secure payments, transparent pricing, and fair resolution** for all bookings
+- **Client satisfaction is central** — issues are reviewed and resolved quickly by our support team
+- **Complete admin management** interface for global coordination points with AI assistance
 
-### AppSheet Tables Structure:
-1. **CoordinationPoints**: name, address, contact, phone, email, active, latitude, longitude
-2. **Pricing**: service_id, price_per_m2, weekly_discount, monthly_discount, distance_fee, free_distance
-3. **Bookings**: Booking data can be pushed to AppSheet for external management
+### 🔐 Privacy & Safety System:
+- Client and CP contact details remain hidden **until payment is confirmed** to ensure privacy and prevent off-platform transactions
+- **After payment confirmation**, both parties gain access to verified contact information (phone / email / address) for safety, coordination, and service verification
+- All communication is still logged through the in-app messaging system for transparency and dispute protection
+- AI moderation continues to monitor messages for spam or policy violations while preserving client-CP communication freedom
+- **AI Communication Monitoring**: Advanced tone analysis and red flag detection system
+  - **Review Tone Analysis**: AI monitors review language for inappropriate content, fake reviews, or manipulative patterns
+  - **Communication Red Flags**: Detects insulting language, harassment, threats, discriminatory content, or unprofessional behavior
+  - **Automated Reporting**: Red flag incidents automatically reported to AdminSheet with severity levels and email alerts
+  - **Pattern Recognition**: AI identifies repeat offenders and escalating communication issues
+- **Stripe Identity verification** for EU + DK + US compliance with privacy protection
+- **Dynamic escrow payment system** with configurable hold periods ensuring secure transactions
+
+### 🤖 AI-Powered AdminSheet Intelligence:
+#### **Intelligent Reporting**
+- **Weekly AI reports** on platform performance, ratings, and dispute trends
+- **Monthly/yearly financial summaries** for accounting and tax documentation
+- **Real-time analytics** for admin decision-making and business insights
+
+#### **Smart Adjustments**
+- **AI suggests fee or policy updates** by country, currency, or performance trends
+- **Detects anomalies** (fraud, repeated no-shows, refund spikes)
+- **Communication Quality Monitoring**: AI analyzes tone, professionalism, and red flag behaviors
+  - **Insulting Language Detection**: Automatic flagging of inappropriate, offensive, or abusive communication
+  - **Red Flag Reporting**: Instant alerts to AdminSheet and email notifications for serious violations
+  - **Tone Scoring**: Professional communication scores for CPs and clients with trend analysis
+  - **Escalation Protocols**: Automatic escalation for repeated violations or threatening behavior
+- **Predictive matching** recommends the most suitable CPs for each job
+- **Auto-balance feature** distributes bookings evenly among active CPs
+
+#### **Dynamic Rules Management**
+- **Country rules, payout holds, and subscription fees** managed centrally
+- **Auto-adjusted by AI or Admin** based on performance data
+- **Real-time approval/deactivation** of coordination points with AI recommendations
+
+### 💰 Financial Control & Transparency:
+- **Registration or subscription fee** (configurable in AdminSheet) paid during signup via Stripe
+- **Platform and CP revenues handled transparently** with AI ledger for easy reporting and compliance
+- Client pays full amount → funds held in **secure escrow**
+- **Payout Rules**: Funds held until client approval OR **48h auto-release after scheduled cleaning date** (not booking date)
+- **Client Rejection**: If client rejects within 48h → payout paused; admin reviews issue before release or refund
+- **No-Show Protocol**: If CP fails to show up → client reports "no-show" → admin cancels job and **100% refund to client** (Stripe reverses full payment)
+- **Dynamic Fee Management**: AdminSheet can adjust fees for targeted CPs while maintaining auto common fee for all others
+- Transparent payment tracking and dispute resolution with AI assistance
+
+### 🏆 Growth & Quality Assurance:
+- **AI quality score** combines ratings, completion rates, and client feedback
+- **Predictive matching** recommends the most suitable CPs for each job
+- **Optional "auto-balance" feature** distributes bookings evenly among active CPs
+- **Identity verification and quality review** for all service partners
+- **Smart naming system**: CP chooses public name (e.g., *Tiger Clean*, *Isax Group*) or auto-assigned: **Clean Departure 1, 2, 3...**
+
+### 🌟 Client-Driven Workflow (Trust-Focused):
+1. **Client books service** → system lists nearby verified CPs (<100 km)
+2. **Client selects preferred CP** → job pending with secure communication through platform messaging
+3. **Client completes payment** → funds held securely in escrow
+4. **CP accepts/rejects through platform** → if accepted, **client immediately receives CP contact details (name, email, phone) via secure email**
+5. **Direct communication enabled** → client can contact CP directly for scheduling and coordination
+6. **Service completion** → payment released after client approval or 48h auto-release
+7. **AI-powered quality tracking** ensures continuous service improvement
+8. **Safety backup** → CP contact information stored in client's email for reference and emergency contact
+
+### 🌐 Dynamic Global Settings & Compliance:
+- **Country, currency, unit** (m² / sq ft), **language** = auto-detected by geo with AI optimization
+- **Regional Tax Requirements**: Country/state-specific tax ID requirements auto-configured
+- **Registration Compliance**: CPs must accept terms including quality standards, client satisfaction requirements, tax compliance, and professional conduct
+- Stored in AdminSheet (not hard-coded) with AI-suggested regional adjustments
+- **Regional compliance** and localization support with automated updates
+- **Multi-currency** payment processing with AI fraud detection
+
+### AdminSheet Tables Structure:
+1. **CoordinationPoints**: id, name, address, tax_id, stripe_identity_status, active, admin_approved, custom_fee_percentage, ai_quality_score, communication_score, contact_email, contact_phone
+2. **EscrowSettings**: hold_period_hours, auto_release_enabled, region_settings, release_trigger_date_type, ai_optimization_enabled  
+3. **RegionalSettings**: country, currency, unit_system, language, tax_requirements, tax_id_mandatory, ai_suggested_adjustments
+4. **PaymentHolds**: booking_id, amount, hold_start, scheduled_cleaning_date, release_conditions, status, ai_fraud_score
+5. **RegistrationTerms**: quality_standards, satisfaction_requirements, conduct_policies, tax_compliance_text, insurance_requirements
+6. **FeeStructure**: base_platform_fee, cp_custom_fees, regional_adjustments, subscription_fees
+7. **AIReports**: report_type, generated_date, performance_metrics, trends_analysis, recommendations
+8. **CommunicationLogs**: message_id, sender_type, content_filtered, ai_moderation_flags, timestamp, tone_score
+9. **RedFlags**: incident_id, user_id, incident_type, severity_level, detected_content, ai_analysis, admin_status, created_at, resolved_at
+10. **ReviewAnalysis**: review_id, booking_id, reviewer_type, authenticity_score, tone_analysis, red_flag_indicators, ai_confidence
+11. **ContactSharing**: booking_id, client_email, cp_contact_shared, shared_timestamp, email_sent_status, contact_details_backup
 
 ### API Endpoints:
-- `POST /api/appsheet/sync/coordination-points` - Sync coordination points from AppSheet
-- `POST /api/appsheet/sync/pricing` - Sync pricing data from AppSheet
-- `POST /api/appsheet/sync/all` - Sync all data from AppSheet
-- `POST /api/appsheet/push/booking/:id` - Push booking to AppSheet
-- `GET /api/appsheet/config` - Check AppSheet configuration
-- `POST /api/appsheet/test` - Test AppSheet connection
-
-### Admin Dashboard Features:
-- ✅ **Connection Testing**: Verify AppSheet API connectivity
-- ✅ **One-click Sync**: Sync coordination points and pricing data
-- ✅ **Configuration Status**: Visual indicators for setup completion
-- ✅ **Error Handling**: Clear feedback for sync operations
-
----
-
-## 🧾 Admin / AppSheet
-- Non-technical admins manage prices, discounts, and points through AppSheet interface
-- **Automated synchronization** with Clean Departure application
-- **Version control** and audit trail through AppSheet
-- **Role-based access** for different admin functions
+- `GET /api/adminsheet/coordination-points` - List all CPs with status, custom fees, AI quality scores, and communication scores
+- `POST /api/adminsheet/cp/approve/:id` - Approve/activate CP with AI recommendation review
+- `POST /api/adminsheet/cp/deactivate/:id` - Deactivate CP with AI analysis
+- `POST /api/adminsheet/cp/set-fee/:id` - Set custom fee percentage for specific CP
+- `GET /api/adminsheet/escrow/settings` - Get escrow configuration with AI optimization status
+- `POST /api/adminsheet/escrow/settings` - Update hold periods and release rules
+- `POST /api/adminsheet/stripe/verify/:id` - Trigger Stripe Identity verification
+- `GET /api/adminsheet/regional/settings` - Get regional configuration with AI-suggested adjustments
+- `POST /api/adminsheet/regional/tax-requirements` - Update regional tax ID requirements
+- `GET /api/adminsheet/registration/terms` - Get registration terms and declarations
+- `POST /api/adminsheet/registration/terms` - Update registration requirements
+- `POST /api/adminsheet/payment/no-show/:booking_id` - Process no-show refund with AI analysis
+- `POST /api/adminsheet/payment/dispute/:booking_id` - Handle payment disputes with AI assistance
+- `GET /api/adminsheet/ai/reports` - Get AI-generated performance and trend reports
+- `POST /api/adminsheet/ai/optimize` - Trigger AI optimization recommendations
+- `GET /api/adminsheet/communication/moderate` - AI content moderation for messaging
+- `POST /api/adminsheet/communication/analyze-tone` - Real-time tone analysis for messages
+- `GET /api/adminsheet/red-flags` - Get all red flag incidents with severity levels
+- `POST /api/adminsheet/red-flags/resolve/:id` - Mark red flag incident as resolved
+- `GET /api/adminsheet/red-flags/user/:user_id` - Get red flag history for specific user
+- `POST /api/adminsheet/reviews/analyze` - AI analysis of review authenticity and tone
+- `GET /api/adminsheet/communication/scores` - Get communication quality scores for users
+- `POST /api/adminsheet/booking/share-contact/:booking_id` - Share CP contact details with client after payment
+- `GET /api/adminsheet/contact-sharing/history` - Get contact sharing audit trail
+- `POST /api/adminsheet/contact-sharing/resend/:booking_id` - Resend CP contact details to client
+- `POST /api/adminsheet/matching/predict` - AI-powered CP matching for bookings
 
 ---
 

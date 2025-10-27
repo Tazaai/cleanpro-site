@@ -187,13 +187,13 @@ jobs:
           # Build the image first
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
-          # Determine which Firebase key to use
+          # Determine which Firebase key to use (pass raw JSON, not base64)
           if [ -n "${{ secrets.FIREBASE_KEY }}" ]; then
-            echo "Using FIREBASE_KEY secret"
-            FIREBASE_KEY_B64=$(echo "${{ secrets.FIREBASE_KEY }}" | base64 -w 0)
+            echo "Using FIREBASE_KEY secret (raw JSON)"
+            FIREBASE_KEY_RAW="${{ secrets.FIREBASE_KEY }}"
           elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "Using GCP_SA_KEY as FIREBASE_KEY (fallback)"
-            FIREBASE_KEY_B64=$(echo "${{ secrets.GCP_SA_KEY }}" | base64 -w 0)
+            echo "Using GCP_SA_KEY as FIREBASE_KEY (fallback, raw JSON)"
+            FIREBASE_KEY_RAW="${{ secrets.GCP_SA_KEY }}"
           else
             echo "❌ No Firebase credentials available"
             exit 1
@@ -210,7 +210,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --project $GCP_PROJECT \
-            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY_B64" \
+            --set-env-vars "FIREBASE_KEY=$FIREBASE_KEY_RAW" \
             --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
             --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
             --set-env-vars "GCP_PROJECT=${{ secrets.GCP_PROJECT }}" \
