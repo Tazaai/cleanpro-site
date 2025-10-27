@@ -36,7 +36,7 @@ run_test() {
     exit_code=$?
     
     # Check if curl succeeded
-    if [ $exit_code -ne 0 ]; then
+    if [ "$exit_code" -ne 0 ]; then
         echo -e "${RED}❌ FAILED: Curl command failed (exit code: $exit_code)${NC}"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         echo ""
@@ -147,7 +147,7 @@ echo "Total Tests: $TOTAL_TESTS"
 echo -e "${GREEN}Passed: $PASSED_TESTS${NC}"
 echo -e "${RED}Failed: $FAILED_TESTS${NC}"
 
-if [ $FAILED_TESTS -eq 0 ]; then
+if [ "$FAILED_TESTS" -eq 0 ]; then
     echo -e "${GREEN}🎉 All tests passed! AdminSheet API is working correctly.${NC}"
     exit 0
 else

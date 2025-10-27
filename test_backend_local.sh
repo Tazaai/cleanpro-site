@@ -60,7 +60,7 @@ if [ ! -d "$BACKEND_DIR/node_modules" ]; then
     echo "📦 Installing backend dependencies..."
     cd "$BACKEND_DIR"
     npm install --no-audit --no-fund
-    if [ $? -ne 0 ]; then
+    if [ "$?" -ne 0 ]; then
         log_test "FAIL" "Failed to install dependencies"
         exit 1
     fi
@@ -84,7 +84,7 @@ echo "🔍 Syntax Check:"
 echo "================"
 cd "$BACKEND_DIR"
 node --check index.js
-if [ $? -eq 0 ]; then
+if [ "$?" -eq 0 ]; then
     log_test "PASS" "JavaScript syntax is valid"
 else
     log_test "FAIL" "JavaScript syntax errors detected"
@@ -166,7 +166,7 @@ echo "====================="
 # Test 1: Basic health endpoint
 echo "1️⃣ Testing health endpoint..."
 HEALTH_RESPONSE=$(curl -s --max-time 10 "$LOCAL_URL/health" 2>/dev/null)
-if [ $? -eq 0 ] && echo "$HEALTH_RESPONSE" | grep -q '"ok":true'; then
+if [ "$?" -eq 0 ] && echo "$HEALTH_RESPONSE" | grep -q '"ok":true'; then
     log_test "PASS" "Health endpoint responding"
     echo "   Response: $HEALTH_RESPONSE"
 else
@@ -178,7 +178,7 @@ fi
 echo ""
 echo "2️⃣ Testing root endpoint..."
 ROOT_RESPONSE=$(curl -s --max-time 10 "$LOCAL_URL/" 2>/dev/null)
-if [ $? -eq 0 ] && echo "$ROOT_RESPONSE" | grep -q '"ok":true'; then
+if [ "$?" -eq 0 ] && echo "$ROOT_RESPONSE" | grep -q '"ok":true'; then
     log_test "PASS" "Root endpoint responding"
 else
     log_test "FAIL" "Root endpoint not responding properly"
@@ -188,7 +188,7 @@ fi
 echo ""
 echo "3️⃣ Testing coordination points API..."
 COORD_RESPONSE=$(curl -s --max-time 10 "$LOCAL_URL/api/coordination_points" 2>/dev/null)
-if [ $? -eq 0 ] && echo "$COORD_RESPONSE" | grep -q '"ok":true'; then
+if [ "$?" -eq 0 ] && echo "$COORD_RESPONSE" | grep -q '"ok":true'; then
     log_test "PASS" "Coordination points API responding with success"
 else
     if echo "$COORD_RESPONSE" | grep -q '"error"'; then
@@ -203,7 +203,7 @@ fi
 echo ""
 echo "4️⃣ Testing 404 handling..."
 NOT_FOUND_RESPONSE=$(curl -s --max-time 10 "$LOCAL_URL/nonexistent" 2>/dev/null)
-if [ $? -eq 0 ] && echo "$NOT_FOUND_RESPONSE" | grep -q '"error":"Endpoint not found"'; then
+if [ "$?" -eq 0 ] && echo "$NOT_FOUND_RESPONSE" | grep -q '"error":"Endpoint not found"'; then
     log_test "PASS" "404 handling working correctly"
 else
     log_test "WARN" "404 handling may not be working as expected"
@@ -227,7 +227,7 @@ echo "✅ Tests passed: $TESTS_PASSED"
 echo "❌ Tests failed: $TESTS_FAILED"
 echo ""
 
-if [ $TESTS_FAILED -eq 0 ]; then
+if [ "$TESTS_FAILED" -eq 0 ]; then
     echo -e "${GREEN}🎉 ALL TESTS PASSED - SAFE TO DEPLOY!${NC}"
     echo ""
     echo "✅ Backend starts successfully"

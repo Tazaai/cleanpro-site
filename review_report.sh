@@ -108,7 +108,7 @@ validate_secret_detailed() {
         ;;
       "JWT_SECRET")
         local jwt_length=${#secret_var}
-        if [ $jwt_length -ge 32 ]; then
+        if [ "$jwt_length" -ge 32 ]; then
           echo "   ✓ Adequate length ($jwt_length chars)"
         else
           echo "   ⚠️ Short length ($jwt_length chars) - recommend 32+ chars"
@@ -435,16 +435,16 @@ readiness_percent=$((readiness_score * 100 / total_checks))
 echo "======================================================"
 echo "📊 DEPLOYMENT READINESS: $readiness_score/$total_checks ($readiness_percent%)"
 
-if [ $readiness_percent -ge 90 ]; then
+if [ "$readiness_percent" -ge 90 ]; then
   echo "🎉 READY FOR DEPLOYMENT!"
   echo "✅ All critical components validated"
   echo "🚀 Deployment will proceed automatically on next commit"
   echo "💡 Use 'git push origin main' to trigger deployment"
-elif [ $readiness_percent -ge 70 ]; then
+elif [ "$readiness_percent" -ge 70 ]; then
   echo "⚠️ MOSTLY READY - Minor issues detected"
   echo "🔧 Fix missing components before deployment"
   echo "📋 Review items marked with ❌ above"
-elif [ "$ENVIRONMENT" = "Local Development" ] && [ $readiness_percent -ge 60 ]; then
+elif [ "$ENVIRONMENT" = "Local Development" ] && [ "$readiness_percent" -ge 60 ]; then
   echo "🏠 LOCAL DEVELOPMENT ENVIRONMENT"
   echo "✅ Project structure and code validated"
   echo "ℹ️  Secrets are stored in GitHub repository for deployment"
