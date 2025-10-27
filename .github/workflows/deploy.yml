@@ -190,10 +190,10 @@ jobs:
           # Determine which Firebase key to use (pass raw JSON, not base64)
           if [ -n "${{ secrets.FIREBASE_KEY }}" ]; then
             echo "Using FIREBASE_KEY secret (raw JSON)"
-            FIREBASE_KEY_RAW="${{ secrets.FIREBASE_KEY }}"
+            FIREBASE_KEY_RAW='${{ secrets.FIREBASE_KEY }}'
           elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
             echo "Using GCP_SA_KEY as FIREBASE_KEY (fallback, raw JSON)"
-            FIREBASE_KEY_RAW="${{ secrets.GCP_SA_KEY }}"
+            FIREBASE_KEY_RAW='${{ secrets.GCP_SA_KEY }}'
           else
             echo "❌ No Firebase credentials available"
             exit 1
