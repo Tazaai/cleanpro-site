@@ -9,22 +9,25 @@ export async function initFirebase() {
   
   console.log("🔧 Initializing Firebase...");
   
-  if (process.env.FIREBASE_KEY) {
-    console.log("📄 FIREBASE_KEY found, processing...");
+  // Check for Firebase key in different formats
+  let firebaseKey = process.env.FIREBASE_KEY || process.env.FIREBASE_KEY_B64;
+  
+  if (firebaseKey) {
+    console.log("📄 Firebase credentials found, processing...");
     
     let raw;
     try {
       // Check if it's already JSON or base64 encoded
-      if (process.env.FIREBASE_KEY.trim().startsWith("{")) {
-        console.log("📋 FIREBASE_KEY appears to be JSON format");
-        raw = process.env.FIREBASE_KEY.trim();
+      if (firebaseKey.trim().startsWith("{")) {
+        console.log("📋 Firebase key appears to be JSON format");
+        raw = firebaseKey.trim();
       } else {
-        console.log("🔓 FIREBASE_KEY appears to be base64 encoded, decoding...");
-        raw = Buffer.from(process.env.FIREBASE_KEY, "base64").toString("utf8");
+        console.log("🔓 Firebase key appears to be base64 encoded, decoding...");
+        raw = Buffer.from(firebaseKey, "base64").toString("utf8");
         console.log("✅ Base64 decode successful");
       }
     } catch (e) {
-      console.error("❌ Failed to process FIREBASE_KEY:", e.message || e);
+      console.error("❌ Failed to process Firebase key:", e.message || e);
       throw e;
     }
 
@@ -46,7 +49,7 @@ export async function initFirebase() {
         throw new Error("Invalid Firebase service account - missing required fields");
       }
     } catch (e) {
-      console.error("❌ FIREBASE_KEY JSON parse failed:", e.message || e);
+      console.error("❌ Firebase key JSON parse failed:", e.message || e);
       console.error("🔍 Raw key sample (first 200 chars):", raw.substring(0, 200));
       console.error("🔍 Raw key sample (last 200 chars):", raw.substring(Math.max(0, raw.length - 200)));
       
@@ -89,7 +92,7 @@ export async function initFirebase() {
     // The admin.credential.cert(creds) approach is more reliable
     console.log("✅ Skipping GOOGLE_APPLICATION_CREDENTIALS file path to prevent conflicts");
   } else if (!admin.apps.length) {
-    console.log("🔄 No FIREBASE_KEY found, using Application Default Credentials");
+    console.log("🔄 No Firebase credentials found, using Application Default Credentials");
     try {
       admin.initializeApp();
       console.log("🚀 Firebase Admin initialized with ADC");
