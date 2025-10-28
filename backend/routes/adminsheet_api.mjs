@@ -4,7 +4,7 @@ import { getDb } from '../firebase.js';
 const router = express.Router();
 
 // Helper function to get database with error handling
-async function getDatabase() {
+function getDatabase() {
   try {
     const db = getDb();
     if (!db) {
@@ -42,7 +42,7 @@ async function analyzeTone(content) {
 // GET /api/adminsheet/coordination-points - List all CPs with status and scores
 router.get('/coordination-points', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     const coordinationPointsRef = db.collection('coordinationPoints');
     const snapshot = await coordinationPointsRef.get();
     
@@ -82,7 +82,7 @@ router.get('/cp/nearby/:location', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const coordinationPointsRef = db.collection('coordinationPoints');
     const snapshot = await coordinationPointsRef.where('active', '==', true).get();
     
@@ -168,7 +168,7 @@ router.post('/cp/register', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Create CP registration application
     const registrationData = {
@@ -240,7 +240,7 @@ router.post('/cp/register', async (req, res) => {
 router.get('/cp/share-link/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
@@ -302,7 +302,7 @@ router.get('/cp/share-link/:id', async (req, res) => {
 router.get('/cp/public/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
@@ -393,7 +393,7 @@ router.get('/cp/public/:id', async (req, res) => {
 router.post('/cp/approve/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
@@ -432,7 +432,7 @@ router.post('/cp/deactivate/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
@@ -479,7 +479,7 @@ router.post('/cp/set-fee/:id', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
     
@@ -518,7 +518,7 @@ router.post('/cp/set-fee/:id', async (req, res) => {
 // GET /api/adminsheet/escrow/settings - Get escrow configuration
 router.get('/escrow/settings', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     const settingsRef = db.collection('escrowSettings').doc('global');
     const settingsDoc = await settingsRef.get();
     
@@ -571,7 +571,7 @@ router.post('/escrow/settings', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const settingsRef = db.collection('escrowSettings').doc('global');
     
     const updateData = {
@@ -618,7 +618,7 @@ router.post('/communication/analyze-tone', async (req, res) => {
     }
 
     const analysis = await analyzeTone(message);
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Log communication
     const logData = {
@@ -675,7 +675,7 @@ router.post('/communication/analyze-tone', async (req, res) => {
 router.get('/red-flags', async (req, res) => {
   try {
     const { status, severity, limit = 50 } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('redFlags').orderBy('created_at', 'desc');
     
@@ -720,7 +720,7 @@ router.post('/red-flags/resolve/:id', async (req, res) => {
     const { id } = req.params;
     const { resolution_notes, action_taken } = req.body;
     
-    const db = await getDatabase();
+    const db = getDatabase();
     const redFlagRef = db.collection('redFlags').doc(id);
     const redFlagDoc = await redFlagRef.get();
     
@@ -762,7 +762,7 @@ router.post('/red-flags/resolve/:id', async (req, res) => {
 router.post('/booking/share-contact/:booking_id', async (req, res) => {
   try {
     const { booking_id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Get booking details
     const bookingRef = db.collection('bookings').doc(booking_id);
@@ -832,7 +832,7 @@ router.post('/booking/share-contact/:booking_id', async (req, res) => {
 router.get('/contact-sharing/history', async (req, res) => {
   try {
     const { booking_id, limit = 50 } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('contactSharing').orderBy('shared_timestamp', 'desc');
     
@@ -875,7 +875,7 @@ router.get('/contact-sharing/history', async (req, res) => {
 router.get('/regional/settings', async (req, res) => {
   try {
     const { country } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('regionalSettings');
     if (country) {
@@ -926,7 +926,7 @@ router.post('/regional/tax-requirements', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const settingsRef = db.collection('regionalSettings').doc(country.toLowerCase());
     
     const updateData = {
@@ -965,7 +965,7 @@ router.post('/regional/tax-requirements', async (req, res) => {
 router.get('/payment/holds', async (req, res) => {
   try {
     const { status, booking_id, limit = 50 } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('paymentHolds').orderBy('hold_start', 'desc');
     
@@ -1009,7 +1009,7 @@ router.post('/payment/no-show/:booking_id', async (req, res) => {
   try {
     const { booking_id } = req.params;
     const { refund_reason, admin_notes } = req.body;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Get booking details
     const bookingRef = db.collection('bookings').doc(booking_id);
@@ -1071,7 +1071,7 @@ router.post('/payment/dispute/:booking_id', async (req, res) => {
   try {
     const { booking_id } = req.params;
     const { dispute_reason, dispute_notes, resolution_action } = req.body;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Create dispute record
     const disputeData = {
@@ -1109,7 +1109,7 @@ router.post('/payment/dispute/:booking_id', async (req, res) => {
 // GET /api/adminsheet/registration/terms - Get registration terms
 router.get('/registration/terms', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     const termsRef = db.collection('registrationTerms').doc('global');
     const termsDoc = await termsRef.get();
     
@@ -1156,7 +1156,7 @@ router.post('/registration/terms', async (req, res) => {
       insurance_requirements
     } = req.body;
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const termsRef = db.collection('registrationTerms').doc('global');
     
     const updateData = {
@@ -1194,7 +1194,7 @@ router.post('/registration/terms', async (req, res) => {
 // GET /api/adminsheet/fee/structure - Get fee structure
 router.get('/fee/structure', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     const feeRef = db.collection('feeStructure').doc('global');
     const feeDoc = await feeRef.get();
     
@@ -1249,7 +1249,7 @@ router.post('/fee/structure', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     const feeRef = db.collection('feeStructure').doc('global');
     
     const updateData = {
@@ -1286,7 +1286,7 @@ router.post('/fee/structure', async (req, res) => {
 router.get('/ai/reports', async (req, res) => {
   try {
     const { report_type, limit = 20 } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('aiReports').orderBy('generated_date', 'desc');
     
@@ -1325,7 +1325,7 @@ router.get('/ai/reports', async (req, res) => {
 router.post('/ai/optimize', async (req, res) => {
   try {
     const { optimization_type = 'general' } = req.body;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Generate AI optimization recommendations
     const optimizationData = {
@@ -1366,7 +1366,7 @@ router.post('/ai/optimize', async (req, res) => {
 router.post('/stripe/verify/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     const cpRef = db.collection('coordinationPoints').doc(id);
     const cpDoc = await cpRef.get();
@@ -1438,7 +1438,7 @@ router.post('/reviews/analyze', async (req, res) => {
       analyzed_at: new Date().toISOString()
     };
 
-    const db = await getDatabase();
+    const db = getDatabase();
     await db.collection('reviewAnalysis').add(analysisData);
 
     res.json({
@@ -1460,7 +1460,7 @@ router.post('/reviews/analyze', async (req, res) => {
 router.get('/communication/scores', async (req, res) => {
   try {
     const { user_id, limit = 50 } = req.query;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = db.collection('communicationLogs').orderBy('timestamp', 'desc');
     
@@ -1522,7 +1522,7 @@ router.get('/communication/scores', async (req, res) => {
 router.post('/contact-sharing/resend/:booking_id', async (req, res) => {
   try {
     const { booking_id } = req.params;
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Find existing contact sharing record
     const sharingQuery = db.collection('contactSharing').where('booking_id', '==', booking_id);
@@ -1580,7 +1580,7 @@ router.post('/matching/predict', async (req, res) => {
       });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Get available coordination points
     const cpQuery = db.collection('coordinationPoints').where('active', '==', true);
@@ -1641,7 +1641,7 @@ router.post('/matching/predict', async (req, res) => {
 // POST /api/adminsheet/init/schema - Initialize AdminSheet database schema
 router.post('/init/schema', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     console.log('🔥 Initializing AdminSheet database schema...');
     
     // 1. EscrowSettings Collection
@@ -1821,7 +1821,7 @@ router.post('/init/schema', async (req, res) => {
 // GET /api/adminsheet/health - Health check for AdminSheet API
 router.get('/health', async (req, res) => {
   try {
-    const db = await getDatabase();
+    const db = getDatabase();
     
     // Test database connection
     await db.collection('coordinationPoints').limit(1).get();
