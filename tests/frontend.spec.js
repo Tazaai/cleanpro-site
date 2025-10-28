@@ -3,27 +3,27 @@ import { test, expect } from "@playwright/test";
 const BASE_URL = process.env.BASE_URL || "https://cleanpro-frontend-5539254765.europe-west1.run.app";
 
 test("homepage loads", async ({ page }) => {
-  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   console.log("Loaded URL:", page.url());
   await page.screenshot({ path: "debug-home.png", fullPage: true });
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Clean Departure");
 });
 
 test("booking form visible", async ({ page }) => {
-  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   await page.screenshot({ path: "debug-booking.png", fullPage: true });
   await expect(page.locator("form")).toBeVisible();
 });
 
 test("services section visible", async ({ page }) => {
-  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   await page.screenshot({ path: "debug-services.png", fullPage: true });
   // pick the h2 with Our Services (ignore others)
   await expect(page.getByRole("heading", { name: /Our Services/i })).toBeVisible();
 });
 
 test("pricing preview select works", async ({ page }) => {
-  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   const form = page.locator("form");
   await expect(form).toBeVisible();
   // removed select, form is visible test only
@@ -32,7 +32,7 @@ test("pricing preview select works", async ({ page }) => {
 });
 
 test("contact section visible", async ({ page }) => {
-  await page.goto(BASE_URL, { waitUntil: "networkidle" });
+  await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
   await page.screenshot({ path: "debug-contact.png", fullPage: true });
   await expect(page.locator("h2", { hasText: "Get in Touch" }).first()).toBeVisible();
 });
