@@ -192,7 +192,18 @@ jobs:
           echo "✅ Firebase credentials will be passed directly from GitHub Secrets"
           echo "🔧 Using FIREBASE_KEY for Cloud Run environment"
           
-          # Deploy with environment variables - treat Firebase key as raw JSON
+          # Create temporary Firebase key file to avoid gcloud parsing issues
+          echo '${{ secrets.FIREBASE_KEY }}' > /tmp/firebase-key.json
+          
+          # Validate the Firebase key is valid JSON
+          if jq empty /tmp/firebase-key.json 2>/dev/null; then
+            echo "✅ Firebase key is valid JSON"
+          else
+            echo "❌ Firebase key is not valid JSON, deployment will fail"
+            exit 1
+          fi
+          
+          # Deploy with environment variables using file input to avoid escaping issues
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
@@ -203,7 +214,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --project $GCP_PROJECT \
-            --update-env-vars FIREBASE_KEY="${{ secrets.FIREBASE_KEY }}" \
+            --update-env-vars FIREBASE_KEY="$(cat /tmp/firebase-key.json | tr -d '\n')" \
             --update-env-vars GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}" \
             --update-env-vars OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
             --update-env-vars GCP_PROJECT="${{ secrets.GCP_PROJECT }}" \
@@ -213,6 +224,9 @@ jobs:
             --update-env-vars APPSHEET_API_KEY="${{ secrets.APPSHEET_API_KEY }}" \
             --update-env-vars APPSHEET_APP_ID="${{ secrets.APPSHEET_APP_ID }}" \
             --update-env-vars NODE_ENV="production"
+
+          # Clean up temporary Firebase key file
+          rm -f /tmp/firebase-key.json
 
       - name: Build & Deploy Frontend to Cloud Run
         run: |
