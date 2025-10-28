@@ -33,6 +33,88 @@ const getDb = async () => {
 
 router.get("/", async (req, res) => {
   try {
+    // Check for seeding trigger
+    if (req.query.seed === 'true' && req.query.admin === 'true') {
+      console.log("🌱 Seeding request detected - populating Firestore...");
+      try {
+        const db = await getDb();
+        if (db) {
+          // Default coordination points for seeding
+          const seedData = [
+            {
+              id: "hq_main",
+              name: "Main Headquarters",
+              address: "1234 Main Street, San Francisco, CA 94102, USA",
+              city: "San Francisco",
+              state: "CA",
+              zipCode: "94102",
+              phone: "+1 (555) 123-4567",
+              email: "main@cleandeparture.com",
+              active: true,
+              coordinates: { lat: 37.7749, lng: -122.4194 },
+              serviceRadius: 50,
+              capacity: { daily: 20, weekly: 120 }
+            },
+            {
+              id: "hq_east",
+              name: "East Bay Operations",
+              address: "5678 Oakland Avenue, Oakland, CA 94607, USA",
+              city: "Oakland",
+              state: "CA",
+              zipCode: "94607",
+              phone: "+1 (555) 234-5678",
+              email: "eastbay@cleandeparture.com",
+              active: true,
+              coordinates: { lat: 37.8044, lng: -122.2711 },
+              serviceRadius: 40,
+              capacity: { daily: 15, weekly: 90 }
+            },
+            {
+              id: "hq_south",
+              name: "South Bay Center",
+              address: "9999 Silicon Valley Boulevard, San Jose, CA 95110, USA",
+              city: "San Jose",
+              state: "CA",
+              zipCode: "95110",
+              phone: "+1 (555) 345-6789",
+              email: "southbay@cleandeparture.com",
+              active: true,
+              coordinates: { lat: 37.3382, lng: -121.8863 },
+              serviceRadius: 45,
+              capacity: { daily: 18, weekly: 108 }
+            }
+          ];
+
+          // Seed to both possible collection names for compatibility
+          const batch = db.batch();
+          
+          seedData.forEach(point => {
+            const ref1 = db.collection('coordination_points').doc(point.id);
+            const ref2 = db.collection('coordinationPoints').doc(point.id);
+            batch.set(ref1, point);
+            batch.set(ref2, point);
+          });
+          
+          await batch.commit();
+          console.log("✅ Firestore seeded successfully");
+          
+          return res.json({
+            ok: true,
+            message: "Firestore seeded successfully",
+            seeded: seedData.length,
+            collections: ['coordination_points', 'coordinationPoints']
+          });
+        }
+      } catch (seedError) {
+        console.error("❌ Seeding failed:", seedError);
+        return res.json({
+          ok: false,
+          error: "Seeding failed",
+          details: seedError.message
+        });
+      }
+    }
+
     // Try Firebase first
     let coordinationPoints = [];
     let fromFirebase = false;
