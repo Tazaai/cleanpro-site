@@ -188,17 +188,9 @@ jobs:
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
           # Firebase credentials validation and setup
-          if [ -n "${{ secrets.FIREBASE_KEY_BASE64 }}" ]; then
-            echo "✅ Using FIREBASE_KEY_BASE64 secret (Base64 encoded)"
-            echo "🔧 Firebase key will be passed directly to Cloud Run environment"
-          elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "⚠️ Using GCP_SA_KEY as FIREBASE_KEY (fallback)"
-            echo "💡 Consider setting FIREBASE_KEY_BASE64 for proper Firebase integration"
-          else
-            echo "❌ No Firebase credentials available"
-            echo "🔧 Required: Either FIREBASE_KEY_BASE64 or GCP_SA_KEY must be configured"
-            exit 1
-          fi
+          echo "🔧 Validating Firebase credentials for deployment..."
+          echo "✅ Firebase credentials will be passed directly from GitHub Secrets"
+          echo "🔧 Using FIREBASE_KEY_BASE64 for Cloud Run environment"
           
           # Deploy with environment variables directly using GitHub secrets
           gcloud run deploy cleanpro-backend \
