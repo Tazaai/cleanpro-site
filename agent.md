@@ -39,7 +39,7 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 ℹ️  GCP_SA_KEY: Not available locally (stored in GitHub Secrets)
 🔑 API Keys:
 ✅ GOOGLE_MAPS_API_KEY: Available locally (39 chars)
-ℹ️  FIREBASE_KEY: Not available locally (stored in GitHub Secrets)
+ℹ️  FIREBASE_KEY_BASE64: Not available locally (stored in GitHub Secrets)
 ℹ️  OPENAI_API_KEY: Not available locally (stored in GitHub Secrets)
 🔐 Authentication & Security:
 ℹ️  JWT_SECRET: Not available locally (stored in GitHub Secrets)
@@ -150,24 +150,20 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-completed | failure | fix: Proper shell script quoting for Firebase key conditionals
-completed | failure | fix: Remove base64 encoding from FIREBASE_KEY deployment
-completed | failure | deploy: trigger deployment for updated FIREBASE_KEY
+completed | success | feat: Firebase Base64 support - CI/CD-safe approach
+completed | failure | fix: Firebase key re-uploaded properly
+completed | failure | deploy: Updated Firebase key in GitHub Secrets - trigger deployment
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
 ## � Firebase Connection Diagnostic...
 ✅ Firebase integration file found
 🌐 Testing Firebase connection in production...
-Firebase Ready: false
+Firebase Ready: true
 Has Firebase Key: true
-Key Length: 392 characters
+Key Length: 3176 characters
 GCP Project: cleanpro-site
-❌ Firebase connection failed in production
-🔧 CRITICAL: Firebase key too short (392 chars)
-   Expected: 2000-3000 characters
-   Action: Update FIREBASE_KEY in GitHub Secrets with complete JSON
-   💡 Run: ./firebase_key_quick_check.sh for diagnosis
+✅ Firebase connected successfully in production
 🧪 Testing Firebase-dependent endpoints...
 ❌ Coordination points API failing (HTTP 404)
 

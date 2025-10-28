@@ -405,6 +405,8 @@ if [ -f backend/firebaseClient.js ] || [ -f backend/firebase.js ]; then
     
     if [ "$FIREBASE_READY" = "true" ]; then
       echo "✅ Firebase connected successfully in production"
+      echo "🎉 SUCCESS: Firebase key resolution complete ($KEY_LENGTH chars)"
+      echo "💡 Key insight: Used Notepad instead of Studio V for proper JSON copy"
     else
       echo "❌ Firebase connection failed in production"
       
@@ -413,6 +415,7 @@ if [ -f backend/firebaseClient.js ] || [ -f backend/firebase.js ]; then
         echo "   Expected: 2000-3000 characters"
         echo "   Action: Update FIREBASE_KEY_BASE64 in GitHub Secrets with Base64 encoded JSON"
         echo "   💡 Run: ./firebase_key_quick_check.sh for diagnosis"
+        echo "   🎯 TIP: Use Notepad (not Studio V) to copy Firebase JSON properly"
       else
         echo "🔧 Firebase key length OK, check other issues:"
         echo "   - Wrong project_id in service account"
