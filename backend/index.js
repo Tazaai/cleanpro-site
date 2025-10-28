@@ -94,6 +94,23 @@ app.get("/debug/firebase", (req, res) => {
   });
 });
 
+// Google Maps API diagnostic endpoint
+app.get("/debug/maps", (req, res) => {
+  const diagnostics = {
+    hasGoogleMapsKey: !!process.env.GOOGLE_MAPS_API_KEY,
+    googleMapsKeyLength: process.env.GOOGLE_MAPS_API_KEY ? process.env.GOOGLE_MAPS_API_KEY.length : 0,
+    googleMapsKeyPrefix: process.env.GOOGLE_MAPS_API_KEY ? process.env.GOOGLE_MAPS_API_KEY.substring(0, 10) + "..." : "not-set",
+    nodeEnv: process.env.NODE_ENV || "not-set",
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json({
+    ok: true,
+    message: "Google Maps API diagnostic information",
+    diagnostics
+  });
+});
+
 
 // Basic API routes - direct inline to avoid import issues
 // Mount API routes
