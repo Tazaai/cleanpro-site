@@ -195,6 +195,21 @@ router.post('/cp/register', async (req, res) => {
       onboarding_completed: false,
       terms_accepted: true,
       
+      // CP Identification Control - Manual AdminSheet Management
+      identity_required: false, // Admin controls this - default to false
+      verification_provider: null, // stripe_identity/checkr/veriff/manual (admin chooses)
+      verified_date: null, // Set when verification completed
+      verification_status: 'exempt', // pending/verified/exempt/failed (default exempt)
+      
+      // Optional Insurance - Not Required
+      insurance_provided: !!insurance_info, // Convert to boolean if insurance provided
+      insurance_details: insurance_info ? {
+        provider: insurance_info.provider || 'Not specified',
+        policy_number: insurance_info.policy_number || '',
+        coverage_amount: insurance_info.coverage_amount || '',
+        expiry_date: insurance_info.expiry_date || null
+      } : null,
+      
       // Default scores (will be updated after approval)
       ai_quality_score: null,
       communication_score: null,
@@ -466,6 +481,80 @@ router.post('/cp/deactivate/:id', async (req, res) => {
   }
 });
 
+// POST /api/adminsheet/cp/set-identity-requirement/:id - Admin control for identity verification
+router.post('/cp/set-identity-requirement/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      identity_required, 
+      verification_provider, 
+      verification_status,
+      bypass_reason 
+    } = req.body;
+    
+    const db = getDatabase();
+    const cpRef = db.collection('coordinationPoints').doc(id);
+    const cpDoc = await cpRef.get();
+    
+    if (!cpDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Coordination point not found'
+      });
+    }
+
+    const updateData = {
+      identity_required: !!identity_required, // Ensure boolean
+      modified_at: new Date().toISOString(),
+      modified_by: req.user?.id || 'admin'
+    };
+
+    // Set verification provider if identity is required
+    if (identity_required) {
+      const validProviders = ['stripe_identity', 'checkr', 'veriff', 'manual'];
+      if (verification_provider && validProviders.includes(verification_provider)) {
+        updateData.verification_provider = verification_provider;
+        updateData.verification_status = 'pending';
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification provider. Must be: stripe_identity, checkr, veriff, or manual'
+        });
+      }
+    } else {
+      // If identity not required, set as exempt
+      updateData.verification_provider = null;
+      updateData.verification_status = 'exempt';
+      updateData.verified_date = null;
+      if (bypass_reason) {
+        updateData.bypass_reason = bypass_reason;
+      }
+    }
+
+    await cpRef.update(updateData);
+
+    res.json({
+      success: true,
+      message: identity_required ? 
+        `Identity verification requirement activated (${verification_provider})` : 
+        'Identity verification requirement removed - CP marked as exempt',
+      data: { 
+        id, 
+        identity_required: updateData.identity_required,
+        verification_provider: updateData.verification_provider,
+        verification_status: updateData.verification_status
+      }
+    });
+  } catch (error) {
+    console.error('Error updating identity requirement:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update identity requirement',
+      details: error.message
+    });
+  }
+});
+
 // POST /api/adminsheet/cp/set-fee/:id - Set custom fee percentage
 router.post('/cp/set-fee/:id', async (req, res) => {
   try {
@@ -506,6 +595,62 @@ router.post('/cp/set-fee/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to set custom fee',
+      details: error.message
+    });
+  }
+});
+
+// POST /api/adminsheet/cp/manual-verify/:id - Complete manual verification
+router.post('/cp/manual-verify/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { verification_notes, documents_reviewed } = req.body;
+    
+    const db = getDatabase();
+    const cpRef = db.collection('coordinationPoints').doc(id);
+    const cpDoc = await cpRef.get();
+    
+    if (!cpDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Coordination point not found'
+      });
+    }
+
+    const cpData = cpDoc.data();
+    
+    // Check if verification is required and set to manual
+    if (!cpData.identity_required || cpData.verification_provider !== 'manual') {
+      return res.status(400).json({
+        success: false,
+        error: 'Manual verification not applicable for this CP'
+      });
+    }
+
+    await cpRef.update({
+      verification_status: 'verified',
+      verified_date: new Date().toISOString(),
+      verified_by: req.user?.id || 'admin',
+      verification_method: 'manual_review',
+      verification_notes: verification_notes || 'Manual verification completed by admin',
+      documents_reviewed: documents_reviewed || []
+    });
+
+    res.json({
+      success: true,
+      message: 'Manual verification completed successfully',
+      data: { 
+        id, 
+        verification_status: 'verified',
+        verification_method: 'manual_review',
+        verified_date: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error completing manual verification:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to complete manual verification',
       details: error.message
     });
   }

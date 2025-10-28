@@ -273,7 +273,7 @@ Final Total = Subtotal - Discount
 - **Multi-currency** payment processing with AI fraud detection
 
 ### AdminSheet Tables Structure:
-1. **CoordinationPoints**: id, name, address, tax_id, stripe_identity_status, active, admin_approved, custom_fee_percentage, ai_quality_score, communication_score, contact_email, contact_phone
+1. **CoordinationPoints**: id, name, address, tax_id, stripe_identity_status, active, admin_approved, custom_fee_percentage, ai_quality_score, communication_score, contact_email, contact_phone, identity_required, verification_provider, verified_date, verification_status, insurance_provided, insurance_details
 2. **EscrowSettings**: hold_period_hours, auto_release_enabled, region_settings, release_trigger_date_type, ai_optimization_enabled  
 3. **RegionalSettings**: country, currency, unit_system, language, tax_requirements, tax_id_mandatory, ai_suggested_adjustments
 4. **PaymentHolds**: booking_id, amount, hold_start, scheduled_cleaning_date, release_conditions, status, ai_fraud_score
@@ -290,6 +290,8 @@ Final Total = Subtotal - Discount
 - `POST /api/adminsheet/cp/approve/:id` - Approve/activate CP with AI recommendation review
 - `POST /api/adminsheet/cp/deactivate/:id` - Deactivate CP with AI analysis
 - `POST /api/adminsheet/cp/set-fee/:id` - Set custom fee percentage for specific CP
+- `POST /api/adminsheet/cp/set-identity-requirement/:id` - Admin control for identity verification requirement
+- `POST /api/adminsheet/cp/manual-verify/:id` - Complete manual verification for CP
 - `GET /api/adminsheet/cp/nearby/:location` - Find CPs within 50km radius, show registration opportunity if none
 - `POST /api/adminsheet/cp/register` - Public CP registration form submission
 - `GET /api/adminsheet/cp/share-link/:id` - Get shareable marketing link for specific CP
@@ -317,6 +319,37 @@ Final Total = Subtotal - Discount
 - `POST /api/adminsheet/contact-sharing/resend/:booking_id` - Resend CP contact details to client
 - `POST /api/adminsheet/matching/predict` - AI-powered CP matching for bookings
 - `POST /api/adminsheet/init/schema` - Initialize AdminSheet database schema
+
+### 🆔 CP Identification Control
+
+**Manual Management via AdminSheet**: Identification and background checks are **manually managed** through the AdminSheet system, giving administrators full control over verification requirements on a case-by-case basis.
+
+#### **Control Features:**
+- **Admin Decision Authority**: Admin can **activate or deactivate** verification requirements at any time for any CP
+- **Flexible Verification Options**: Support for **Stripe Identity**, **Checkr**, **Veriff**, or **manual review** processes
+- **Case-by-Case Basis**: Admin decides verification needs individually (e.g., trusted or known CPs can be approved without ID checks)
+- **No Automatic Enforcement**: No thresholds or automatic triggers - purely admin-controlled
+
+#### **CP Registration Fields:**
+- `identity_required` (boolean) - Admin-controlled flag for verification requirement
+- `verification_provider` (string) - Selected verification service (stripe_identity/checkr/veriff/manual)
+- `verified_date` (timestamp) - Date of completed verification (if applicable)
+- `verification_status` (string) - pending/verified/exempt/failed
+- `insurance_provided` (boolean) - **Optional** insurance coverage (not required)
+- `insurance_details` (object) - Insurance provider and policy information (optional)
+
+#### **Verification Workflow:**
+1. **CP Registration**: All CPs register normally via public form
+2. **Admin Review**: Admin reviews application in AdminSheet dashboard  
+3. **Verification Decision**: Admin decides if identity verification is needed
+4. **Flexible Approval**: Admin can approve with or without verification based on trust level
+5. **Optional Insurance**: Insurance coverage is recommended but not mandatory
+
+#### **Admin Controls:**
+- **Toggle verification requirement** per CP instantly
+- **Override verification** for trusted providers
+- **Manual approval** option bypassing all automated checks
+- **Insurance tracking** without enforcement (optional field)
 
 ---
 
