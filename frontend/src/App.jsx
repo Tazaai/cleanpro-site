@@ -67,7 +67,7 @@ function AppContent() {
     if (navigator.share) {
       navigator.share({
         title: "Clean Departure",
-        text: "Book your cleaning service easily with Clean Departure!",
+        text: "Connect with verified cleaning professionals through Clean Departure's trusted marketplace!",
         url: window.location.href,
       });
     } else {
@@ -156,7 +156,7 @@ function AppContent() {
         <img src="/cleandeparture.jpg" alt="Cleaning Services" className="w-full h-72 object-cover" />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/60 to-black/30 px-4">
           <h1 className="text-3xl md:text-5xl font-bold">🚀 Clean Departure</h1>
-          <p className="mt-2 text-lg md:text-xl">Your trusted cleaning partner</p>
+          <p className="mt-2 text-lg md:text-xl">Your trusted platform for safe, verified cleaning services</p>
           <button
             onClick={scrollToBooking}
             className="mt-4 px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow mr-4"
@@ -194,12 +194,12 @@ function AppContent() {
             ))}
           </div>
 
-          <h3 className="text-xl font-semibold mt-6">✨ Why Choose Us?</h3>
+          <h3 className="text-xl font-semibold mt-6">✨ Why Choose Clean Departure?</h3>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 text-gray-700">
-            <li>✅ Reliable and trusted cleaners</li>
-            <li>✅ Eco-friendly cleaning products</li>
-            <li>✅ Affordable transparent pricing</li>
-            <li>✅ Flexible scheduling to fit your needs</li>
+            <li>✅ Identity-verified cleaning professionals</li>
+            <li>✅ Secure escrow payment protection</li>
+            <li>✅ Transparent platform with fair pricing</li>
+            <li>✅ Safe coordination and dispute resolution</li>
           </ul>
 
           {/* Google Map */}
