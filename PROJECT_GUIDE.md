@@ -153,13 +153,41 @@ Final Total = Subtotal - Discount
 - **First booking**: NO discount (establishes customer relationship)
 - **Repeat bookings**: Auto-discount applied by backend based on history
 
-### 📋 Price Preview Components
-1. **Base Cost Breakdown**: sq ft × rate per sq ft
-2. **Distance Fee Breakdown**: miles over 40 × rate per mile (or "FREE" if ≤40)
-3. **Subtotal Calculation**: Base + Distance fees
-4. **Discount Application**: Percentage and dollar amount (if eligible)
-5. **Final Total**: Clear, prominent display
-6. **Service Summary**: Service type, area, distance, frequency, cleaning history  
+### 🎯 First-Time Customer Messaging
+- **Weekly Service Selection**: "First-time customer - No discount today. Starting from your 2nd booking: 15% weekly discount!"
+- **Monthly Service Selection**: "First-time customer - No discount today. Starting from your 2nd booking: 8% monthly discount!"
+- **Discount Promise**: Clear messaging about future savings to encourage repeat bookings
+- **Eligibility**: Discounts only available from 2nd booking onwards (proper repeat customer logic)
+
+### �️ Coordination Point Availability & Registration
+- **Distance Check**: If no coordination points within 50km (≈31 miles) of client location
+- **Encouragement Message**: "Thanks for your interest! Unfortunately, we don't have coordination points near your location yet. Would you like to register as a coordination point and serve your local area?"
+- **Registration Opportunity**: Convert no-service situations into business expansion opportunities
+- **Distance Validation**: Automatically check CP availability before showing booking form
+
+### 📱 Digital Marketing & Share Links
+- **Individual CP Share Links**: Each coordination point gets unique shareable marketing link
+- **Privacy Protection**: Share links show CP services and coverage area WITHOUT contact details
+- **Platform-Only Booking**: Clients can only book through platform - no direct contact until payment confirmed
+- **Marketing Features**: 
+  - CP name and service area display
+  - Quality ratings and reviews
+  - Service descriptions and pricing
+  - "Book Now" button that routes through platform
+- **SEO Optimization**: Each CP gets their own landing page for local marketing  
+
+### 🏢 Coordination Point Registration System
+- **Public Registration Portal**: `/register-cp` - Public-facing CP registration form
+- **Application Process**: Multi-step registration with identity verification
+- **Required Information**:
+  - Business/individual details and tax ID
+  - Service coverage area (address + radius)
+  - Insurance documentation
+  - Stripe identity verification
+  - Professional references
+- **Admin Approval Workflow**: All CP applications require admin review and approval
+- **Quality Standards Agreement**: CPs must accept service quality standards and conduct policies
+- **Onboarding Process**: Training materials and platform orientation for approved CPs
 
 ---
 
@@ -262,6 +290,10 @@ Final Total = Subtotal - Discount
 - `POST /api/adminsheet/cp/approve/:id` - Approve/activate CP with AI recommendation review
 - `POST /api/adminsheet/cp/deactivate/:id` - Deactivate CP with AI analysis
 - `POST /api/adminsheet/cp/set-fee/:id` - Set custom fee percentage for specific CP
+- `GET /api/adminsheet/cp/nearby/:location` - Find CPs within 50km radius, show registration opportunity if none
+- `POST /api/adminsheet/cp/register` - Public CP registration form submission
+- `GET /api/adminsheet/cp/share-link/:id` - Get shareable marketing link for specific CP
+- `GET /api/adminsheet/cp/public/:id` - Public CP landing page (no contact details)
 - `GET /api/adminsheet/escrow/settings` - Get escrow configuration with AI optimization status
 - `POST /api/adminsheet/escrow/settings` - Update hold periods and release rules
 - `POST /api/adminsheet/stripe/verify/:id` - Trigger Stripe Identity verification
@@ -284,6 +316,7 @@ Final Total = Subtotal - Discount
 - `GET /api/adminsheet/contact-sharing/history` - Get contact sharing audit trail
 - `POST /api/adminsheet/contact-sharing/resend/:booking_id` - Resend CP contact details to client
 - `POST /api/adminsheet/matching/predict` - AI-powered CP matching for bookings
+- `POST /api/adminsheet/init/schema` - Initialize AdminSheet database schema
 
 ---
 
