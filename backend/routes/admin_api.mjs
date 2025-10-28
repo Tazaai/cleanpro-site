@@ -338,4 +338,185 @@ router.put("/settings", authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// =============================================================
+// 🌱 Database Seeding (Temporary - for initial setup)
+// =============================================================
+
+// Seed coordination points - temporary endpoint for initial data setup
+router.post("/seed-coordination-points", async (req, res) => {
+  try {
+    const db = getDb();
+    
+    // Check if coordination points already exist
+    const existingSnap = await db.collection("coordination_points").get();
+    if (!existingSnap.empty) {
+      return res.json({
+        ok: true,
+        message: "Coordination points already exist",
+        count: existingSnap.size,
+        action: "skipped"
+      });
+    }
+    
+    const coordinationPoints = [
+      {
+        id: "hq_main",
+        name: "Main Headquarters",
+        address: "1234 Main Street, San Francisco, CA 94102, USA",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94102",
+        phone: "+1 (555) 123-4567",
+        email: "main@cleandeparture.com",
+        active: true,
+        coordinates: {
+          lat: 37.7749,
+          lng: -122.4194
+        },
+        serviceRadius: 50,
+        capacity: {
+          daily: 20,
+          weekly: 120
+        },
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+      },
+      {
+        id: "hq_east",
+        name: "East Bay Operations", 
+        address: "5678 Oakland Avenue, Oakland, CA 94607, USA",
+        city: "Oakland",
+        state: "CA",
+        zipCode: "94607",
+        phone: "+1 (555) 234-5678",
+        email: "eastbay@cleandeparture.com",
+        active: true,
+        coordinates: {
+          lat: 37.8044,
+          lng: -122.2711
+        },
+        serviceRadius: 40,
+        capacity: {
+          daily: 15,
+          weekly: 90
+        },
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+      },
+      {
+        id: "hq_south",
+        name: "South Bay Center",
+        address: "9999 Silicon Valley Boulevard, San Jose, CA 95110, USA", 
+        city: "San Jose",
+        state: "CA",
+        zipCode: "95110",
+        phone: "+1 (555) 345-6789",
+        email: "southbay@cleandeparture.com",
+        active: true,
+        coordinates: {
+          lat: 37.3382,
+          lng: -121.8863
+        },
+        serviceRadius: 45,
+        capacity: {
+          daily: 18,
+          weekly: 108
+        },
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+      }
+    ];
+
+    // Insert coordination points
+    let inserted = 0;
+    for (const point of coordinationPoints) {
+      await db.collection("coordination_points").doc(point.id).set(point);
+      inserted++;
+    }
+
+    res.json({
+      ok: true,
+      message: "Coordination points seeded successfully",
+      inserted: inserted,
+      total: coordinationPoints.length
+    });
+
+  } catch (error) {
+    console.error("Seed coordination points error:", error);
+    res.status(500).json({ 
+      ok: false, 
+      error: "Failed to seed coordination points",
+      details: error.message
+    });
+  }
+});
+
+// Seed basic configuration data
+router.post("/seed-config", async (req, res) => {
+  try {
+    const db = getDb();
+
+    // Seed pricing configuration
+    await db.collection("config").doc("pricing").set({
+      freeMiles: 40,
+      maxDistance: 120,
+      loyaltyDiscount: 0.025,
+      baseRates: {
+        residential_standard: 0.20,
+        residential_deep: 0.30,
+        residential_move: 0.35,
+        commercial: 0.15
+      },
+      distanceRate: 1.50,
+      updated: new Date().toISOString()
+    });
+
+    // Seed services data
+    const services = [
+      {
+        id: "residential_standard",
+        name: "Standard Residential Cleaning",
+        description: "Regular house cleaning service",
+        baseRate: 0.20,
+        category: "residential"
+      },
+      {
+        id: "residential_deep", 
+        name: "Deep Cleaning",
+        description: "Thorough deep cleaning service",
+        baseRate: 0.30,
+        category: "residential"
+      },
+      {
+        id: "commercial",
+        name: "Commercial Cleaning",
+        description: "Office and commercial space cleaning",
+        baseRate: 0.15,
+        category: "commercial"
+      }
+    ];
+
+    for (const service of services) {
+      await db.collection("services").doc(service.id).set(service);
+    }
+
+    res.json({
+      ok: true,
+      message: "Configuration and services seeded successfully",
+      seeded: {
+        pricing: 1,
+        services: services.length
+      }
+    });
+
+  } catch (error) {
+    console.error("Seed config error:", error);
+    res.status(500).json({ 
+      ok: false, 
+      error: "Failed to seed configuration",
+      details: error.message
+    });
+  }
+});
+
 export default router;
