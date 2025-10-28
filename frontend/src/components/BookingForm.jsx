@@ -9,6 +9,21 @@ import { extractCoordinationPoints, syncDualState } from "../utils/dualNaming";
 // ✅ Correct base URL with fallback
 const API_BASE = import.meta.env.VITE_API_BASE || window.API_BASE || "https://cleanpro-backend-5539254765.europe-west1.run.app";
 
+// Function to check for nearby coordination points
+const checkNearbyCoordinationPoints = async (address) => {
+  try {
+    if (!address || address.length < 3) return null;
+    
+    const response = await fetch(`${API_BASE}/api/adminsheet/cp/nearby/${encodeURIComponent(address)}`);
+    const data = await response.json();
+    
+    return data;
+  } catch (error) {
+    console.log('CP nearby check not available:', error);
+    return null;
+  }
+};
+
 // Custom calendar styles
 const calendarStyles = `
   .react-calendar {

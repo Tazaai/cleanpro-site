@@ -3,6 +3,7 @@ import BookingForm from "./components/BookingForm";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import AdminDashboard from "./components/AdminDashboard";
+import CPRegistrationForm from "./components/CPRegistrationForm";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
@@ -13,6 +14,7 @@ function AppContent() {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showCPRegistration, setShowCPRegistration] = useState(false);
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
 
   // ✅ Initialize map safely with better error handling
@@ -104,6 +106,9 @@ function AppContent() {
       {showAdmin && isAdmin && (
         <AdminDashboard onClose={() => setShowAdmin(false)} />
       )}
+      {showCPRegistration && (
+        <CPRegistrationForm onClose={() => setShowCPRegistration(false)} />
+      )}
 
       {/* Hero */}
       <header className="relative mb-8 text-center text-white">
@@ -154,9 +159,15 @@ function AppContent() {
           <p className="mt-2 text-lg md:text-xl">Your trusted cleaning partner</p>
           <button
             onClick={scrollToBooking}
-            className="mt-4 px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow"
+            className="mt-4 px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow mr-4"
           >
             Book Now
+          </button>
+          <button
+            onClick={() => setShowCPRegistration(true)}
+            className="mt-4 px-6 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white shadow"
+          >
+            Become a Provider
           </button>
         </div>
       </header>
