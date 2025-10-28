@@ -256,7 +256,25 @@ router.post('/cp/register', async (req, res) => {
 
     const docRef = await db.collection('coordinationPoints').add(registrationData);
     
-    // Send notification to admins (would integrate with email service)
+    // Add the document ID to the registration data for email notifications
+    registrationData.id = docRef.id;
+    
+    // Send email notifications
+    try {
+      const { emailService } = await import('../services/email_service.js');
+      
+      // Send admin notification
+      await emailService.notifyAdminCPRegistration(registrationData);
+      
+      // Send confirmation to CP
+      await emailService.notifyCPRegistrationReceived(registrationData);
+      
+      console.log('📧 Email notifications sent for CP registration');
+    } catch (emailError) {
+      console.error('❌ Failed to send email notifications:', emailError);
+      // Don't fail the registration if email fails
+    }
+    
     console.log(`🔔 New CP registration: ${business_name} (${docRef.id})`);
 
     res.json({

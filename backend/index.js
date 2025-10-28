@@ -35,6 +35,7 @@ import configApi from "./routes/config_api.mjs";
 import appsheetApi from "./routes/appsheet_api.mjs";
 import adminsheetApi from "./routes/adminsheet_api.mjs";
 import aiMonitoringApi from "./routes/ai_monitoring_api.mjs";
+import emailApi from "./routes/email_api.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -132,6 +133,7 @@ app.use("/api/config", configApi);
 app.use("/api/appsheet", appsheetApi);
 app.use("/api/adminsheet", adminsheetApi);
 app.use("/api/ai-monitoring", aiMonitoringApi);
+app.use("/api/email", emailApi);
 console.log("✅ API routes mounted successfully");
 
 // Keep the inline routes for backward compatibility

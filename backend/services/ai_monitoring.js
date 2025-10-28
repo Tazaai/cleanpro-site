@@ -5,6 +5,7 @@ class AIMonitoringService {
   constructor() {
     this.openai = null;
     this.isEnabled = false;
+    this.emailService = null; // Will be loaded dynamically to avoid circular imports
     this.initialize();
   }
 
@@ -206,9 +207,19 @@ Red flags to detect:
         escalated: false
       };
 
-      await db.collection('ai_alerts').add(alertData);
+      const docRef = await db.collection('ai_alerts').add(alertData);
+      alertData.id = docRef.id;
       
-      // TODO: Integrate with email notification system when available
+      // Send email notification to admin
+      try {
+        // Dynamically import to avoid circular dependency
+        const { emailService } = await import('./email_service.js');
+        await emailService.notifyAdminCriticalAIAlert(alertData);
+        console.log('📧 Critical AI alert email sent to admin');
+      } catch (emailError) {
+        console.error('❌ Failed to send AI alert email:', emailError);
+      }
+      
       console.log('🚨 CRITICAL AI ALERT:', analysis.summary);
       
     } catch (error) {
