@@ -70,28 +70,24 @@ export async function initFirebase() {
       }
     }
 
-    // Write service account file
-    try {
-      if (!existsSync(SA_PATH) || readFileSync(SA_PATH, "utf8") !== raw) {
-        writeFileSync(SA_PATH, raw, { mode: 0o600 });
-        console.log("📝 Firebase service account file written to:", SA_PATH);
-      }
-      process.env.GOOGLE_APPLICATION_CREDENTIALS = SA_PATH;
-    } catch (e) {
-      console.error("❌ Failed to write service account file:", e.message || e);
-      throw e;
-    }
-
-    // Initialize Firebase Admin
+    // Initialize Firebase Admin with credentials object directly
     try {
       if (!admin.apps.length) {
-        admin.initializeApp({ credential: admin.credential.cert(creds) });
-        console.log("🚀 Firebase Admin initialized successfully");
+        // Use credential object directly instead of relying on environment file
+        admin.initializeApp({ 
+          credential: admin.credential.cert(creds),
+          projectId: creds.project_id 
+        });
+        console.log("🚀 Firebase Admin initialized with credentials object");
       }
     } catch (e) {
       console.error("❌ Failed to initialize Firebase Admin:", e.message || e);
       throw e;
     }
+    
+    // Don't set GOOGLE_APPLICATION_CREDENTIALS to avoid conflicts
+    // The admin.credential.cert(creds) approach is more reliable
+    console.log("✅ Skipping GOOGLE_APPLICATION_CREDENTIALS file path to prevent conflicts");
   } else if (!admin.apps.length) {
     console.log("🔄 No FIREBASE_KEY found, using Application Default Credentials");
     try {
