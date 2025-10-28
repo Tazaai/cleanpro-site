@@ -98,6 +98,7 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 ## 🧩 Backend routes overview (MVP APIs)...
 📁 Checking MVP API routes...
 backend/routes/admin_api.mjs
+backend/routes/adminsheet_api.mjs
 backend/routes/appsheet_api.mjs
 backend/routes/auth_api.mjs
 backend/routes/booking_api.mjs
@@ -149,14 +150,26 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-in_progress |  | 🔧 Fix 500 distance API error - implement lazy Firebase initialization
-completed | success | 🔧 Fix 404 calendar API error - re-enable calendar and config APIs
-completed | success | 🧪 Implement mandatory local testing - add test_backend_local.sh, fix …
+completed | failure | fix: Proper shell script quoting for Firebase key conditionals
+completed | failure | fix: Remove base64 encoding from FIREBASE_KEY deployment
+completed | failure | deploy: trigger deployment for updated FIREBASE_KEY
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
-## 📦 Firebase sanity check...
-✅ Firebase file found
+## � Firebase Connection Diagnostic...
+✅ Firebase integration file found
+🌐 Testing Firebase connection in production...
+Firebase Ready: false
+Has Firebase Key: true
+Key Length: 392 characters
+GCP Project: cleanpro-site
+❌ Firebase connection failed in production
+🔧 CRITICAL: Firebase key too short (392 chars)
+   Expected: 2000-3000 characters
+   Action: Update FIREBASE_KEY in GitHub Secrets with complete JSON
+   💡 Run: ./firebase_key_quick_check.sh for diagnosis
+🧪 Testing Firebase-dependent endpoints...
+❌ Coordination points API failing (HTTP 404)
 
 ## 🎯 Deployment Readiness Assessment...
 ======================================================

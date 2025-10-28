@@ -134,7 +134,7 @@ validate_secret_detailed "GCP_SA_KEY"
 # API Keys  
 echo "🔑 API Keys:"
 validate_secret_detailed "GOOGLE_MAPS_API_KEY"
-validate_secret_detailed "FIREBASE_KEY"
+validate_secret_detailed "FIREBASE_KEY_BASE64"
 validate_secret_detailed "OPENAI_API_KEY"
 
 # Authentication & Security
@@ -382,9 +382,57 @@ else
 fi
 
 echo ""
-echo "## 📦 Firebase sanity check..."
+echo "## � Firebase Connection Diagnostic..."
 if [ -f backend/firebaseClient.js ] || [ -f backend/firebase.js ]; then
-  echo "✅ Firebase file found"
+  echo "✅ Firebase integration file found"
+  
+  # Test Firebase connectivity in production
+  echo "🌐 Testing Firebase connection in production..."
+  
+  # Use the detailed Firebase diagnostic endpoint
+  FIREBASE_DIAG=$(curl -s https://cleanpro-backend-5539254765.europe-west1.run.app/debug/firebase)
+  
+  if echo "$FIREBASE_DIAG" | jq -e .diagnostics > /dev/null 2>&1; then
+    FIREBASE_READY=$(echo "$FIREBASE_DIAG" | jq -r '.diagnostics.firebaseReady')
+    HAS_KEY=$(echo "$FIREBASE_DIAG" | jq -r '.diagnostics.hasFirebaseKey')
+    KEY_LENGTH=$(echo "$FIREBASE_DIAG" | jq -r '.diagnostics.firebaseKeyLength')
+    GCP_PROJECT=$(echo "$FIREBASE_DIAG" | jq -r '.diagnostics.gcpProject' | tr -d '\n')
+    
+    echo "Firebase Ready: $FIREBASE_READY"
+    echo "Has Firebase Key: $HAS_KEY"
+    echo "Key Length: $KEY_LENGTH characters"
+    echo "GCP Project: $GCP_PROJECT"
+    
+    if [ "$FIREBASE_READY" = "true" ]; then
+      echo "✅ Firebase connected successfully in production"
+    else
+      echo "❌ Firebase connection failed in production"
+      
+      if [ "$KEY_LENGTH" -lt 2000 ]; then
+        echo "🔧 CRITICAL: Firebase key too short ($KEY_LENGTH chars)"
+        echo "   Expected: 2000-3000 characters"
+        echo "   Action: Update FIREBASE_KEY_BASE64 in GitHub Secrets with Base64 encoded JSON"
+        echo "   💡 Run: ./firebase_key_quick_check.sh for diagnosis"
+      else
+        echo "🔧 Firebase key length OK, check other issues:"
+        echo "   - Wrong project_id in service account"
+        echo "   - Missing Firebase APIs enabled"
+        echo "   - Service account permissions issue"
+      fi
+    fi
+  else
+    echo "⚠️ Cannot retrieve Firebase diagnostic information"
+    echo "   Response: $FIREBASE_DIAG"
+  fi
+  
+  # Test specific Firebase endpoints
+  echo "🧪 Testing Firebase-dependent endpoints..."
+  COORD_TEST=$(curl -s -o /dev/null -w "%{http_code}" https://cleanpro-backend-5539254765.europe-west1.run.app/api/coordination-points)
+  if [ "$COORD_TEST" = "200" ]; then
+    echo "✅ Coordination points API working"
+  else
+    echo "❌ Coordination points API failing (HTTP $COORD_TEST)"
+  fi
 else
   echo "⚠️ No Firebase integration file found"
 fi
