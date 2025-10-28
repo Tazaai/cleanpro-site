@@ -27,7 +27,8 @@ jobs:
         
         # Check each secret individually with proper shell quoting
         echo "Checking GCP_PROJECT..."
-        if [ -z "${{ secrets.GCP_PROJECT }}" ]; then
+        GCP_PROJECT_SECRET="${{ secrets.GCP_PROJECT }}"
+        if [ -z "$GCP_PROJECT_SECRET" ]; then
           echo "❌ GCP_PROJECT: MISSING"
           VALIDATION_PASSED=false
         else
@@ -35,7 +36,8 @@ jobs:
         fi
         
         echo "Checking GCP_SA_KEY..."
-        if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+        GCP_SA_KEY_SECRET="${{ secrets.GCP_SA_KEY }}"
+        if [ -z "$GCP_SA_KEY_SECRET" ]; then
           echo "❌ GCP_SA_KEY: MISSING"
           VALIDATION_PASSED=false
         else
@@ -43,14 +45,16 @@ jobs:
         fi
         
         echo "Checking FIREBASE_KEY_BASE64..."
-        if [ -z "${{ secrets.FIREBASE_KEY_BASE64 }}" ]; then
+        FIREBASE_SECRET="${{ secrets.FIREBASE_KEY_BASE64 }}"
+        if [ -z "$FIREBASE_SECRET" ]; then
           echo "⚠️ FIREBASE_KEY_BASE64: MISSING (will use GCP_SA_KEY if available)"
         else
           echo "✅ FIREBASE_KEY_BASE64: PRESENT"
         fi
         
         echo "Checking GOOGLE_MAPS_API_KEY..."
-        if [ -z "${{ secrets.GOOGLE_MAPS_API_KEY }}" ]; then
+        GOOGLE_MAPS_SECRET="${{ secrets.GOOGLE_MAPS_API_KEY }}"
+        if [ -z "$GOOGLE_MAPS_SECRET" ]; then
           echo "❌ GOOGLE_MAPS_API_KEY: MISSING"
           VALIDATION_PASSED=false
         else
@@ -58,7 +62,8 @@ jobs:
         fi
         
         echo "Checking JWT_SECRET..."
-        if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+        JWT_SECRET_SECRET="${{ secrets.JWT_SECRET }}"
+        if [ -z "$JWT_SECRET_SECRET" ]; then
           echo "❌ JWT_SECRET: MISSING"
           VALIDATION_PASSED=false
         else
@@ -84,7 +89,8 @@ jobs:
         echo "🔬 Running streamlined deployment validation..."
         
         # Basic JWT_SECRET strength check
-        JWT_LENGTH=$(echo -n "${{ secrets.JWT_SECRET }}" | wc -c)
+        JWT_SECRET_VAL="${{ secrets.JWT_SECRET }}"
+        JWT_LENGTH=$(echo -n "$JWT_SECRET_VAL" | wc -c)
         if [ $JWT_LENGTH -ge 32 ]; then
           echo "✅ JWT_SECRET: Adequate length ($JWT_LENGTH chars)"
         else
@@ -187,16 +193,16 @@ jobs:
           # Build the image first
           gcloud builds submit --tag "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" .
           
-          # Decode Base64 Firebase key and prepare for deployment
+          # Firebase credentials validation and setup
           if [ -n "${{ secrets.FIREBASE_KEY_BASE64 }}" ]; then
-            echo "Using FIREBASE_KEY_BASE64 secret (Base64 encoded)"
-            # Decode Base64 to get the raw JSON for Cloud Run environment variable
-            FIREBASE_KEY_RAW=$(echo '${{ secrets.FIREBASE_KEY_BASE64 }}' | base64 --decode)
+            echo "✅ Using FIREBASE_KEY_BASE64 secret (Base64 encoded)"
+            echo "🔧 Firebase key will be passed directly to Cloud Run environment"
           elif [ -n "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "Using GCP_SA_KEY as FIREBASE_KEY (fallback, raw JSON)"
-            FIREBASE_KEY_RAW='${{ secrets.GCP_SA_KEY }}'
+            echo "⚠️ Using GCP_SA_KEY as FIREBASE_KEY (fallback)"
+            echo "💡 Consider setting FIREBASE_KEY_BASE64 for proper Firebase integration"
           else
             echo "❌ No Firebase credentials available"
+            echo "🔧 Required: Either FIREBASE_KEY_BASE64 or GCP_SA_KEY must be configured"
             exit 1
           fi
           
