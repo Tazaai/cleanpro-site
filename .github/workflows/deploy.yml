@@ -27,8 +27,7 @@ jobs:
         
         # Check each secret individually with proper shell quoting
         echo "Checking GCP_PROJECT..."
-        GCP_PROJECT_SECRET="${{ secrets.GCP_PROJECT }}"
-        if [ -z "$GCP_PROJECT_SECRET" ]; then
+        if [ -z "${{ secrets.GCP_PROJECT }}" ]; then
           echo "❌ GCP_PROJECT: MISSING"
           VALIDATION_PASSED=false
         else
@@ -36,8 +35,7 @@ jobs:
         fi
         
         echo "Checking GCP_SA_KEY..."
-        GCP_SA_KEY_SECRET="${{ secrets.GCP_SA_KEY }}"
-        if [ -z "$GCP_SA_KEY_SECRET" ]; then
+        if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
           echo "❌ GCP_SA_KEY: MISSING"
           VALIDATION_PASSED=false
         else
@@ -45,16 +43,14 @@ jobs:
         fi
         
         echo "Checking FIREBASE_KEY_BASE64..."
-        FIREBASE_SECRET="${{ secrets.FIREBASE_KEY_BASE64 }}"
-        if [ -z "$FIREBASE_SECRET" ]; then
+        if [ -z "${{ secrets.FIREBASE_KEY_BASE64 }}" ]; then
           echo "⚠️ FIREBASE_KEY_BASE64: MISSING (will use GCP_SA_KEY if available)"
         else
           echo "✅ FIREBASE_KEY_BASE64: PRESENT"
         fi
         
         echo "Checking GOOGLE_MAPS_API_KEY..."
-        GOOGLE_MAPS_SECRET="${{ secrets.GOOGLE_MAPS_API_KEY }}"
-        if [ -z "$GOOGLE_MAPS_SECRET" ]; then
+        if [ -z "${{ secrets.GOOGLE_MAPS_API_KEY }}" ]; then
           echo "❌ GOOGLE_MAPS_API_KEY: MISSING"
           VALIDATION_PASSED=false
         else
@@ -62,8 +58,7 @@ jobs:
         fi
         
         echo "Checking JWT_SECRET..."
-        JWT_SECRET_SECRET="${{ secrets.JWT_SECRET }}"
-        if [ -z "$JWT_SECRET_SECRET" ]; then
+        if [ -z "${{ secrets.JWT_SECRET }}" ]; then
           echo "❌ JWT_SECRET: MISSING"
           VALIDATION_PASSED=false
         else
@@ -89,8 +84,7 @@ jobs:
         echo "🔬 Running streamlined deployment validation..."
         
         # Basic JWT_SECRET strength check
-        JWT_SECRET_VAL="${{ secrets.JWT_SECRET }}"
-        JWT_LENGTH=$(echo -n "$JWT_SECRET_VAL" | wc -c)
+        JWT_LENGTH=$(printf '%s' "${{ secrets.JWT_SECRET }}" | wc -c)
         if [ $JWT_LENGTH -ge 32 ]; then
           echo "✅ JWT_SECRET: Adequate length ($JWT_LENGTH chars)"
         else
