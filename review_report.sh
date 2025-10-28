@@ -134,7 +134,7 @@ validate_secret_detailed "GCP_SA_KEY"
 # API Keys  
 echo "🔑 API Keys:"
 validate_secret_detailed "GOOGLE_MAPS_API_KEY"
-validate_secret_detailed "FIREBASE_KEY_BASE64"
+validate_secret_detailed "FIREBASE_KEY"
 validate_secret_detailed "OPENAI_API_KEY"
 
 # Authentication & Security
@@ -413,7 +413,7 @@ if [ -f backend/firebaseClient.js ] || [ -f backend/firebase.js ]; then
       if [ "$KEY_LENGTH" -lt 2000 ]; then
         echo "🔧 CRITICAL: Firebase key too short ($KEY_LENGTH chars)"
         echo "   Expected: 2000-3000 characters"
-        echo "   Action: Update FIREBASE_KEY_BASE64 in GitHub Secrets with Base64 encoded JSON"
+        echo "   Action: Update FIREBASE_KEY in GitHub Secrets with JSON content"
         echo "   💡 Run: ./firebase_key_quick_check.sh for diagnosis"
         echo "   🎯 TIP: Use Notepad (not Studio V) to copy Firebase JSON properly"
       else

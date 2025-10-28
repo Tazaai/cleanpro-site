@@ -42,11 +42,11 @@ jobs:
           echo "✅ GCP_SA_KEY: PRESENT"
         fi
         
-        echo "Checking FIREBASE_KEY_BASE64..."
-        if [ -z "${{ secrets.FIREBASE_KEY_BASE64 }}" ]; then
-          echo "⚠️ FIREBASE_KEY_BASE64: MISSING (will use GCP_SA_KEY if available)"
+        echo "Checking FIREBASE_KEY..."
+        if [ -z "${{ secrets.FIREBASE_KEY }}" ]; then
+          echo "⚠️ FIREBASE_KEY: MISSING (will use GCP_SA_KEY if available)"
         else
-          echo "✅ FIREBASE_KEY_BASE64: PRESENT"
+          echo "✅ FIREBASE_KEY: PRESENT"
         fi
         
         echo "Checking GOOGLE_MAPS_API_KEY..."

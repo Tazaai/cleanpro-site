@@ -167,7 +167,7 @@ case $option in
                 echo "📋 STEPS:"
                 echo "1. Copy the Base64 string above"
                 echo "2. Go to: https://github.com/Tazaai/cleanpro-site/settings/secrets/actions"
-                echo "3. Create or update secret: FIREBASE_KEY_BASE64"
+                echo "3. Create or update secret: FIREBASE_KEY"
                 echo "4. Paste the Base64 string"
                 echo "5. Save and deploy"
                 echo ""
@@ -211,7 +211,7 @@ if [ $validation_result -eq 0 ]; then
     echo "1. Copy your complete JSON"
     echo "2. Encode it to Base64: echo -n 'YOUR_JSON' | base64 -w 0"
     echo "3. Go to: https://github.com/Tazaai/cleanpro-site/settings/secrets/actions"
-    echo "4. Create/update FIREBASE_KEY_BASE64 secret"
+    echo "4. Create/update FIREBASE_KEY secret"
     echo "5. Or use option 4 of this script for automatic Base64 encoding"
     echo "4. Redeploy and test"
 else
