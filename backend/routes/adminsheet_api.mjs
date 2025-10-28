@@ -6,7 +6,7 @@ const router = express.Router();
 // Helper function to get database with error handling
 async function getDatabase() {
   try {
-    const db = await getDb();
+    const db = getDb();
     if (!db) {
       throw new Error('Database connection not available');
     }
