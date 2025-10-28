@@ -190,9 +190,12 @@ jobs:
           # Firebase credentials validation and setup
           echo "🔧 Validating Firebase credentials for deployment..."
           echo "✅ Firebase credentials will be passed directly from GitHub Secrets"
-          echo "🔧 Using FIREBASE_KEY_BASE64 for Cloud Run environment"
+          echo "🔧 Using FIREBASE_KEY for Cloud Run environment"
           
-          # Deploy with environment variables directly using GitHub secrets
+          # Decode base64 Firebase key and create temporary file for secure deployment
+          echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > /tmp/firebase-key.json
+          
+          # Deploy with environment variables, setting Firebase key as file content
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
@@ -203,7 +206,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --project $GCP_PROJECT \
-            --set-env-vars "FIREBASE_KEY=${{ secrets.FIREBASE_KEY }}" \
+            --set-env-vars "FIREBASE_KEY=$(cat /tmp/firebase-key.json | tr -d '\n' | sed 's/"/\\"/g')" \
             --set-env-vars "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" \
             --set-env-vars "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
             --set-env-vars "GCP_PROJECT=${{ secrets.GCP_PROJECT }}" \
@@ -213,6 +216,9 @@ jobs:
             --set-env-vars "APPSHEET_API_KEY=${{ secrets.APPSHEET_API_KEY }}" \
             --set-env-vars "APPSHEET_APP_ID=${{ secrets.APPSHEET_APP_ID }}" \
             --set-env-vars "NODE_ENV=production"
+
+          # Clean up temporary Firebase key file
+          rm -f /tmp/firebase-key.json
 
       - name: Build & Deploy Frontend to Cloud Run
         run: |
