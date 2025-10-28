@@ -39,7 +39,7 @@ Any edits must follow the 2-step developer authorization process (manual confirm
 ℹ️  GCP_SA_KEY: Not available locally (stored in GitHub Secrets)
 🔑 API Keys:
 ✅ GOOGLE_MAPS_API_KEY: Available locally (39 chars)
-ℹ️  FIREBASE_KEY_BASE64: Not available locally (stored in GitHub Secrets)
+ℹ️  FIREBASE_KEY: Not available locally (stored in GitHub Secrets)
 ℹ️  OPENAI_API_KEY: Not available locally (stored in GitHub Secrets)
 🔐 Authentication & Security:
 ℹ️  JWT_SECRET: Not available locally (stored in GitHub Secrets)
@@ -150,9 +150,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-completed | failure | fix: Use file-based Firebase key deployment
-completed | failure | fix: Use update-env-vars for Firebase key deployment
-completed | failure | fix: Properly decode base64 Firebase key in deployment
+completed | success | Fix YAML parsing error in deployment
+completed | failure | Fix gcloud deployment env-vars syntax error
+completed | failure | fix: Update secret validation to use FIREBASE_KEY instead of FIREBASE…
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 

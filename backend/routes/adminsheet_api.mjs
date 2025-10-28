@@ -1,5 +1,6 @@
 import express from 'express';
 import { getDb } from '../firebase.js';
+import aiMonitoring from '../services/ai_monitoring.js';
 
 const router = express.Router();
 
@@ -17,22 +18,36 @@ function getDatabase() {
   }
 }
 
-// Helper function for AI tone analysis (placeholder for OpenAI integration)
-async function analyzeTone(content) {
-  // TODO: Integrate with OpenAI API for real tone analysis
-  // For now, simple keyword detection
-  const redFlags = ['stupid', 'idiot', 'hate', 'kill', 'threat', 'scam'];
-  const lowercaseContent = content.toLowerCase();
-  
-  const hasRedFlag = redFlags.some(flag => lowercaseContent.includes(flag));
-  const toneScore = hasRedFlag ? 2 : 8; // Scale 1-10, lower is worse
-  
-  return {
-    toneScore,
-    hasRedFlag,
-    confidence: 0.85,
-    analysis: hasRedFlag ? 'Potentially inappropriate language detected' : 'Professional communication'
-  };
+// Helper function for AI tone analysis (integrated with OpenAI)
+async function analyzeTone(content, context = {}) {
+  try {
+    const analysis = await aiMonitoring.analyzeCommunication(content, context);
+    return {
+      toneScore: analysis.toneScore,
+      riskLevel: analysis.riskLevel,
+      redFlags: analysis.redFlags,
+      recommendations: analysis.recommendations,
+      aiEnabled: aiMonitoring.isEnabled,
+      analysis: analysis
+    };
+  } catch (error) {
+    console.error('AI tone analysis failed:', error);
+    // Fallback to simple analysis
+    const redFlags = ['stupid', 'idiot', 'hate', 'kill', 'threat', 'scam'];
+    const lowercaseContent = content.toLowerCase();
+    
+    const hasRedFlag = redFlags.some(flag => lowercaseContent.includes(flag));
+    const toneScore = hasRedFlag ? 2 : 8; // Scale 1-10, lower is worse
+    
+    return {
+      toneScore,
+      riskLevel: hasRedFlag ? 'high' : 'low',
+      redFlags: hasRedFlag ? ['Contains inappropriate content'] : [],
+      recommendations: hasRedFlag ? ['Review content manually'] : [],
+      aiEnabled: false,
+      fallback: true
+    };
+  }
 }
 
 // ==========================================
@@ -170,6 +185,16 @@ router.post('/cp/register', async (req, res) => {
 
     const db = getDatabase();
     
+    // Run AI monitoring on registration data
+    const aiAnalysis = await aiMonitoring.monitorCPRegistration({
+      business_name,
+      contact_person,
+      email,
+      services_offered: coverage_areas,
+      special_notes: `${business_type} business, radius: ${service_radius || 25}km`,
+      id: `pending_${Date.now()}`
+    });
+    
     // Create CP registration application
     const registrationData = {
       business_name,
@@ -210,9 +235,18 @@ router.post('/cp/register', async (req, res) => {
         expiry_date: insurance_info.expiry_date || null
       } : null,
       
-      // Default scores (will be updated after approval)
-      ai_quality_score: null,
-      communication_score: null,
+      // AI Monitoring Results
+      ai_quality_score: aiAnalysis.toneScore,
+      communication_score: aiAnalysis.professionalismScore,
+      ai_risk_level: aiAnalysis.riskLevel,
+      ai_red_flags: aiAnalysis.redFlags,
+      ai_monitoring: {
+        initial_assessment: aiAnalysis,
+        last_updated: new Date().toISOString(),
+        monitoring_enabled: true
+      },
+      
+      // Default scores
       custom_fee_percentage: null,
       
       // Auto-generated fields
