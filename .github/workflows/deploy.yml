@@ -128,7 +128,7 @@ jobs:
     if: needs.secret-validation.outputs.secrets_valid == 'true' && github.ref == 'refs/heads/main'
     env:
       GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-      FIREBASE_KEY_BASE64: ${{ secrets.FIREBASE_KEY_BASE64 }}
+      FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
       GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
@@ -189,10 +189,10 @@ jobs:
           
           # Firebase credentials validation and setup
           echo "🔧 Validating Firebase credentials for deployment..."
-          echo "✅ Firebase credentials will be passed directly from GitHub Secrets"
+          echo "✅ Firebase credentials will be passed via env-vars-file for safe JSON handling"
           echo "🔧 Using FIREBASE_KEY for Cloud Run environment"
           
-          # Create temporary Firebase key file to avoid gcloud parsing issues
+          # Create temporary Firebase key file and validate JSON
           echo '${{ secrets.FIREBASE_KEY }}' > /tmp/firebase-key.json
           
           # Validate the Firebase key is valid JSON
@@ -203,7 +203,22 @@ jobs:
             exit 1
           fi
           
-          # Deploy with environment variables using file input to avoid escaping issues
+          # Create environment variables file for safe deployment
+          cat > /tmp/env-vars.yaml << EOF
+          FIREBASE_KEY: |
+            ${{ secrets.FIREBASE_KEY }}
+          GOOGLE_MAPS_API_KEY: "${{ secrets.GOOGLE_MAPS_API_KEY }}"
+          OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}"
+          GCP_PROJECT: "${{ secrets.GCP_PROJECT }}"
+          STRIPE_SECRET_KEY: "${{ secrets.STRIPE_SECRET_KEY }}"
+          STRIPE_WEBHOOK_SECRET: "${{ secrets.STRIPE_WEBHOOK_SECRET }}"
+          JWT_SECRET: "${{ secrets.JWT_SECRET }}"
+          APPSHEET_API_KEY: "${{ secrets.APPSHEET_API_KEY }}"
+          APPSHEET_APP_ID: "${{ secrets.APPSHEET_APP_ID }}"
+          NODE_ENV: "production"
+          EOF
+          
+          # Deploy with environment variables from file
           gcloud run deploy cleanpro-backend \
             --image "europe-west1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/cleanpro-backend" \
             --region europe-west1 \
@@ -214,19 +229,10 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --project $GCP_PROJECT \
-            --update-env-vars FIREBASE_KEY="$(cat /tmp/firebase-key.json | tr -d '\n')" \
-            --update-env-vars GOOGLE_MAPS_API_KEY="${{ secrets.GOOGLE_MAPS_API_KEY }}" \
-            --update-env-vars OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-            --update-env-vars GCP_PROJECT="${{ secrets.GCP_PROJECT }}" \
-            --update-env-vars STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
-            --update-env-vars STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
-            --update-env-vars JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            --update-env-vars APPSHEET_API_KEY="${{ secrets.APPSHEET_API_KEY }}" \
-            --update-env-vars APPSHEET_APP_ID="${{ secrets.APPSHEET_APP_ID }}" \
-            --update-env-vars NODE_ENV="production"
+            --env-vars-file /tmp/env-vars.yaml
 
-          # Clean up temporary Firebase key file
-          rm -f /tmp/firebase-key.json
+          # Clean up temporary files
+          rm -f /tmp/firebase-key.json /tmp/env-vars.yaml
 
       - name: Build & Deploy Frontend to Cloud Run
         run: |
