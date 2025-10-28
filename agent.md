@@ -150,9 +150,9 @@ Distance Matrix API status: REQUEST_DENIED
 
 ## 🚀 Cloud Run deployment status...
 📋 Recent deployment runs:
-in_progress |  | feat: Add Google Maps API diagnostic endpoints
-completed | failure | docs: Update Firebase diagnostic tools with success story
-completed | failure | feat: Add database seeding endpoints for initial Firestore setup
+completed | success | feat: Add temporary Firestore seeding via coordination points API
+completed | success | fix: Remove problematic Firebase credentials shell conditional logic …
+completed | failure | fix: Playwright test timeouts for Cloud Run - increase timeout and us…
 📊 Cloud Run services status:
 ⚠️ Cloud Run list failed (not authenticated or missing project)
 
@@ -160,11 +160,11 @@ completed | failure | feat: Add database seeding endpoints for initial Firestore
 ✅ Firebase integration file found
 🌐 Testing Firebase connection in production...
 Firebase Ready: true
-Has Firebase Key: true
-Key Length: 3176 characters
+Has Firebase Key: false
+Key Length: 0 characters
 GCP Project: cleanpro-site
 ✅ Firebase connected successfully in production
-🎉 SUCCESS: Firebase key resolution complete (3176 chars)
+🎉 SUCCESS: Firebase key resolution complete (0 chars)
 💡 Key insight: Used Notepad instead of Studio V for proper JSON copy
 🧪 Testing Firebase-dependent endpoints...
 ❌ Coordination points API failing (HTTP 404)
