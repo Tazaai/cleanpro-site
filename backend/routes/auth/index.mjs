@@ -5,8 +5,9 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { body, validationResult } from "express-validator";
 import { getDb } from "../../firebase.js";
+import { validate } from "../../middleware/validation.js";
+import { registerSchema, loginSchema, passwordUpdateSchema, profileUpdateSchema } from "../../schemas/auth.js";
 
 const router = express.Router();
 
@@ -74,25 +75,9 @@ export const requireAdmin = (req, res, next) => {
 // =============================================================
 
 // Register new user
-router.post("/register", [
-  body("email").isEmail().normalizeEmail(),
-  body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
-  body("firstName").trim().isLength({ min: 1 }).withMessage("First name is required"),
-  body("lastName").trim().isLength({ min: 1 }).withMessage("Last name is required"),
-  body("phone").optional().isMobilePhone(),
-], async (req, res) => {
+router.post("/register", validate(registerSchema), async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: "Validation failed", 
-        details: errors.array() 
-      });
-    }
-
-    const { email, password, firstName, lastName, phone } = req.body;
+    const { email, password, firstName, lastName, role = 'user' } = req.validated;
     const db = getDb();
 
     // Check if user already exists
@@ -153,22 +138,9 @@ router.post("/register", [
 });
 
 // Login user
-router.post("/login", [
-  body("email").isEmail().normalizeEmail(),
-  body("password").exists().withMessage("Password is required")
-], async (req, res) => {
+router.post("/login", validate(loginSchema), async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: "Validation failed", 
-        details: errors.array() 
-      });
-    }
-
-    const { email, password } = req.body;
+    const { email, password } = req.validated;
     const db = getDb();
 
     // Find user by email
@@ -277,23 +249,9 @@ router.get("/profile", authenticateToken, async (req, res) => {
 });
 
 // Update user profile
-router.put("/profile", authenticateToken, [
-  body("firstName").optional().trim().isLength({ min: 1 }),
-  body("lastName").optional().trim().isLength({ min: 1 }),
-  body("phone").optional().isMobilePhone()
-], async (req, res) => {
+router.put("/profile", authenticateToken, validate(profileUpdateSchema), async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: "Validation failed", 
-        details: errors.array() 
-      });
-    }
-
-    const { firstName, lastName, phone } = req.body;
+    const updates = req.validated;
     const db = getDb();
 
     // Update user document
@@ -322,22 +280,9 @@ router.put("/profile", authenticateToken, [
 });
 
 // Change password
-router.post("/change-password", authenticateToken, [
-  body("currentPassword").exists().withMessage("Current password is required"),
-  body("newPassword").isLength({ min: 8 }).withMessage("New password must be at least 8 characters")
-], async (req, res) => {
+router.post("/change-password", authenticateToken, validate(passwordUpdateSchema), async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: "Validation failed", 
-        details: errors.array() 
-      });
-    }
-
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.validated;
     const db = getDb();
 
     // Get current user

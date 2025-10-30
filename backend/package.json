@@ -23,7 +23,8 @@
     "nodemailer": "^6.10.1",
     "openai": "^4.104.0",
     "puppeteer": "^24.4.0",
-    "stripe": "^14.7.0"
+    "stripe": "^14.7.0",
+    "zod": "^4.1.12"
   },
   "engines": {
     "node": ">=20.x"
