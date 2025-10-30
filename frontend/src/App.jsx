@@ -4,9 +4,10 @@ import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import AdminDashboard from "./components/AdminDashboard";
 import CPRegistrationForm from "./components/CPRegistrationForm";
+import CPPortal from "./components/CPPortal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaWhatsapp, FaShareAlt, FaUser, FaSignOutAlt, FaCog, FaChartBar } from "react-icons/fa";
 
 function AppContent() {
   const bookingRef = useRef(null);
@@ -15,6 +16,7 @@ function AppContent() {
   const [showRegister, setShowRegister] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showCPRegistration, setShowCPRegistration] = useState(false);
+  const [showCPPortal, setShowCPPortal] = useState(false);
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
 
   // ✅ Initialize map safely with better error handling
@@ -106,6 +108,17 @@ function AppContent() {
       {showAdmin && isAdmin && (
         <AdminDashboard onClose={() => setShowAdmin(false)} />
       )}
+      {showCPPortal && isAdmin && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <CPPortal onClose={() => setShowCPPortal(false)} />
+          <button
+            onClick={() => setShowCPPortal(false)}
+            className="fixed top-4 left-4 z-60 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+          >
+            ← Back
+          </button>
+        </div>
+      )}
       {showCPRegistration && (
         <CPRegistrationForm onClose={() => setShowCPRegistration(false)} />
       )}
@@ -119,13 +132,22 @@ function AppContent() {
               <FaUser className="text-white" />
               <span className="text-white text-sm">{user?.name}</span>
               {isAdmin && (
-                <button
-                  onClick={() => setShowAdmin(true)}
-                  className="text-yellow-300 hover:text-yellow-100"
-                  title="Admin Dashboard"
-                >
-                  <FaCog />
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowAdmin(true)}
+                    className="text-yellow-300 hover:text-yellow-100"
+                    title="Admin Dashboard"
+                  >
+                    <FaCog />
+                  </button>
+                  <button
+                    onClick={() => setShowCPPortal(true)}
+                    className="text-blue-300 hover:text-blue-100"
+                    title="CP Portal"
+                  >
+                    <FaChartBar />
+                  </button>
+                </>
               )}
               <button
                 onClick={logout}
