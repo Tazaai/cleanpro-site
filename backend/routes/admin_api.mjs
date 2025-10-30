@@ -4,7 +4,7 @@
 
 import express from "express";
 import { getFirestore } from "firebase-admin/firestore";
-import { authenticateToken, requireAdmin } from "./auth_api.mjs";
+import { authenticateToken, requireAdmin } from "./auth/index.mjs";
 import admin from "firebase-admin";
 
 const router = express.Router();

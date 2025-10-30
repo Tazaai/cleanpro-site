@@ -18,26 +18,8 @@ const HOST = process.env.HOST || "0.0.0.0";
 import { initFirebase } from "./firebase.js";
 import admin from "firebase-admin";
 
-// Import API routes
-import bookingsApi from "./routes/bookings_api.mjs";
-import authApi from "./routes/auth_api.mjs";
-import adminApi from "./routes/admin_api.mjs";
-import pricingApi from "./routes/pricing_api.mjs";
-import coordinationPointsApi from "./routes/coordination_points_api.mjs";
-import distanceApi from "./routes/distance_api.mjs";
-import paymentApi from "./routes/payment_api.mjs";
-import legalApi from "./routes/legal_api.mjs";
-import servicesApi from "./routes/services_api.mjs";
-import quotesApi from "./routes/quotes_api.mjs";
-import mapsApi from "./routes/maps_api.mjs";
-import calendarApi from "./routes/calendar_api.mjs";
-import configApi from "./routes/config_api.mjs";
-import appsheetApi from "./routes/appsheet_api.mjs";
-import adminsheetApi from "./routes/adminsheet_api.mjs";
-import aiMonitoringApi from "./routes/ai_monitoring_api.mjs";
-import emailApi from "./routes/email_api.mjs";
-import smartMatchingApi from "./routes/smart_matching_api.mjs";
-import analyticsApi from "./routes/analytics_api.mjs";
+// Import centralized API router
+import apiRouter from "./routes/index.mjs";
 
 console.log("🚀 Starting CleanPro Backend...");
 console.log("🌍 Environment:", process.env.NODE_ENV || "development");
@@ -116,28 +98,9 @@ app.get("/debug/maps", (req, res) => {
 });
 
 
-// Basic API routes - direct inline to avoid import issues
-// Mount API routes
+// Mount centralized API router
 console.log("🧩 Mounting API routes...");
-app.use("/api/bookings", bookingsApi);
-app.use("/api/auth", authApi);
-app.use("/api/admin", adminApi);
-app.use("/api/pricing", pricingApi);
-app.use("/api/coordination_points", coordinationPointsApi);
-app.use("/api/distance", distanceApi);
-app.use("/api/payment", paymentApi);
-app.use("/api/legal", legalApi);
-app.use("/api/services", servicesApi);
-app.use("/api/quotes", quotesApi);
-app.use("/api/maps", mapsApi);
-app.use("/api/calendar", calendarApi);
-app.use("/api/config", configApi);
-app.use("/api/appsheet", appsheetApi);
-app.use("/api/adminsheet", adminsheetApi);
-app.use("/api/ai-monitoring", aiMonitoringApi);
-app.use("/api/email", emailApi);
-app.use("/api/smart-matching", smartMatchingApi);
-app.use("/api/analytics", analyticsApi);
+app.use("/api", apiRouter);
 console.log("✅ API routes mounted successfully");
 
 // Keep the inline routes for backward compatibility

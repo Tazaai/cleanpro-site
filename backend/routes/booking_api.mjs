@@ -1,12 +1,11 @@
 import express from "express";
-import { getFirestore } from "firebase-admin/firestore";
+import { getDb } from "../firebase.js";
 
 const router = express.Router();
-const db = getFirestore();
 
-// ✅ Create new booking
 router.post("/", async (req, res) => {
   try {
+    const db = getDb();
     const data = req.body;
     if (!data.name || !data.service || !data.address)
       return res.status(400).json({ ok: false, message: "Missing required fields" });

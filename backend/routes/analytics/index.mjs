@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import analyticsService from '../services/analytics_service.js';
+import analyticsService from '../../services/analytics_service.js';
 
 const router = express.Router();
 

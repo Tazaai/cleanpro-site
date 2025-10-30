@@ -5,7 +5,7 @@
 import express from "express";
 import { getDb } from "../firebase.js";
 import { body, validationResult } from "express-validator";
-import { authenticateToken, requireAdmin } from "./auth_api.mjs";
+import { authenticateToken, requireAdmin } from "./auth/index.mjs";
 
 const router = express.Router();
 
