@@ -106,6 +106,7 @@ if (typeof document !== 'undefined') {
 }
 
 export default function BookingForm() {
+  // Form state
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -129,6 +130,20 @@ export default function BookingForm() {
   const [bookingId, setBookingId] = useState(null);
   const [lastCleaning, setLastCleaning] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(true);
+  
+  // Mobile and validation state
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [formTouched, setFormTouched] = useState(false);
+  
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 🗓 Load availability
   useEffect(() => {
