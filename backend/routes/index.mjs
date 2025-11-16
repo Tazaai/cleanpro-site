@@ -5,6 +5,16 @@ import authRouter from './auth/index.mjs';
 import paymentsRouter from './payments/index.mjs';
 import analyticsRouter from './analytics/index.mjs';
 
+// New finalized APIs
+import cpBookingsApi from './cp_bookings_api.mjs';
+import adminFeesApi from './admin_fees_api.mjs';
+import adminIdVerificationApi from './admin_id_verification_api.mjs';
+import adminPayoutsApi from './admin_payouts_api.mjs';
+import adminStripeApi from './admin_stripe_api.mjs';
+import analyticsDashboardApi from './analytics_dashboard_api.mjs';
+import locationDetectApi from './location_detect_api.mjs';
+import calendarConnectApi from './calendar_connect_api.mjs';
+
 // Legacy routes (to be organized later)
 import adminApi from './admin_api.mjs';
 import adminsheetApi from './adminsheet_api.mjs';
@@ -33,6 +43,20 @@ const router = express.Router();
 router.use('/auth', authRouter);
 router.use('/payments', paymentsRouter);
 router.use('/analytics', analyticsRouter);
+
+// New finalized API routes
+router.use('/cp/bookings', cpBookingsApi);
+router.use('/admin/fees', adminFeesApi);
+router.use('/admin/id_verification', adminIdVerificationApi);
+router.use('/admin/payouts', adminPayoutsApi);
+router.use('/admin/stripe', adminStripeApi);
+router.use('/analytics', analyticsDashboardApi);
+router.use('/location/detect', locationDetectApi);
+router.use('/calendar/connect_google', calendarConnectApi);
+router.use('/calendar/sync', calendarConnectApi);
+
+// Fixed coordination points route
+router.use('/coordination_points', coordinationPointsApi);
 
 // Legacy routes (maintain existing paths)
 router.use('/admin', adminApi);

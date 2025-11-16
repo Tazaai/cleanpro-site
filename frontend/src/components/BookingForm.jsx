@@ -195,7 +195,7 @@ export default function BookingForm() {
       
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
         types: ["address"],
-        componentRestrictions: { country: ["us", "ca"] }, // Restrict to US and Canada
+        // No country restrictions - global platform supports all countries
         fields: ["formatted_address", "geometry", "place_id", "address_components"]
       });
       

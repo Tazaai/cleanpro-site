@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 export const getFirebaseConfig = () => {
   const configPath = path.resolve("/app/firebase_config.json");
@@ -11,4 +13,12 @@ export const getFirebaseConfig = () => {
     console.error("⚠️ No Firebase config found.");
     return null;
   }
+};
+
+// Centralized Firestore access function
+export const getDb = () => {
+  if (!admin.apps.length) {
+    throw new Error("Firebase not initialized - please ensure Firebase is initialized before calling getDb()");
+  }
+  return getFirestore();
 };

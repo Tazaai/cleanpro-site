@@ -6,6 +6,7 @@ export const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
+  phone: z.string().optional(),
   role: z.enum(['user', 'admin']).optional().default('user')
 });
 
@@ -25,5 +26,6 @@ export const passwordUpdateSchema = z.object({
 export const profileUpdateSchema = z.object({
   firstName: z.string().min(1, 'First name is required').optional(),
   lastName: z.string().min(1, 'Last name is required').optional(),
+  phone: z.string().optional(),
   email: z.string().email('Invalid email format').optional()
 });
